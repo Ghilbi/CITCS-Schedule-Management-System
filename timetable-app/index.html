@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Schedule App (Faculty/Room/Course CRUD)</title>
+  <!-- Google Font for modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Schedule Management</h1>
+
+  <!-- Navigation Buttons -->
+  <nav>
+    <button id="btn-faculty">Manage Faculty</button>
+    <button id="btn-rooms">Manage Rooms</button>
+    <button id="btn-courses">Manage Courses</button>
+    <button id="btn-schedule">Schedule</button>
+    <button id="btn-room-view">Room View</button>
+  </nav>
+
+  <!-- 1. FACULTY SECTION -->
+  <section id="section-faculty" class="hidden">
+    <h2>Manage Faculty</h2>
+    <button id="btn-add-faculty" class="add-btn">Add New Faculty</button>
+    <table id="table-faculty">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Faculty Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 2. ROOMS SECTION -->
+  <section id="section-rooms" class="hidden">
+    <h2>Manage Rooms</h2>
+    <button id="btn-add-room" class="add-btn">Add New Room</button>
+    <table id="table-rooms">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Room Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 3. COURSES SECTION -->
+  <section id="section-courses" class="hidden">
+    <h2>Manage Courses</h2>
+    <button id="btn-add-course" class="add-btn">Add New Course</button>
+    <table id="table-courses">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Subject</th>
+          <th>Section</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 4. SCHEDULE SECTION -->
+  <section id="section-schedule" class="hidden">
+    <h2>Schedule</h2>
+
+    <!-- MWF Table -->
+    <table class="schedule-table" id="mwf-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+
+    <!-- TTHS Table -->
+    <table class="schedule-table" id="tths-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 5. ROOM VIEW SECTION -->
+  <section id="section-room-view" class="hidden">
+    <h2>Room View</h2>
+    <label for="select-room-view"><strong>Select Room:</strong></label>
+    <select id="select-room-view"></select>
+
+    <table id="table-room-view">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Time</th>
+          <th>Schedule</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- MODALS -->
+
+  <!-- FACULTY MODAL -->
+  <div class="modal hidden" id="modal-faculty">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-faculty">&times;</span>
+      <h3 id="modal-faculty-title">Add/Edit Faculty</h3>
+      <label for="faculty-name">Faculty Name:</label>
+      <input type="text" id="faculty-name" />
+      <input type="hidden" id="faculty-id" />
+      <button id="btn-save-faculty" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- ROOM MODAL -->
+  <div class="modal hidden" id="modal-room">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-room">&times;</span>
+      <h3 id="modal-room-title">Add/Edit Room</h3>
+      <label for="room-name">Room Name:</label>
+      <input type="text" id="room-name" />
+      <input type="hidden" id="room-id" />
+      <button id="btn-save-room" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- COURSE MODAL -->
+  <div class="modal hidden" id="modal-course">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-course">&times;</span>
+      <h3 id="modal-course-title">Add/Edit Course</h3>
+      <label for="course-subject">Subject:</label>
+      <input type="text" id="course-subject" />
+      <label for="course-section">Section:</label>
+      <input type="text" id="course-section" />
+      <input type="hidden" id="course-id" />
+      <button id="btn-save-course" class="save-btn">Save</button>
+    </div>
+  </div>
+
+<!-- SCHEDULE MODAL -->
+<div class="modal hidden" id="modal-schedule">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-schedule">&times;</span>
+    <h3>Assign Schedule</h3>
+
+    <label for="schedule-dayType">Day Type:</label>
+    <input type="text" id="schedule-dayType" readonly />
+
+    <label for="schedule-time">Time:</label>
+    <input type="text" id="schedule-time" readonly />
+
+    <!-- hidden fields for schedule ID and col index -->
+    <input type="hidden" id="schedule-id" />
+    <input type="hidden" id="schedule-col" />
+
+    <!-- Faculty dropdown -->
+    <label for="schedule-faculty">Faculty:</label>
+    <select id="schedule-faculty"></select>
+
+    <!-- Room dropdown -->
+    <label for="schedule-room">Room:</label>
+    <select id="schedule-room"></select>
+
+    <!-- Course dropdown -->
+    <label for="schedule-course">Course:</label>
+    <select id="schedule-course"></select>
+
+    <!-- Color Picker -->
+    <label for="schedule-color">Cell Color:</label>
+    <input type="color" id="schedule-color" value="#e9f1fb" /> <!-- Default color -->
+
+    <button id="btn-save-schedule" class="save-btn">Save</button>
+    <!-- A delete button that only appears when editing an existing schedule -->
+    <button id="btn-delete-schedule" class="delete-btn" style="display: none;">Delete</button>
+  </div>
+</div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -110,23 +110,46 @@
     </table>
   </section>
 
-  <!-- 5. ROOM VIEW SECTION -->
-  <section id="section-room-view" class="hidden">
-    <h2>Room View</h2>
-    <label for="select-room-view"><strong>Select Room:</strong></label>
-    <select id="select-room-view"></select>
+<!-- 5. ROOM VIEW SECTION -->
+<section id="section-room-view" class="hidden">
+  <h2>Room View</h2>
+  <label for="select-room-view"><strong>Select Room:</strong></label>
+  <select id="select-room-view"></select>
 
-    <table id="table-room-view">
-      <thead>
-        <tr>
-          <th>Day</th>
-          <th>Time</th>
-          <th>Schedule</th>
-        </tr>
-      </thead>
-      <tbody><!-- Populated by script.js --></tbody>
-    </table>
-  </section>
+  <!-- MWF Table -->
+  <table class="schedule-table" id="room-view-mwf-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>MWF</th>
+        <th>MWF</th>
+        <th>MWF</th>
+        <th>MWF</th>
+        <th>MWF</th>
+        <th>MWF</th>
+        <th>MWF</th>
+      </tr>
+    </thead>
+    <tbody><!-- Populated by script.js --></tbody>
+  </table>
+
+  <!-- TTHS Table -->
+  <table class="schedule-table" id="room-view-tths-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>TTHS</th>
+        <th>TTHS</th>
+        <th>TTHS</th>
+        <th>TTHS</th>
+        <th>TTHS</th>
+        <th>TTHS</th>
+        <th>TTHS</th>
+      </tr>
+    </thead>
+    <tbody><!-- Populated by script.js --></tbody>
+  </table>
+</section>
 
   <!-- MODALS -->
 

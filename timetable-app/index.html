@@ -76,7 +76,6 @@
   <!-- 4. SCHEDULE SECTION -->
   <section id="section-schedule" class="hidden">
     <h2>Schedule</h2>
-
     <!-- MWF Table -->
     <table class="schedule-table" id="mwf-table">
       <thead>
@@ -110,50 +109,26 @@
     </table>
   </section>
 
-<!-- 5. ROOM VIEW SECTION -->
-<section id="section-room-view" class="hidden">
-  <h2>Room View</h2>
-  <label for="select-room-view"><strong>Select Room:</strong></label>
-  <select id="select-room-view"></select>
+  <!-- 5. ROOM VIEW SECTION -->
+  <section id="section-room-view" class="hidden">
+    <h2>Room View</h2>
 
-  <!-- MWF Table -->
-  <table class="schedule-table" id="room-view-mwf-table">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>MWF</th>
-        <th>MWF</th>
-        <th>MWF</th>
-        <th>MWF</th>
-        <th>MWF</th>
-        <th>MWF</th>
-        <th>MWF</th>
-      </tr>
-    </thead>
-    <tbody><!-- Populated by script.js --></tbody>
-  </table>
+    <!-- MWF ROOM VIEW -->
+    <h3>MWF Room View</h3>
+    <table class="schedule-table" id="room-view-mwf-table">
+      <thead id="room-view-mwf-thead"></thead>
+      <tbody id="room-view-mwf-tbody"></tbody>
+    </table>
 
-  <!-- TTHS Table -->
-  <table class="schedule-table" id="room-view-tths-table">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>TTHS</th>
-        <th>TTHS</th>
-        <th>TTHS</th>
-        <th>TTHS</th>
-        <th>TTHS</th>
-        <th>TTHS</th>
-        <th>TTHS</th>
-      </tr>
-    </thead>
-    <tbody><!-- Populated by script.js --></tbody>
-  </table>
-</section>
+    <!-- TTHS ROOM VIEW -->
+    <h3>TTHS Room View</h3>
+    <table class="schedule-table" id="room-view-tths-table">
+      <thead id="room-view-tths-thead"></thead>
+      <tbody id="room-view-tths-tbody"></tbody>
+    </table>
+  </section>
 
   <!-- MODALS -->
-
-  <!-- FACULTY MODAL -->
   <div class="modal hidden" id="modal-faculty">
     <div class="modal-content">
       <span class="close-button" data-close-modal="modal-faculty">&times;</span>
@@ -165,7 +140,6 @@
     </div>
   </div>
 
-  <!-- ROOM MODAL -->
   <div class="modal hidden" id="modal-room">
     <div class="modal-content">
       <span class="close-button" data-close-modal="modal-room">&times;</span>
@@ -177,7 +151,6 @@
     </div>
   </div>
 
-  <!-- COURSE MODAL -->
   <div class="modal hidden" id="modal-course">
     <div class="modal-content">
       <span class="close-button" data-close-modal="modal-course">&times;</span>
@@ -191,43 +164,33 @@
     </div>
   </div>
 
-<!-- SCHEDULE MODAL -->
-<div class="modal hidden" id="modal-schedule">
-  <div class="modal-content">
-    <span class="close-button" data-close-modal="modal-schedule">&times;</span>
-    <h3>Assign Schedule</h3>
-
-    <label for="schedule-dayType">Day Type:</label>
-    <input type="text" id="schedule-dayType" readonly />
-
-    <label for="schedule-time">Time:</label>
-    <input type="text" id="schedule-time" readonly />
-
-    <!-- hidden fields for schedule ID and col index -->
-    <input type="hidden" id="schedule-id" />
-    <input type="hidden" id="schedule-col" />
-
-    <!-- Faculty dropdown -->
-    <label for="schedule-faculty">Faculty:</label>
-    <select id="schedule-faculty"></select>
-
-    <!-- Room dropdown -->
-    <label for="schedule-room">Room:</label>
-    <select id="schedule-room"></select>
-
-    <!-- Course dropdown -->
-    <label for="schedule-course">Course:</label>
-    <select id="schedule-course"></select>
-
-    <!-- Color Picker -->
-    <label for="schedule-color">Cell Color:</label>
-    <input type="color" id="schedule-color" value="#e9f1fb" /> <!-- Default color -->
-
-    <button id="btn-save-schedule" class="save-btn">Save</button>
-    <!-- A delete button that only appears when editing an existing schedule -->
-    <button id="btn-delete-schedule" class="delete-btn" style="display: none;">Delete</button>
+  <!-- Schedule Modal with new "Apply to next timeslot" checkbox -->
+  <div class="modal hidden" id="modal-schedule">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-schedule">&times;</span>
+      <h3>Assign Schedule</h3>
+      <label for="schedule-dayType">Day Type:</label>
+      <input type="text" id="schedule-dayType" readonly />
+      <label for="schedule-time">Time:</label>
+      <input type="text" id="schedule-time" readonly />
+      <input type="hidden" id="schedule-id" />
+      <input type="hidden" id="schedule-col" />
+      <label for="schedule-faculty">Faculty:</label>
+      <select id="schedule-faculty"></select>
+      <label for="schedule-room">Room:</label>
+      <select id="schedule-room"></select>
+      <label for="schedule-course">Course:</label>
+      <select id="schedule-course"></select>
+      <label for="schedule-color">Cell Color:</label>
+      <input type="color" id="schedule-color" value="#e9f1fb" />
+      <!-- New checkbox for applying to two consecutive timeslots -->
+      <label>
+        <input type="checkbox" id="apply-next" /> Apply to next timeslot as well
+      </label>
+      <button id="btn-save-schedule" class="save-btn">Save</button>
+      <button id="btn-delete-schedule" class="delete-btn" style="display: none;">Delete</button>
+    </div>
   </div>
-</div>
 
   <script src="script.js"></script>
 </body>

@@ -1,5 +1,5 @@
 /**************************************************************
- * 1) Initialize LocalStorage for faculty, rooms, courses, schedules
+ * 1) Initialize LocalStorage
  **************************************************************/
 function initData() {
   if (!localStorage.getItem("faculty")) {
@@ -17,28 +17,35 @@ function initData() {
 }
 initData();
 
-// Helper to read/write arrays in LocalStorage
 function getData(key) {
   return JSON.parse(localStorage.getItem(key)) || [];
 }
 function setData(key, arr) {
   localStorage.setItem(key, JSON.stringify(arr));
 }
-
-// Generate a new ID
 function getNewId(arr) {
   if (arr.length === 0) return 1;
   return Math.max(...arr.map(i => i.id)) + 1;
 }
 
 /**************************************************************
- * 2) Navigation & Section Handling
+ * 2) Global variables for Room View columns
+ **************************************************************/
+const predefinedRooms = ["M301", "M303", "M304", "M305", "M306", "M306", "S311", "S312"];
+let extraColumns = []; // Additional room columns if user chooses
+
+function getAllRoomColumns() {
+  return predefinedRooms.concat(extraColumns);
+}
+
+/**************************************************************
+ * 3) Navigation
  **************************************************************/
 const sectionFaculty = document.getElementById("section-faculty");
-const sectionRooms   = document.getElementById("section-rooms");
+const sectionRooms = document.getElementById("section-rooms");
 const sectionCourses = document.getElementById("section-courses");
-const sectionSchedule= document.getElementById("section-schedule");
-const sectionRoomView= document.getElementById("section-room-view");
+const sectionSchedule = document.getElementById("section-schedule");
+const sectionRoomView = document.getElementById("section-room-view");
 
 function hideAllSections() {
   sectionFaculty.classList.add("hidden");
@@ -71,19 +78,19 @@ document.getElementById("btn-schedule").addEventListener("click", () => {
 document.getElementById("btn-room-view").addEventListener("click", () => {
   hideAllSections();
   sectionRoomView.classList.remove("hidden");
-  renderRoomDropdown();
-  renderRoomViewTable();
+  renderRoomViewHeaders();
+  renderRoomViewTables();
 });
 
 /**************************************************************
- * 3) FACULTY CRUD
+ * 4) FACULTY CRUD
  **************************************************************/
 const tableFacultyBody = document.querySelector("#table-faculty tbody");
 const btnAddFaculty = document.getElementById("btn-add-faculty");
-const modalFaculty  = document.getElementById("modal-faculty");
-const facultyIdInput= document.getElementById("faculty-id");
-const facultyNameInput= document.getElementById("faculty-name");
-const btnSaveFaculty= document.getElementById("btn-save-faculty");
+const modalFaculty = document.getElementById("modal-faculty");
+const facultyIdInput = document.getElementById("faculty-id");
+const facultyNameInput = document.getElementById("faculty-name");
+const btnSaveFaculty = document.getElementById("btn-save-faculty");
 
 function renderFacultyTable() {
   const facultyList = getData("faculty");
@@ -118,13 +125,11 @@ btnSaveFaculty.addEventListener("click", () => {
   }
   let facultyList = getData("faculty");
   if (id) {
-    // Update
     const idx = facultyList.findIndex(f => f.id == id);
     if (idx > -1) {
       facultyList[idx].name = name;
     }
   } else {
-    // Create
     const newId = getNewId(facultyList);
     facultyList.push({ id: newId, name });
   }
@@ -152,14 +157,14 @@ window.deleteFaculty = function(id) {
 };
 
 /**************************************************************
- * 4) ROOMS CRUD
+ * 5) ROOMS CRUD
  **************************************************************/
 const tableRoomsBody = document.querySelector("#table-rooms tbody");
 const btnAddRoom = document.getElementById("btn-add-room");
-const modalRoom  = document.getElementById("modal-room");
-const roomIdInput= document.getElementById("room-id");
-const roomNameInput= document.getElementById("room-name");
-const btnSaveRoom= document.getElementById("btn-save-room");
+const modalRoom = document.getElementById("modal-room");
+const roomIdInput = document.getElementById("room-id");
+const roomNameInput = document.getElementById("room-name");
+const btnSaveRoom = document.getElementById("btn-save-room");
 
 function renderRoomsTable() {
   const roomsList = getData("rooms");
@@ -226,11 +231,11 @@ window.deleteRoom = function(id) {
 };
 
 /**************************************************************
- * 5) COURSES CRUD
+ * 6) COURSES CRUD
  **************************************************************/
 const tableCoursesBody = document.querySelector("#table-courses tbody");
-const btnAddCourse  = document.getElementById("btn-add-course");
-const modalCourse   = document.getElementById("modal-course");
+const btnAddCourse = document.getElementById("btn-add-course");
+const modalCourse = document.getElementById("modal-course");
 const courseIdInput = document.getElementById("course-id");
 const courseSubjectInput = document.getElementById("course-subject");
 const courseSectionInput = document.getElementById("course-section");
@@ -306,25 +311,27 @@ window.deleteCourse = function(id) {
 };
 
 /**************************************************************
- * 6) SCHEDULE: Conflict Validation
+ * 7) SCHEDULE: Conflict Validation, Color Picker Fix,
+ *     and New Feature: Option to assign two consecutive timeslots.
  **************************************************************/
-const mwfTableBody   = document.querySelector("#mwf-table tbody");
-const tthsTableBody  = document.querySelector("#tths-table tbody");
-const modalSchedule  = document.getElementById("modal-schedule");
+const mwfTableBody = document.querySelector("#mwf-table tbody");
+const tthsTableBody = document.querySelector("#tths-table tbody");
+const modalSchedule = document.getElementById("modal-schedule");
 
-const scheduleDayTypeInput  = document.getElementById("schedule-dayType");
-const scheduleTimeInput     = document.getElementById("schedule-time");
-const scheduleColInput      = document.getElementById("schedule-col");
-const scheduleIdInput       = document.getElementById("schedule-id");
+const scheduleDayTypeInput = document.getElementById("schedule-dayType");
+const scheduleTimeInput = document.getElementById("schedule-time");
+const scheduleColInput = document.getElementById("schedule-col");
+const scheduleIdInput = document.getElementById("schedule-id");
 
 const scheduleFacultySelect = document.getElementById("schedule-faculty");
-const scheduleRoomSelect    = document.getElementById("schedule-room");
-const scheduleCourseSelect  = document.getElementById("schedule-course");
+const scheduleRoomSelect = document.getElementById("schedule-room");
+const scheduleCourseSelect = document.getElementById("schedule-course");
+const scheduleColorInput = document.getElementById("schedule-color");
+const applyNextCheckbox = document.getElementById("apply-next");
 
-const btnSaveSchedule    = document.getElementById("btn-save-schedule");
-const btnDeleteSchedule  = document.getElementById("btn-delete-schedule");
+const btnSaveSchedule = document.getElementById("btn-save-schedule");
+const btnDeleteSchedule = document.getElementById("btn-delete-schedule");
 
-// Example times
 const MWF_TIMES = [
   "7:30 - 8:50", "8:50 - 10:10", "10:10 - 11:30",
   "11:30 - 12:50", "12:50 - 2:10", "2:10 - 3:30",
@@ -336,12 +343,11 @@ const TTHS_TIMES = [
   "3:30 - 4:50", "4:50 - 6:10", "6:10 - 7:30"
 ];
 
-// Build the MWF & TTHS tables
 function renderScheduleTables() {
   mwfTableBody.innerHTML = "";
-  tthsTableBody.innerHTML= "";
+  tthsTableBody.innerHTML = "";
 
-  // MWF with 6 columns
+  // Build MWF table
   MWF_TIMES.forEach(time => {
     const tr = document.createElement("tr");
     const timeTd = document.createElement("td");
@@ -360,7 +366,7 @@ function renderScheduleTables() {
     mwfTableBody.appendChild(tr);
   });
 
-  // TTHS with 6 columns
+  // Build TTHS table
   TTHS_TIMES.forEach(time => {
     const tr = document.createElement("tr");
     const timeTd = document.createElement("td");
@@ -384,90 +390,79 @@ function renderScheduleTables() {
   schedules.forEach(sch => fillScheduleCell(sch));
 }
 
-// Show the schedule modal & populate dropdowns
 function openScheduleModal(dayType, time, col) {
   populateScheduleDropdowns();
 
   const schedules = getData("schedules");
-  const existing = schedules.find(s =>
+  const existing = schedules.find(s => 
     s.dayType === dayType && s.time === time && s.col === col
   );
 
   if (existing) {
-    // Editing
+    // Editing an existing schedule
     scheduleIdInput.value = existing.id;
     scheduleDayTypeInput.value = existing.dayType;
-    scheduleTimeInput.value     = existing.time;
-    scheduleColInput.value      = existing.col;
-
-    // Set the selects
+    scheduleTimeInput.value = existing.time;
+    scheduleColInput.value = existing.col;
     scheduleFacultySelect.value = existing.facultyId || "";
-    scheduleRoomSelect.value    = existing.roomId    || "";
-    scheduleCourseSelect.value  = existing.courseId  || "";
-
+    scheduleRoomSelect.value = existing.roomId || "";
+    scheduleCourseSelect.value = existing.courseId || "";
+    scheduleColorInput.value = existing.color || "#e9f1fb";
+    applyNextCheckbox.checked = false;
+    applyNextCheckbox.disabled = true;
     btnDeleteSchedule.style.display = "block";
   } else {
-    // New
+    // Creating a new schedule
     scheduleIdInput.value = "";
     scheduleDayTypeInput.value = dayType;
-    scheduleTimeInput.value    = time;
-    scheduleColInput.value     = col;
-
+    scheduleTimeInput.value = time;
+    scheduleColInput.value = col;
     scheduleFacultySelect.value = "";
-    scheduleRoomSelect.value    = "";
-    scheduleCourseSelect.value  = "";
-
+    scheduleRoomSelect.value = "";
+    scheduleCourseSelect.value = "";
+    scheduleColorInput.value = "#e9f1fb";
+    applyNextCheckbox.checked = false;
+    applyNextCheckbox.disabled = false;
     btnDeleteSchedule.style.display = "none";
   }
 
   showModal(modalSchedule);
 }
 
-// Fill the text of the table cell
 function fillScheduleCell(scheduleObj) {
   const tableBody = scheduleObj.dayType === "MWF" ? mwfTableBody : tthsTableBody;
   if (!tableBody) return;
 
   const cell = tableBody.querySelector(
-    `.clickable-cell[data-dayType="${scheduleObj.dayType}"]` +
-    `[data-time="${scheduleObj.time}"]` +
-    `[data-col="${scheduleObj.col}"]`
+    `.clickable-cell[data-dayType="${scheduleObj.dayType}"][data-time="${scheduleObj.time}"][data-col="${scheduleObj.col}"]`
   );
   if (!cell) return;
 
-  // Look up the actual data from ID references
-  const facultyList = getData("faculty");
-  const roomsList   = getData("rooms");
-  const coursesList = getData("courses");
-
-  const fac  = facultyList.find(f => f.id === scheduleObj.facultyId);
-  const room = roomsList.find(r => r.id === scheduleObj.roomId);
-  const crs  = coursesList.find(c => c.id === scheduleObj.courseId);
+  const fac = getData("faculty").find(f => f.id === scheduleObj.facultyId);
+  const room = getData("rooms").find(r => r.id === scheduleObj.roomId);
+  const crs = getData("courses").find(c => c.id === scheduleObj.courseId);
 
   const facultyName = fac ? fac.name : "Unknown";
-  const roomName    = room ? room.name : "NoRoom";
+  const roomName = room ? room.name : "NoRoom";
   const courseLabel = crs ? `${crs.subject}-${crs.section}` : "NoCourse";
 
   cell.textContent = `${courseLabel} (${facultyName}) @ ${roomName}`;
-  cell.style.backgroundColor = scheduleObj.color || "#ffffff"; // Default to white if no color is set
+  cell.style.backgroundColor = scheduleObj.color || "#ffffff";
 }
 
 function populateScheduleDropdowns() {
-  // Fill faculty
   const facultyList = getData("faculty");
   scheduleFacultySelect.innerHTML = `<option value="">-- Select Faculty --</option>`;
   facultyList.forEach(f => {
     scheduleFacultySelect.innerHTML += `<option value="${f.id}">${f.name}</option>`;
   });
 
-  // Fill rooms
   const roomsList = getData("rooms");
   scheduleRoomSelect.innerHTML = `<option value="">-- Select Room --</option>`;
   roomsList.forEach(r => {
     scheduleRoomSelect.innerHTML += `<option value="${r.id}">${r.name}</option>`;
   });
 
-  // Fill courses
   const coursesList = getData("courses");
   scheduleCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
   coursesList.forEach(c => {
@@ -475,26 +470,68 @@ function populateScheduleDropdowns() {
   });
 }
 
-// Function to check for conflicts
-function checkForConflicts(dayType, time, col, facultyId, roomId, scheduleId) {
+/* 
+  Robust conflict check: For a given day and time, ensure that neither the
+  selected faculty nor room is already assigned in any other schedule (regardless of column).
+  Returns an array of conflict objects.
+*/
+function checkForConflicts(dayType, time, facultyId, roomId, scheduleId) {
   const schedules = getData("schedules");
-
-  // Check for conflicts in the same time slot for the same room or faculty
-  const conflicts = schedules.filter(sch => {
-    return (
-      sch.dayType === dayType &&
-      sch.time === time &&
-      sch.col === col &&
-      sch.id !== scheduleId && // Exclude the current schedule being edited
-      (sch.roomId === roomId || sch.facultyId === facultyId)
-    );
+  let conflicts = [];
+  schedules.forEach(sch => {
+    if (sch.dayType === dayType && sch.time === time && sch.id != scheduleId) {
+      if (sch.facultyId === facultyId) {
+        conflicts.push({ type: "faculty", schedule: sch });
+      }
+      if (sch.roomId === roomId) {
+        conflicts.push({ type: "room", schedule: sch });
+      }
+    }
   });
-
   return conflicts;
 }
 
-// Function to show conflict pop-up
-function showConflictPopup(conflicts) {
+/* 
+  New function: getConflictSuggestions() returns an array of suggestion strings 
+  for alternative times and/or rooms.
+*/
+function getConflictSuggestions(dayType, time, facultyId, roomId, scheduleId) {
+  let suggestions = [];
+  // Suggest alternative times (same day type)
+  let timesArray = (dayType === "MWF") ? MWF_TIMES : TTHS_TIMES;
+  for (let t of timesArray) {
+    if (t === time) continue;
+    if (checkForConflicts(dayType, t, facultyId, roomId, scheduleId).length === 0) {
+      suggestions.push(`Try scheduling at time: ${t}`);
+      // Optionally, break after one suggestion.
+      // break;
+    }
+  }
+  // Suggest alternative rooms (at the same time)
+  let rooms = getData("rooms");
+  for (let r of rooms) {
+    if (parseInt(r.id) === roomId) continue;
+    if (checkForConflicts(dayType, time, facultyId, parseInt(r.id), scheduleId).length === 0) {
+      suggestions.push(`Try using room: ${r.name}`);
+      // Optionally, break after one suggestion.
+      // break;
+    }
+  }
+  return suggestions;
+}
+
+/* 
+  Modified showConflictPopup(): In addition to the conflict messages, 
+  suggestions are appended if available.
+*/
+function showConflictPopup(conflicts, dayType, time, facultyId, roomId, scheduleId) {
+  // If parameters are missing, try to get from modal fields.
+  dayType = dayType || scheduleDayTypeInput.value;
+  time = time || scheduleTimeInput.value;
+  facultyId = facultyId || parseInt(scheduleFacultySelect.value) || null;
+  roomId = roomId || parseInt(scheduleRoomSelect.value) || null;
+  scheduleId = scheduleId || scheduleIdInput.value;
+  
   const conflictPopup = document.createElement("div");
   conflictPopup.id = "conflict-popup";
   conflictPopup.style.position = "fixed";
@@ -507,30 +544,30 @@ function showConflictPopup(conflicts) {
   conflictPopup.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   conflictPopup.style.zIndex = "1000";
 
-  let conflictMessage = "Conflict(s) detected:<br>";
+  let msg = "Conflict(s) detected:<br>";
   conflicts.forEach(conflict => {
-    const faculty = getData("faculty").find(f => f.id === conflict.facultyId);
-    const room = getData("rooms").find(r => r.id === conflict.roomId);
-    const course = getData("courses").find(c => c.id === conflict.courseId);
-
-    conflictMessage += `
-      - ${faculty?.name || "Unknown Faculty"} is already assigned to ${course?.subject || "Unknown Course"} 
-      in ${room?.name || "Unknown Room"} at ${conflict.time} on ${conflict.dayType}.<br>
-    `;
+    const sch = conflict.schedule;
+    const fac = getData("faculty").find(f => f.id === sch.facultyId);
+    const room = getData("rooms").find(r => r.id === sch.roomId);
+    const crs = getData("courses").find(c => c.id === sch.courseId);
+    if (conflict.type === "faculty") {
+      msg += `- Faculty "${fac?.name || "Unknown"}" is already assigned to ${crs ? crs.subject + "-" + crs.section : "an unknown course"} in room "${room?.name || "Unknown"}" at ${sch.time} on ${sch.dayType}.<br>`;
+    } else if (conflict.type === "room") {
+      msg += `- Room "${room?.name || "Unknown"}" is already in use for ${crs ? crs.subject + "-" + crs.section : "an unknown course"} by faculty "${fac?.name || "Unknown"}" at ${sch.time} on ${sch.dayType}.<br>`;
+    }
   });
-
-  conflictPopup.innerHTML = conflictMessage;
-
-  // Append the popup to the body
+  // Append suggestions if available.
+  const suggestions = getConflictSuggestions(dayType, time, facultyId, roomId, scheduleId);
+  if (suggestions.length > 0) {
+    msg += "<br>Suggestions:<br>" + suggestions.join("<br>");
+  }
+  conflictPopup.innerHTML = msg;
   document.body.appendChild(conflictPopup);
-
-  // Remove the popup after 5 seconds
   setTimeout(() => {
-    document.body.removeChild(conflictPopup);
+    conflictPopup.remove();
   }, 5000);
 }
 
-// Modify the save schedule logic to check for conflicts
 btnSaveSchedule.addEventListener("click", () => {
   const schId = scheduleIdInput.value;
   const dayType = scheduleDayTypeInput.value;
@@ -538,175 +575,214 @@ btnSaveSchedule.addEventListener("click", () => {
   const col = parseInt(scheduleColInput.value, 10);
 
   const facultyId = parseInt(scheduleFacultySelect.value) || null;
-  const roomId = parseInt(scheduleRoomSelect.value)    || null;
-  const courseId = parseInt(scheduleCourseSelect.value)  || null;
+  const roomId = parseInt(scheduleRoomSelect.value) || null;
+  const courseId = parseInt(scheduleCourseSelect.value) || null;
 
   if (!facultyId || !roomId || !courseId) {
     alert("Please select faculty, room, and course.");
     return;
   }
 
-  // Check for conflicts
-  const conflicts = checkForConflicts(dayType, time, col, facultyId, roomId, schId);
+  // Get the selected color from the color picker.
+  const color = scheduleColorInput.value;
 
+  // Check conflict for the current timeslot.
+  const conflicts = checkForConflicts(dayType, time, facultyId, roomId, schId);
   if (conflicts.length > 0) {
-    // Show conflict pop-up
-    showConflictPopup(conflicts);
-    return; // Prevent saving if there is a conflict
+    showConflictPopup(conflicts, dayType, time, facultyId, roomId, schId);
+    return;
   }
 
   let schedules = getData("schedules");
+  let newSchedules = [];
 
   if (schId) {
-    // Update existing
-    const index = schedules.findIndex(s => s.id == schId);
-    if (index > -1) {
-      schedules[index].facultyId = facultyId;
-      schedules[index].roomId    = roomId;
-      schedules[index].courseId  = courseId;
+    // Edit existing schedule.
+    const idx = schedules.findIndex(s => s.id == schId);
+    if (idx > -1) {
+      schedules[idx].facultyId = facultyId;
+      schedules[idx].roomId = roomId;
+      schedules[idx].courseId = courseId;
+      schedules[idx].color = color;
     }
   } else {
-    // Create
+    // Create new schedule entry.
     const newId = getNewId(schedules);
-    schedules.push({
+    newSchedules.push({
       id: newId,
-      dayType, time, col,
-      facultyId, roomId, courseId,
-      color: "#e9f1fb" // Default color
+      dayType,
+      time,
+      col,
+      facultyId,
+      roomId,
+      courseId,
+      color: color
     });
+    // If "Apply to next timeslot" is checked, attempt to add for the next timeslot.
+    if (applyNextCheckbox.checked) {
+      let timesArray = (dayType === "MWF") ? MWF_TIMES : TTHS_TIMES;
+      let currentIndex = timesArray.indexOf(time);
+      if (currentIndex === -1 || currentIndex === timesArray.length - 1) {
+        alert("No next timeslot available for the selected day type.");
+        return;
+      }
+      let nextTime = timesArray[currentIndex + 1];
+      const conflictsNext = checkForConflicts(dayType, nextTime, facultyId, roomId, "");
+      if (conflictsNext.length > 0) {
+        showConflictPopup(conflictsNext, dayType, nextTime, facultyId, roomId, "");
+        return;
+      }
+      const newId2 = newId + 1; // Simple new id generation.
+      newSchedules.push({
+        id: newId2,
+        dayType,
+        time: nextTime,
+        col, // same column
+        facultyId,
+        roomId,
+        courseId,
+        color: color
+      });
+    }
   }
 
+  if (newSchedules.length > 0 && !schId) {
+    schedules = schedules.concat(newSchedules);
+  }
   setData("schedules", schedules);
   hideModal(modalSchedule);
   renderScheduleTables();
 });
 
-// Delete schedule
 btnDeleteSchedule.addEventListener("click", () => {
   const schId = scheduleIdInput.value;
   if (!schId) return;
-
-  if (!confirm("Are you sure you want to delete this schedule?")) return;
-
+  if (!confirm("Are you sure?")) return;
   let schedules = getData("schedules");
   schedules = schedules.filter(s => s.id != schId);
   setData("schedules", schedules);
-
   hideModal(modalSchedule);
   renderScheduleTables();
 });
 
 /**************************************************************
- * 7) ROOM VIEW: Render Room View Table
+ * 8) ROOM VIEW: Two Separate Tables (MWF, TTHS)
  **************************************************************/
-const selectRoomView = document.getElementById("select-room-view");
-const roomViewMwfTableBody = document.querySelector("#room-view-mwf-table tbody");
-const roomViewTthsTableBody = document.querySelector("#room-view-tths-table tbody");
-
-function renderRoomViewTable() {
-  const roomId = parseInt(selectRoomView.value, 10);
-  roomViewMwfTableBody.innerHTML = "";
-  roomViewTthsTableBody.innerHTML = "";
-
-  if (!roomId) return;
-
-  // Get all rooms
-  const roomsList = getData("rooms");
-
-  // Render MWF Table
-  MWF_TIMES.forEach(time => {
-    const tr = document.createElement("tr");
-    const timeTd = document.createElement("td");
-    timeTd.textContent = time;
-    tr.appendChild(timeTd);
-
-    // Add rooms column
-    const roomsTd = document.createElement("td");
-    const roomInput = document.createElement("input");
-    roomInput.type = "text";
-    roomInput.value = roomsList.find(r => r.id === roomId)?.name || "";
-    roomInput.classList.add("editable-room");
-    roomInput.setAttribute("data-room-id", roomId);
-    roomsTd.appendChild(roomInput);
-    tr.appendChild(roomsTd);
-
-    // Add schedule columns
-    for (let col = 1; col <= 6; col++) {
-      const cell = document.createElement("td");
-      const schedules = getData("schedules");
-      const schedule = schedules.find(sch => sch.roomId === roomId && sch.dayType === "MWF" && sch.time === time && sch.col === col);
-      const faculty = schedule ? getData("faculty").find(f => f.id === schedule.facultyId) : null;
-      const course = schedule ? getData("courses").find(c => c.id === schedule.courseId) : null;
-
-      cell.textContent = schedule ? `${course?.subject || "No Course"} (${faculty?.name || "No Faculty"})` : "";
-      cell.classList.add("clickable-cell");
-      tr.appendChild(cell);
-    }
-    roomViewMwfTableBody.appendChild(tr);
-  });
-
-  // Render TTHS Table
-  TTHS_TIMES.forEach(time => {
-    const tr = document.createElement("tr");
-    const timeTd = document.createElement("td");
-    timeTd.textContent = time;
-    tr.appendChild(timeTd);
-
-    // Add rooms column
-    const roomsTd = document.createElement("td");
-    const roomInput = document.createElement("input");
-    roomInput.type = "text";
-    roomInput.value = roomsList.find(r => r.id === roomId)?.name || "";
-    roomInput.classList.add("editable-room");
-    roomInput.setAttribute("data-room-id", roomId);
-    roomsTd.appendChild(roomInput);
-    tr.appendChild(roomsTd);
-
-    // Add schedule columns
-    for (let col = 1; col <= 6; col++) {
-      const cell = document.createElement("td");
-      const schedules = getData("schedules");
-      const schedule = schedules.find(sch => sch.roomId === roomId && sch.dayType === "TTHS" && sch.time === time && sch.col === col);
-      const faculty = schedule ? getData("faculty").find(f => f.id === schedule.facultyId) : null;
-      const course = schedule ? getData("courses").find(c => c.id === schedule.courseId) : null;
-
-      cell.textContent = schedule ? `${course?.subject || "No Course"} (${faculty?.name || "No Faculty"})` : "";
-      cell.classList.add("clickable-cell");
-      tr.appendChild(cell);
-    }
-    roomViewTthsTableBody.appendChild(tr);
-  });
-
-  // Add event listeners for editable rooms
-  document.querySelectorAll(".editable-room").forEach(input => {
-    input.addEventListener("change", (e) => {
-      const roomId = e.target.getAttribute("data-room-id");
-      const newName = e.target.value.trim();
-
-      if (newName) {
-        let roomsList = getData("rooms");
-        const roomIndex = roomsList.findIndex(r => r.id == roomId);
-        if (roomIndex > -1) {
-          roomsList[roomIndex].name = newName;
-          setData("rooms", roomsList);
-          renderRoomDropdown(); // Refresh the dropdown
-          renderRoomViewTable(); // Refresh the room view table
-        }
-      }
-    });
-  });
+function renderRoomViewHeaders() {
+  buildRoomViewHeader("MWF");
+  buildRoomViewHeader("TTHS");
 }
 
-function renderRoomDropdown() {
-  const roomsList = getData("rooms");
-  selectRoomView.innerHTML = `<option value="">-- Select Room --</option>`;
-  roomsList.forEach(r => {
-    selectRoomView.innerHTML += `<option value="${r.id}">${r.name}</option>`;
+function buildRoomViewHeader(dayType) {
+  const columns = getAllRoomColumns();
+  const thead = document.getElementById(
+    dayType === "MWF" ? "room-view-mwf-thead" : "room-view-tths-thead"
+  );
+  thead.innerHTML = "";
+
+  const headerRow = document.createElement("tr");
+  const timeTh = document.createElement("th");
+  timeTh.textContent = "Time";
+  headerRow.appendChild(timeTh);
+
+  columns.forEach((roomName) => {
+    const th = document.createElement("th");
+    const input = document.createElement("input");
+    input.type = "text";
+    input.classList.add("extra-column-input");
+    input.value = roomName;
+    if (predefinedRooms.includes(roomName)) {
+      input.disabled = true;
+    } else {
+      input.addEventListener("change", () => {
+        const idx = extraColumns.indexOf(roomName);
+        if (idx !== -1) {
+          extraColumns[idx] = input.value;
+          renderRoomViewTables();
+        }
+      });
+    }
+    th.appendChild(input);
+    headerRow.appendChild(th);
+  });
+
+  const addTh = document.createElement("th");
+  const addBtn = document.createElement("button");
+  addBtn.textContent = "Add Column";
+  addBtn.classList.add("add-column-btn");
+  addBtn.addEventListener("click", () => {
+    const newColName = prompt("Enter new room column name:");
+    if (newColName) {
+      extraColumns.push(newColName);
+      renderRoomViewHeaders();
+      renderRoomViewTables();
+    }
+  });
+  addTh.appendChild(addBtn);
+  headerRow.appendChild(addTh);
+
+  thead.appendChild(headerRow);
+}
+
+function renderRoomViewTables() {
+  buildRoomViewTable("MWF");
+  buildRoomViewTable("TTHS");
+}
+
+function buildRoomViewTable(dayType) {
+  const columns = getAllRoomColumns();
+  const times = dayType === "MWF" ? MWF_TIMES : TTHS_TIMES;
+  const tbody = document.getElementById(
+    dayType === "MWF" ? "room-view-mwf-tbody" : "room-view-tths-tbody"
+  );
+  tbody.innerHTML = "";
+
+  times.forEach((time) => {
+    const tr = document.createElement("tr");
+    const timeTd = document.createElement("td");
+    timeTd.textContent = time;
+    tr.appendChild(timeTd);
+
+    columns.forEach((roomName) => {
+      const td = document.createElement("td");
+      const schedules = getData("schedules");
+      const schedule = schedules.find((sch) => {
+        if (sch.dayType !== dayType) return false;
+        if (sch.time !== time) return false;
+        const currentRoomName = getRoomName(sch.roomId);
+        return currentRoomName === roomName;
+      });
+
+      if (schedule) {
+        const faculty = getData("faculty").find((f) => f.id === schedule.facultyId);
+        const course = getData("courses").find((c) => c.id === schedule.courseId);
+        td.textContent = `${course ? course.subject + "-" + course.section : "No Course"} (${faculty ? faculty.name : "No Faculty"})`;
+        td.style.backgroundColor = schedule.color || "#e9f1fb";
+      } else {
+        td.textContent = "";
+      }
+      td.classList.add("clickable-cell");
+      tr.appendChild(td);
+    });
+
+    const extraTd = document.createElement("td");
+    extraTd.textContent = "";
+    tr.appendChild(extraTd);
+
+    tbody.appendChild(tr);
   });
 }
 
 /**************************************************************
- * 8) Modal Show/Hide
+ * Helper Functions
+ **************************************************************/
+function getRoomName(roomId) {
+  const room = getData("rooms").find((r) => r.id === roomId);
+  return room ? room.name : "";
+}
+
+/**************************************************************
+ * 9) Modal Show/Hide
  **************************************************************/
 document.querySelectorAll(".close-button").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -714,7 +790,6 @@ document.querySelectorAll(".close-button").forEach(btn => {
     hideModal(document.getElementById(modalId));
   });
 });
-
 document.querySelectorAll(".modal").forEach(m => {
   m.addEventListener("click", e => {
     if (e.target.classList.contains("modal")) {
@@ -722,7 +797,6 @@ document.querySelectorAll(".modal").forEach(m => {
     }
   });
 });
-
 function showModal(modal) {
   modal.classList.remove("hidden");
 }
@@ -734,5 +808,5 @@ function hideModal(modal) {
  * INITIAL PAGE LOAD
  **************************************************************/
 hideAllSections();
-sectionSchedule.classList.remove("hidden"); // default view
+sectionSchedule.classList.remove("hidden"); // Default view
 renderScheduleTables();

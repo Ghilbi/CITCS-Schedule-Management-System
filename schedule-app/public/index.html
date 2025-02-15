@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Schedule App (Faculty/Room/Course CRUD)</title>
+  <!-- Google Font for modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Schedule Management</h1>
+
+  <!-- Navigation Buttons -->
+  <nav>
+    <button id="btn-faculty">Manage Faculty</button>
+    <button id="btn-rooms">Manage Rooms</button>
+    <button id="btn-courses">Manage Courses</button>
+    <button id="btn-schedule">Schedule</button>
+    <button id="btn-room-view">Room View</button>
+  </nav>
+
+  <!-- 1. FACULTY SECTION -->
+  <section id="section-faculty" class="hidden">
+    <h2>Manage Faculty</h2>
+    <button id="btn-add-faculty" class="add-btn">Add New Faculty</button>
+    <table id="table-faculty">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Faculty Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 2. ROOMS SECTION -->
+  <section id="section-rooms" class="hidden">
+    <h2>Manage Rooms</h2>
+    <button id="btn-add-room" class="add-btn">Add New Room</button>
+    <table id="table-rooms">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Room Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 3. COURSES SECTION -->
+  <section id="section-courses" class="hidden">
+    <h2>Manage Courses</h2>
+    <button id="btn-add-course" class="add-btn">Add New Course</button>
+    <table id="table-courses">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Subject</th>
+          <th>Unit Category</th>
+          <th>Units</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 4. SCHEDULE SECTION -->
+  <section id="section-schedule" class="hidden">
+    <h2>Schedule</h2>
+    <!-- MWF Table -->
+    <table class="schedule-table" id="mwf-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+          <th>MWF</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+
+    <!-- TTHS Table -->
+    <table class="schedule-table" id="tths-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+          <th>TTHS</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 5. ROOM VIEW SECTION -->
+  <section id="section-room-view" class="hidden">
+    <h2>Room View</h2>
+
+    <!-- MWF ROOM VIEW -->
+    <h3>MWF Room View</h3>
+    <table class="schedule-table" id="room-view-mwf-table">
+      <thead id="room-view-mwf-thead"></thead>
+      <tbody id="room-view-mwf-tbody"></tbody>
+    </table>
+
+    <!-- TTHS ROOM VIEW -->
+    <h3>TTHS Room View</h3>
+    <table class="schedule-table" id="room-view-tths-table">
+      <thead id="room-view-tths-thead"></thead>
+      <tbody id="room-view-tths-tbody"></tbody>
+    </table>
+  </section>
+
+  <!-- MODALS -->
+  <div class="modal hidden" id="modal-faculty">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-faculty">&times;</span>
+      <h3 id="modal-faculty-title">Add/Edit Faculty</h3>
+      <label for="faculty-name">Faculty Name:</label>
+      <input type="text" id="faculty-name" />
+      <input type="hidden" id="faculty-id" />
+      <button id="btn-save-faculty" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-room">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-room">&times;</span>
+      <h3 id="modal-room-title">Add/Edit Room</h3>
+      <label for="room-name">Room Name:</label>
+      <input type="text" id="room-name" />
+      <input type="hidden" id="room-id" />
+      <button id="btn-save-room" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- Courses Modal Updated -->
+  <div class="modal hidden" id="modal-course">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-course">&times;</span>
+      <h3 id="modal-course-title">Add/Edit Course</h3>
+      
+      <label for="course-subject">Subject:</label>
+      <input type="text" id="course-subject" />
+
+      <!-- Radio buttons fixed to display properly -->
+      <label>Unit Category:</label>
+      <div class="radio-group">
+        <label for="purelec">
+          <input type="radio" id="purelec" name="unitCategory" value="PureLec" checked />
+          PureLec
+        </label>
+        <label for="leclab">
+          <input type="radio" id="leclab" name="unitCategory" value="Lec/Lab" />
+          Lec/Lab
+        </label>
+      </div>
+
+      <label for="course-units">Units:</label>
+      <input type="text" id="course-units" />
+      
+      <input type="hidden" id="course-id" />
+      <button id="btn-save-course" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- Schedule Modal (includes "Apply to next timeslot" checkbox) -->
+  <div class="modal hidden" id="modal-schedule">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-schedule">&times;</span>
+      <h3>Assign Schedule</h3>
+      <label for="schedule-dayType">Day Type:</label>
+      <input type="text" id="schedule-dayType" readonly />
+      <label for="schedule-time">Time:</label>
+      <input type="text" id="schedule-time" readonly />
+      <input type="hidden" id="schedule-id" />
+      <input type="hidden" id="schedule-col" />
+      <label for="schedule-faculty">Faculty:</label>
+      <select id="schedule-faculty"></select>
+      <label for="schedule-room">Room:</label>
+      <select id="schedule-room"></select>
+      <label for="schedule-course">Course:</label>
+      <select id="schedule-course"></select>
+      <label for="schedule-color">Cell Color:</label>
+      <input type="color" id="schedule-color" value="#e9f1fb" />
+      <!-- New checkbox for double timeslot assignment -->
+      <label>
+        <input type="checkbox" id="apply-next" /> Apply to next timeslot as well
+      </label>
+      <button id="btn-save-schedule" class="save-btn">Save</button>
+      <button id="btn-delete-schedule" class="delete-btn" style="display: none;">Delete</button>
+    </div>
+  </div>
+
+  <!-- Load script.js -->
+  <script src="script.js"></script>
+</body>
+</html>

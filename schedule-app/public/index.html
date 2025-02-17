@@ -20,6 +20,7 @@
     <button id="btn-faculty">Manage Faculty</button>
     <button id="btn-rooms">Manage Rooms</button>
     <button id="btn-courses">Manage Courses</button>
+    <button id="btn-course-offering">Manage Course Offering</button>
     <button id="btn-schedule">Schedule</button>
     <button id="btn-room-view">Room View</button>
   </nav>
@@ -74,7 +75,26 @@
     </table>
   </section>
 
-  <!-- 4. SCHEDULE SECTION -->
+  <!-- 4. COURSE OFFERING SECTION -->
+  <section id="section-course-offering" class="hidden">
+    <h2>Manage Course Offering</h2>
+    <button id="btn-add-courseOffering" class="add-btn">Add New Course Offering</button>
+    <table id="table-courseOffering">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Course ID</th>
+          <th>Section</th>
+          <th>Type</th>
+          <th>Units</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody><!-- Populated by script.js --></tbody>
+    </table>
+  </section>
+
+  <!-- 5. SCHEDULE SECTION -->
   <section id="section-schedule" class="hidden">
     <h2>Schedule</h2>
     <!-- MWF Table -->
@@ -110,7 +130,7 @@
     </table>
   </section>
 
-  <!-- 5. ROOM VIEW SECTION -->
+  <!-- 6. ROOM VIEW SECTION -->
   <section id="section-room-view" class="hidden">
     <h2>Room View</h2>
 
@@ -179,6 +199,45 @@
       
       <input type="hidden" id="course-id" />
       <button id="btn-save-course" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- Course Offering Modal -->
+  <div class="modal hidden" id="modal-course-offering">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-course-offering">&times;</span>
+      <h3 id="modal-course-offering-title">Add/Edit Course Offering</h3>
+      
+      <label for="courseOffering-course">Course:</label>
+      <select id="courseOffering-course">
+        <option value="">-- Select Course --</option>
+      </select>
+
+      <label for="courseOffering-section">Section:</label>
+      <input type="text" id="courseOffering-section" placeholder="e.g., 1A" />
+
+      <label>Type:</label>
+      <div class="radio-group" id="courseOffering-type-group">
+        <!-- Options will be dynamically shown/hidden based on selected course -->
+        <label id="label-lec" style="display:none;">
+          <input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" />
+          Lec
+        </label>
+        <label id="label-lab" style="display:none;">
+          <input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" />
+          Lab
+        </label>
+        <label id="label-purelec" style="display:none;">
+          <input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" />
+          PureLec
+        </label>
+      </div>
+
+      <label for="courseOffering-units">Units:</label>
+      <input type="text" id="courseOffering-units" readonly />
+
+      <input type="hidden" id="courseOffering-id" />
+      <button id="btn-save-courseOffering" class="save-btn">Save</button>
     </div>
   </div>
 

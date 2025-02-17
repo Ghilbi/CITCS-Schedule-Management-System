@@ -30,7 +30,6 @@ db.serialize(() => {
     name TEXT NOT NULL
   )`);
 
-  // Courses table now has subject, unit_category and units fields
   db.run(`CREATE TABLE IF NOT EXISTS courses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     subject TEXT NOT NULL,
@@ -51,10 +50,20 @@ db.serialize(() => {
     FOREIGN KEY(roomId) REFERENCES rooms(id),
     FOREIGN KEY(courseId) REFERENCES courses(id)
   )`);
+
+  // New table for course offerings
+  db.run(`CREATE TABLE IF NOT EXISTS course_offerings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    courseId INTEGER NOT NULL,
+    section TEXT NOT NULL,
+    type TEXT NOT NULL,
+    units INTEGER NOT NULL,
+    FOREIGN KEY(courseId) REFERENCES courses(id)
+  )`);
 });
 
 // Only allow valid table names
-const validTables = ['faculty', 'rooms', 'courses', 'schedules'];
+const validTables = ['faculty', 'rooms', 'courses', 'schedules', 'course_offerings'];
 function isValidTable(table) {
   return validTables.includes(table);
 }
@@ -92,6 +101,10 @@ app.post('/api/:table', (req, res) => {
     case 'schedules':
       query = 'INSERT INTO schedules (dayType, time, col, facultyId, roomId, courseId, color) VALUES (?, ?, ?, ?, ?, ?, ?)';
       params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color];
+      break;
+    case 'course_offerings':
+      query = 'INSERT INTO course_offerings (courseId, section, type, units) VALUES (?, ?, ?, ?)';
+      params = [data.courseId, data.section, data.type, data.units];
       break;
     default:
       return res.status(400).json({ error: 'Invalid table' });
@@ -133,6 +146,10 @@ app.put('/api/:table/:id', (req, res) => {
     case 'schedules':
       query = 'UPDATE schedules SET dayType = ?, time = ?, col = ?, facultyId = ?, roomId = ?, courseId = ?, color = ? WHERE id = ?';
       params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, id];
+      break;
+    case 'course_offerings':
+      query = 'UPDATE course_offerings SET courseId = ?, section = ?, type = ?, units = ? WHERE id = ?';
+      params = [data.courseId, data.section, data.type, data.units, id];
       break;
     default:
       return res.status(400).json({ error: 'Invalid table' });

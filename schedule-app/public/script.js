@@ -47,6 +47,7 @@ function getAllRoomColumns() {
 const sectionFaculty = document.getElementById("section-faculty");
 const sectionRooms = document.getElementById("section-rooms");
 const sectionCourses = document.getElementById("section-courses");
+const sectionCourseOffering = document.getElementById("section-course-offering");
 const sectionSchedule = document.getElementById("section-schedule");
 const sectionRoomView = document.getElementById("section-room-view");
 
@@ -54,6 +55,7 @@ function hideAllSections() {
   sectionFaculty.classList.add("hidden");
   sectionRooms.classList.add("hidden");
   sectionCourses.classList.add("hidden");
+  sectionCourseOffering.classList.add("hidden");
   sectionSchedule.classList.add("hidden");
   sectionRoomView.classList.add("hidden");
 }
@@ -298,7 +300,155 @@ window.deleteCourse = async function(id) {
 };
 
 /**************************************************************
- * 7) SCHEDULE: Conflict Validation, Color Picker Fix,
+ * 7) COURSE OFFERING CRUD
+ **************************************************************/
+const tableCourseOfferingBody = document.querySelector("#table-courseOffering tbody");
+const btnAddCourseOffering = document.getElementById("btn-add-courseOffering");
+const modalCourseOffering = document.getElementById("modal-course-offering");
+const courseOfferingIdInput = document.getElementById("courseOffering-id");
+const courseOfferingCourseSelect = document.getElementById("courseOffering-course");
+const courseOfferingSectionInput = document.getElementById("courseOffering-section");
+const courseOfferingUnitsInput = document.getElementById("courseOffering-units");
+const btnSaveCourseOffering = document.getElementById("btn-save-courseOffering");
+
+// Radio buttons and labels for course offering type
+const courseOfferingLecRadio = document.getElementById("courseOffering-lec");
+const courseOfferingLabRadio = document.getElementById("courseOffering-lab");
+const courseOfferingPurelecRadio = document.getElementById("courseOffering-purelec");
+const labelLec = document.getElementById("label-lec");
+const labelLab = document.getElementById("label-lab");
+const labelPurelec = document.getElementById("label-purelec");
+
+document.getElementById("btn-course-offering").addEventListener("click", async () => {
+  hideAllSections();
+  sectionCourseOffering.classList.remove("hidden");
+  await renderCourseOfferingTable();
+});
+
+async function populateCourseOfferingCourses() {
+  let coursesList = await apiGet("courses");
+  courseOfferingCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
+  coursesList.forEach(c => {
+    courseOfferingCourseSelect.innerHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}">${c.subject} (${c.unit_category})</option>`;
+  });
+}
+
+courseOfferingCourseSelect.addEventListener("change", function() {
+  const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
+  const unitCategory = selectedOption.getAttribute("data-unit-category");
+  labelLec.style.display = "none";
+  labelLab.style.display = "none";
+  labelPurelec.style.display = "none";
+  if (unitCategory === "PureLec") {
+    labelPurelec.style.display = "inline-block";
+    courseOfferingPurelecRadio.checked = true;
+    courseOfferingUnitsInput.value = "3";
+  } else if (unitCategory === "Lec/Lab") {
+    labelLec.style.display = "inline-block";
+    labelLab.style.display = "inline-block";
+    courseOfferingLecRadio.checked = true;
+    courseOfferingUnitsInput.value = "2";
+  }
+});
+
+document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
+  radio.addEventListener("change", function() {
+    const type = document.querySelector('input[name="courseOfferingType"]:checked').value;
+    if (type === "Lec") {
+      courseOfferingUnitsInput.value = "2";
+    } else if (type === "Lab") {
+      courseOfferingUnitsInput.value = "1";
+    } else if (type === "PureLec") {
+      courseOfferingUnitsInput.value = "3";
+    }
+  });
+});
+
+btnAddCourseOffering.addEventListener("click", async () => {
+  courseOfferingIdInput.value = "";
+  courseOfferingCourseSelect.value = "";
+  courseOfferingSectionInput.value = "";
+  labelLec.style.display = "none";
+  labelLab.style.display = "none";
+  labelPurelec.style.display = "none";
+  courseOfferingUnitsInput.value = "";
+  document.getElementById("modal-course-offering-title").textContent = "Add Course Offering";
+  await populateCourseOfferingCourses();
+  showModal(modalCourseOffering);
+});
+
+async function renderCourseOfferingTable() {
+  const offerings = await apiGet("course_offerings");
+  let coursesList = await apiGet("courses");
+  tableCourseOfferingBody.innerHTML = "";
+  offerings.forEach(off => {
+    const course = coursesList.find(c => c.id == off.courseId);
+    const courseDisplay = course ? course.subject : off.courseId;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${off.id}</td>
+      <td>${courseDisplay}</td>
+      <td>${off.section}</td>
+      <td>${off.type}</td>
+      <td>${off.units}</td>
+      <td>
+        <button onclick="editCourseOffering(${off.id})">Edit</button>
+        <button onclick="deleteCourseOffering(${off.id})">Delete</button>
+      </td>
+    `;
+    tableCourseOfferingBody.appendChild(tr);
+  });
+}
+
+btnSaveCourseOffering.addEventListener("click", async () => {
+  const id = courseOfferingIdInput.value;
+  const courseId = courseOfferingCourseSelect.value;
+  const section = courseOfferingSectionInput.value.trim();
+  const type = document.querySelector('input[name="courseOfferingType"]:checked') ? document.querySelector('input[name="courseOfferingType"]:checked').value : "";
+  const units = courseOfferingUnitsInput.value;
+  if (!courseId || !section || !type || !units) {
+    alert("Please fill out all fields.");
+    return;
+  }
+  if (id) {
+    await apiPut("course_offerings", id, { courseId, section, type, units });
+  } else {
+    await apiPost("course_offerings", { courseId, section, type, units });
+  }
+  hideModal(modalCourseOffering);
+  await renderCourseOfferingTable();
+});
+
+window.editCourseOffering = async function(id) {
+  const offerings = await apiGet("course_offerings");
+  const offering = offerings.find(off => off.id == id);
+  if (!offering) return;
+  courseOfferingIdInput.value = offering.id;
+  await populateCourseOfferingCourses();
+  courseOfferingCourseSelect.value = offering.courseId;
+  const event = new Event('change');
+  courseOfferingCourseSelect.dispatchEvent(event);
+  courseOfferingSectionInput.value = offering.section;
+  if (offering.type === "Lec") {
+    courseOfferingLecRadio.checked = true;
+  } else if (offering.type === "Lab") {
+    courseOfferingLabRadio.checked = true;
+  } else if (offering.type === "PureLec") {
+    courseOfferingPurelecRadio.checked = true;
+  }
+  courseOfferingUnitsInput.value = offering.units;
+  document.getElementById("modal-course-offering-title").textContent = "Edit Course Offering";
+  showModal(modalCourseOffering);
+};
+
+window.deleteCourseOffering = async function(id) {
+  if (!confirm("Are you sure?")) return;
+  await apiDelete("course_offerings", id);
+  await renderCourseOfferingTable();
+};
+
+/**************************************************************
+ * 8) SCHEDULE: Conflict Validation, Color Picker Fix,
  *     Double Timeslot Assignment, and Conflict Resolution Suggestions
  **************************************************************/
 const mwfTableBody = document.querySelector("#mwf-table tbody");
@@ -555,9 +705,7 @@ btnSaveSchedule.addEventListener("click", async () => {
   if (schId) {
     await apiPut("schedules", schId, { dayType, time, col, facultyId, roomId, courseId, color });
   } else {
-    // Create main schedule
     await apiPost("schedules", { dayType, time, col, facultyId, roomId, courseId, color });
-    // Apply to next timeslot if checkbox checked
     if (applyNextCheckbox.checked) {
       let timesArray = (dayType === "MWF") ? MWF_TIMES : TTHS_TIMES;
       let currentIndex = timesArray.indexOf(time);
@@ -588,7 +736,7 @@ btnDeleteSchedule.addEventListener("click", async () => {
 });
 
 /**************************************************************
- * 8) ROOM VIEW: Two Separate Tables (MWF, TTHS)
+ * 9) ROOM VIEW: Two Separate Tables (MWF, TTHS)
  **************************************************************/
 function renderRoomViewHeaders() {
   buildRoomViewHeader("MWF");
@@ -654,7 +802,6 @@ async function buildRoomViewTable(dayType) {
     dayType === "MWF" ? "room-view-mwf-tbody" : "room-view-tths-tbody"
   );
   tbody.innerHTML = "";
-  // Preload rooms data once to avoid multiple API calls
   const rooms = await apiGet("rooms");
   for (let time of times) {
     const tr = document.createElement("tr");
@@ -694,7 +841,7 @@ async function buildRoomViewTable(dayType) {
 }
 
 /**************************************************************
- * 9) Modal Show/Hide
+ * 10) Modal Show/Hide
  **************************************************************/
 document.querySelectorAll(".close-button").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -717,7 +864,7 @@ function hideModal(modal) {
 }
 
 /**************************************************************
- * INITIAL PAGE LOAD
+ * 11) INITIAL PAGE LOAD
  **************************************************************/
 (async function initialLoad() {
   hideAllSections();

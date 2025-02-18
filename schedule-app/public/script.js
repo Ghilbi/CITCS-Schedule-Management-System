@@ -32,7 +32,7 @@ async function apiDelete(table, id) {
 }
 
 /**************************************************************
- * 2) Global variables for Room View columns
+ * Global variables for Room View columns
  **************************************************************/
 const predefinedRooms = ["M301", "M303", "M304", "M305", "M306", "M306", "S311", "S312"];
 let extraColumns = []; // Additional room columns if user chooses
@@ -42,21 +42,18 @@ function getAllRoomColumns() {
 }
 
 /**************************************************************
- * 3) Navigation
+ * Navigation
  **************************************************************/
+// Manage Rooms removed
 const sectionFaculty = document.getElementById("section-faculty");
-const sectionRooms = document.getElementById("section-rooms");
 const sectionCourses = document.getElementById("section-courses");
 const sectionCourseOffering = document.getElementById("section-course-offering");
-const sectionSchedule = document.getElementById("section-schedule");
 const sectionRoomView = document.getElementById("section-room-view");
 
 function hideAllSections() {
   sectionFaculty.classList.add("hidden");
-  sectionRooms.classList.add("hidden");
   sectionCourses.classList.add("hidden");
   sectionCourseOffering.classList.add("hidden");
-  sectionSchedule.classList.add("hidden");
   sectionRoomView.classList.add("hidden");
 }
 
@@ -65,26 +62,22 @@ document.getElementById("btn-faculty").addEventListener("click", async () => {
   sectionFaculty.classList.remove("hidden");
   await renderFacultyTable();
 });
-document.getElementById("btn-rooms").addEventListener("click", async () => {
-  hideAllSections();
-  sectionRooms.classList.remove("hidden");
-  await renderRoomsTable();
-});
 document.getElementById("btn-courses").addEventListener("click", async () => {
   hideAllSections();
   sectionCourses.classList.remove("hidden");
   await renderCoursesTable();
 });
-document.getElementById("btn-schedule").addEventListener("click", async () => {
+document.getElementById("btn-course-offering").addEventListener("click", async () => {
   hideAllSections();
-  sectionSchedule.classList.remove("hidden");
-  await renderScheduleTables();
+  sectionCourseOffering.classList.remove("hidden");
+  await renderCourseOfferingTable();
 });
 document.getElementById("btn-room-view").addEventListener("click", async () => {
   hideAllSections();
   sectionRoomView.classList.remove("hidden");
   renderRoomViewHeaders();
   renderRoomViewTables();
+  await validateAllComplementary();
 });
 
 /**************************************************************
@@ -154,72 +147,6 @@ window.deleteFaculty = async function(id) {
 };
 
 /**************************************************************
- * 5) ROOMS CRUD
- **************************************************************/
-const tableRoomsBody = document.querySelector("#table-rooms tbody");
-const btnAddRoom = document.getElementById("btn-add-room");
-const modalRoom = document.getElementById("modal-room");
-const roomIdInput = document.getElementById("room-id");
-const roomNameInput = document.getElementById("room-name");
-const btnSaveRoom = document.getElementById("btn-save-room");
-
-async function renderRoomsTable() {
-  const roomsList = await apiGet("rooms");
-  tableRoomsBody.innerHTML = "";
-  roomsList.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.id}</td>
-      <td>${r.name}</td>
-      <td>
-        <button onclick="editRoom(${r.id})">Edit</button>
-        <button onclick="deleteRoom(${r.id})">Delete</button>
-      </td>
-    `;
-    tableRoomsBody.appendChild(tr);
-  });
-}
-
-btnAddRoom.addEventListener("click", () => {
-  roomIdInput.value = "";
-  roomNameInput.value = "";
-  document.getElementById("modal-room-title").textContent = "Add Room";
-  showModal(modalRoom);
-});
-
-btnSaveRoom.addEventListener("click", async () => {
-  const id = roomIdInput.value;
-  const name = roomNameInput.value.trim();
-  if (!name) {
-    alert("Enter a room name.");
-    return;
-  }
-  if (id) {
-    await apiPut("rooms", id, { name });
-  } else {
-    await apiPost("rooms", { name });
-  }
-  hideModal(modalRoom);
-  await renderRoomsTable();
-});
-
-window.editRoom = async function(id) {
-  const roomsList = await apiGet("rooms");
-  const found = roomsList.find(r => r.id == id);
-  if (!found) return;
-  roomIdInput.value = found.id;
-  roomNameInput.value = found.name;
-  document.getElementById("modal-room-title").textContent = "Edit Room";
-  showModal(modalRoom);
-};
-
-window.deleteRoom = async function(id) {
-  if (!confirm("Are you sure?")) return;
-  await apiDelete("rooms", id);
-  await renderRoomsTable();
-};
-
-/**************************************************************
  * 6) COURSES CRUD
  **************************************************************/
 const tableCoursesBody = document.querySelector("#table-courses tbody");
@@ -253,7 +180,6 @@ btnAddCourse.addEventListener("click", () => {
   courseIdInput.value = "";
   courseSubjectInput.value = "";
   courseUnitsInput.value = "";
-  // Reset radio buttons to default PureLec
   document.getElementById("purelec").checked = true;
   document.getElementById("modal-course-title").textContent = "Add Course";
   showModal(modalCourse);
@@ -448,295 +374,7 @@ window.deleteCourseOffering = async function(id) {
 };
 
 /**************************************************************
- * 8) SCHEDULE: Conflict Validation, Color Picker Fix,
- *     Double Timeslot Assignment, and Conflict Resolution Suggestions
- **************************************************************/
-const mwfTableBody = document.querySelector("#mwf-table tbody");
-const tthsTableBody = document.querySelector("#tths-table tbody");
-const modalSchedule = document.getElementById("modal-schedule");
-
-const scheduleDayTypeInput = document.getElementById("schedule-dayType");
-const scheduleTimeInput = document.getElementById("schedule-time");
-const scheduleColInput = document.getElementById("schedule-col");
-const scheduleIdInput = document.getElementById("schedule-id");
-
-const scheduleFacultySelect = document.getElementById("schedule-faculty");
-const scheduleRoomSelect = document.getElementById("schedule-room");
-const scheduleCourseSelect = document.getElementById("schedule-course");
-const scheduleColorInput = document.getElementById("schedule-color");
-const applyNextCheckbox = document.getElementById("apply-next");
-
-const btnSaveSchedule = document.getElementById("btn-save-schedule");
-const btnDeleteSchedule = document.getElementById("btn-delete-schedule");
-
-const MWF_TIMES = [
-  "7:30 - 8:50", "8:50 - 10:10", "10:10 - 11:30",
-  "11:30 - 12:50", "12:50 - 2:10", "2:10 - 3:30",
-  "3:30 - 4:50", "4:50 - 6:10", "6:10 - 7:30"
-];
-const TTHS_TIMES = [
-  "7:30 - 8:50", "8:50 - 10:10", "10:10 - 11:30",
-  "11:30 - 12:50", "12:50 - 2:10", "2:10 - 3:30",
-  "3:30 - 4:50", "4:50 - 6:10", "6:10 - 7:30"
-];
-
-async function renderScheduleTables() {
-  mwfTableBody.innerHTML = "";
-  tthsTableBody.innerHTML = "";
-  // Build MWF table
-  MWF_TIMES.forEach(time => {
-    const tr = document.createElement("tr");
-    const timeTd = document.createElement("td");
-    timeTd.textContent = time;
-    tr.appendChild(timeTd);
-    for (let col = 1; col <= 6; col++) {
-      const cell = document.createElement("td");
-      cell.classList.add("clickable-cell");
-      cell.setAttribute("data-dayType", "MWF");
-      cell.setAttribute("data-time", time);
-      cell.setAttribute("data-col", col);
-      cell.addEventListener("click", () => openScheduleModal("MWF", time, col));
-      tr.appendChild(cell);
-    }
-    mwfTableBody.appendChild(tr);
-  });
-  // Build TTHS table
-  TTHS_TIMES.forEach(time => {
-    const tr = document.createElement("tr");
-    const timeTd = document.createElement("td");
-    timeTd.textContent = time;
-    tr.appendChild(timeTd);
-    for (let col = 1; col <= 6; col++) {
-      const cell = document.createElement("td");
-      cell.classList.add("clickable-cell");
-      cell.setAttribute("data-dayType", "TTHS");
-      cell.setAttribute("data-time", time);
-      cell.setAttribute("data-col", col);
-      cell.addEventListener("click", () => openScheduleModal("TTHS", time, col));
-      tr.appendChild(cell);
-    }
-    tthsTableBody.appendChild(tr);
-  });
-  // Fill existing schedule data
-  const schedules = await apiGet("schedules");
-  schedules.forEach(sch => {
-    fillScheduleCell(sch);
-  });
-}
-
-async function openScheduleModal(dayType, time, col) {
-  await populateScheduleDropdowns();
-  const schedules = await apiGet("schedules");
-  const existing = schedules.find(s => 
-    s.dayType === dayType && s.time === time && s.col === col
-  );
-  if (existing) {
-    scheduleIdInput.value = existing.id;
-    scheduleDayTypeInput.value = existing.dayType;
-    scheduleTimeInput.value = existing.time;
-    scheduleColInput.value = existing.col;
-    scheduleFacultySelect.value = existing.facultyId || "";
-    scheduleRoomSelect.value = existing.roomId || "";
-    scheduleCourseSelect.value = existing.courseId || "";
-    scheduleColorInput.value = existing.color || "#e9f1fb";
-    applyNextCheckbox.checked = false;
-    applyNextCheckbox.disabled = true;
-    btnDeleteSchedule.style.display = "block";
-  } else {
-    scheduleIdInput.value = "";
-    scheduleDayTypeInput.value = dayType;
-    scheduleTimeInput.value = time;
-    scheduleColInput.value = col;
-    scheduleFacultySelect.value = "";
-    scheduleRoomSelect.value = "";
-    scheduleCourseSelect.value = "";
-    scheduleColorInput.value = "#e9f1fb";
-    applyNextCheckbox.checked = false;
-    applyNextCheckbox.disabled = false;
-    btnDeleteSchedule.style.display = "none";
-  }
-  showModal(modalSchedule);
-}
-
-async function fillScheduleCell(scheduleObj) {
-  const tableBody = scheduleObj.dayType === "MWF" ? mwfTableBody : tthsTableBody;
-  if (!tableBody) return;
-  const cell = tableBody.querySelector(
-    `.clickable-cell[data-dayType="${scheduleObj.dayType}"][data-time="${scheduleObj.time}"][data-col="${scheduleObj.col}"]`
-  );
-  if (!cell) return;
-  const facultyList = await apiGet("faculty");
-  const roomsList = await apiGet("rooms");
-  const coursesList = await apiGet("courses");
-  const fac = facultyList.find(f => f.id === scheduleObj.facultyId);
-  const room = roomsList.find(r => r.id === scheduleObj.roomId);
-  const crs = coursesList.find(c => c.id === scheduleObj.courseId);
-  const facultyName = fac ? fac.name : "Unknown";
-  const roomName = room ? room.name : "NoRoom";
-  const courseLabel = crs
-    ? `${crs.subject} (${crs.unit_category}) - ${crs.units}`
-    : "NoCourse";
-  cell.textContent = `${courseLabel} (${facultyName}) @ ${roomName}`;
-  cell.style.backgroundColor = scheduleObj.color || "#ffffff";
-}
-
-async function populateScheduleDropdowns() {
-  let facultyList = await apiGet("faculty");
-  scheduleFacultySelect.innerHTML = `<option value="">-- Select Faculty --</option>`;
-  facultyList.forEach(f => {
-    scheduleFacultySelect.innerHTML += `<option value="${f.id}">${f.name}</option>`;
-  });
-  let roomsList = await apiGet("rooms");
-  scheduleRoomSelect.innerHTML = `<option value="">-- Select Room --</option>`;
-  roomsList.forEach(r => {
-    scheduleRoomSelect.innerHTML += `<option value="${r.id}">${r.name}</option>`;
-  });
-  let coursesList = await apiGet("courses");
-  scheduleCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
-  coursesList.forEach(c => {
-    scheduleCourseSelect.innerHTML += `<option value="${c.id}">${c.subject} (${c.unit_category}) - ${c.units}</option>`;
-  });
-}
-
-async function checkForConflicts(dayType, time, facultyId, roomId, scheduleId) {
-  const schedules = await apiGet("schedules");
-  let conflicts = [];
-  schedules.forEach(sch => {
-    if (sch.dayType === dayType && sch.time === time && sch.id != scheduleId) {
-      if (sch.facultyId === facultyId) {
-        conflicts.push({ type: "faculty", schedule: sch });
-      }
-      if (sch.roomId === roomId) {
-        conflicts.push({ type: "room", schedule: sch });
-      }
-    }
-  });
-  return conflicts;
-}
-
-async function getConflictSuggestions(dayType, time, facultyId, roomId, scheduleId) {
-  let suggestions = [];
-  let timesArray = (dayType === "MWF") ? MWF_TIMES : TTHS_TIMES;
-  for (let t of timesArray) {
-    if (t === time) continue;
-    let conflicts = await checkForConflicts(dayType, t, facultyId, roomId, scheduleId);
-    if (conflicts.length === 0) {
-      suggestions.push(`Try scheduling at time: ${t}`);
-    }
-  }
-  let rooms = await apiGet("rooms");
-  for (let r of rooms) {
-    if (parseInt(r.id) === roomId) continue;
-    let conflicts = await checkForConflicts(dayType, time, facultyId, parseInt(r.id), scheduleId);
-    if (conflicts.length === 0) {
-      suggestions.push(`Try using room: ${r.name}`);
-    }
-  }
-  return suggestions;
-}
-
-async function showConflictPopup(conflicts, dayType, time, facultyId, roomId, scheduleId) {
-  dayType = dayType || scheduleDayTypeInput.value;
-  time = time || scheduleTimeInput.value;
-  facultyId = facultyId || parseInt(scheduleFacultySelect.value) || null;
-  roomId = roomId || parseInt(scheduleRoomSelect.value) || null;
-  scheduleId = scheduleId || scheduleIdInput.value;
-  
-  const conflictPopup = document.createElement("div");
-  conflictPopup.id = "conflict-popup";
-  conflictPopup.style.position = "fixed";
-  conflictPopup.style.top = "20px";
-  conflictPopup.style.right = "20px";
-  conflictPopup.style.backgroundColor = "#ffebee";
-  conflictPopup.style.color = "#c62828";
-  conflictPopup.style.padding = "10px";
-  conflictPopup.style.borderRadius = "4px";
-  conflictPopup.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
-  conflictPopup.style.zIndex = "1000";
-  
-  let msg = "Conflict(s) detected:<br>";
-  for (let conflict of conflicts) {
-    const sch = conflict.schedule;
-    const facultyList = await apiGet("faculty");
-    const roomsList = await apiGet("rooms");
-    const coursesList = await apiGet("courses");
-    const fac = facultyList.find(f => f.id === sch.facultyId);
-    const room = roomsList.find(r => r.id === sch.roomId);
-    const crs = coursesList.find(c => c.id === sch.courseId);
-    if (conflict.type === "faculty") {
-      msg += `- Faculty "${fac?.name || "Unknown"}" is already assigned to ${
-        crs ? crs.subject + " (" + crs.unit_category + ") - " + crs.units : "an unknown course"
-      } in room "${room?.name || "Unknown"}" at ${sch.time} on ${sch.dayType}.<br>`;
-    } else if (conflict.type === "room") {
-      msg += `- Room "${room?.name || "Unknown"}" is already in use for ${
-        crs ? crs.subject + " (" + crs.unit_category + ") - " + crs.units : "an unknown course"
-      } by faculty "${fac?.name || "Unknown"}" at ${sch.time} on ${sch.dayType}.<br>`;
-    }
-  }
-  const suggestions = await getConflictSuggestions(dayType, time, facultyId, roomId, scheduleId);
-  if (suggestions.length > 0) {
-    msg += "<br>Suggestions:<br>" + suggestions.join("<br>");
-  }
-  conflictPopup.innerHTML = msg;
-  document.body.appendChild(conflictPopup);
-  setTimeout(() => {
-    conflictPopup.remove();
-  }, 5000);
-}
-
-btnSaveSchedule.addEventListener("click", async () => {
-  const schId = scheduleIdInput.value;
-  const dayType = scheduleDayTypeInput.value;
-  const time = scheduleTimeInput.value;
-  const col = parseInt(scheduleColInput.value, 10);
-  const facultyId = parseInt(scheduleFacultySelect.value) || null;
-  const roomId = parseInt(scheduleRoomSelect.value) || null;
-  const courseId = parseInt(scheduleCourseSelect.value) || null;
-  if (!facultyId || !roomId || !courseId) {
-    alert("Please select faculty, room, and course.");
-    return;
-  }
-  const color = scheduleColorInput.value;
-  const conflicts = await checkForConflicts(dayType, time, facultyId, roomId, schId);
-  if (conflicts.length > 0) {
-    await showConflictPopup(conflicts, dayType, time, facultyId, roomId, schId);
-    return;
-  }
-  if (schId) {
-    await apiPut("schedules", schId, { dayType, time, col, facultyId, roomId, courseId, color });
-  } else {
-    await apiPost("schedules", { dayType, time, col, facultyId, roomId, courseId, color });
-    if (applyNextCheckbox.checked) {
-      let timesArray = (dayType === "MWF") ? MWF_TIMES : TTHS_TIMES;
-      let currentIndex = timesArray.indexOf(time);
-      if (currentIndex === -1 || currentIndex === timesArray.length - 1) {
-        alert("No next timeslot available for the selected day type.");
-        return;
-      }
-      let nextTime = timesArray[currentIndex + 1];
-      const conflictsNext = await checkForConflicts(dayType, nextTime, facultyId, roomId, "");
-      if (conflictsNext.length > 0) {
-        await showConflictPopup(conflictsNext, dayType, nextTime, facultyId, roomId, "");
-        return;
-      }
-      await apiPost("schedules", { dayType, time: nextTime, col, facultyId, roomId, courseId, color });
-    }
-  }
-  hideModal(modalSchedule);
-  await renderScheduleTables();
-});
-
-btnDeleteSchedule.addEventListener("click", async () => {
-  const schId = scheduleIdInput.value;
-  if (!schId) return;
-  if (!confirm("Are you sure?")) return;
-  await apiDelete("schedules", schId);
-  hideModal(modalSchedule);
-  await renderScheduleTables();
-});
-
-/**************************************************************
- * 9) ROOM VIEW: Two Separate Tables (MWF, TTHS)
+ * ROOM VIEW: Build headers and tables, and add cell click for pop up
  **************************************************************/
 function renderRoomViewHeaders() {
   buildRoomViewHeader("MWF");
@@ -797,40 +435,52 @@ function renderRoomViewTables() {
 
 async function buildRoomViewTable(dayType) {
   const columns = getAllRoomColumns();
-  const times = dayType === "MWF" ? MWF_TIMES : TTHS_TIMES;
+  const times = dayType === "MWF"
+    ? ["7:30 - 8:50","8:50 - 10:10","10:10 - 11:30","11:30 - 12:50","12:50 - 2:10","2:10 - 3:30","3:30 - 4:50","4:50 - 6:10","6:10 - 7:30"]
+    : ["7:30 - 8:50","8:50 - 10:10","10:10 - 11:30","11:30 - 12:50","12:50 - 2:10","2:10 - 3:30","3:30 - 4:50","4:50 - 6:10","6:10 - 7:30"];
   const tbody = document.getElementById(
     dayType === "MWF" ? "room-view-mwf-tbody" : "room-view-tths-tbody"
   );
   tbody.innerHTML = "";
   const rooms = await apiGet("rooms");
+  const schedules = await apiGet("schedules");
+  
   for (let time of times) {
     const tr = document.createElement("tr");
     const timeTd = document.createElement("td");
     timeTd.textContent = time;
     tr.appendChild(timeTd);
-    for (let roomName of columns) {
+    for (const [index, roomName] of columns.entries()) {
       const td = document.createElement("td");
-      const schedules = await apiGet("schedules");
-      const schedule = schedules.find((sch) => {
-        if (sch.dayType !== dayType) return false;
-        if (sch.time !== time) return false;
-        const r = rooms.find(r => r.id === sch.roomId);
-        const currentRoomName = r ? r.name : "";
-        return currentRoomName === roomName;
-      });
+      td.classList.add("clickable-cell");
+      td.setAttribute("data-dayType", dayType);
+      td.setAttribute("data-time", time);
+      td.setAttribute("data-col", index + 1);
+      td.addEventListener("click", () => openRoomViewModal(dayType, time, roomName, index + 1));
+      const room = rooms.find(r => r.name === roomName);
+      let schedule;
+      if (room) {
+        schedule = schedules.find(sch =>
+          sch.dayType === dayType &&
+          sch.time === time &&
+          sch.roomId === room.id
+        );
+      }
+      if (!schedule) {
+        schedule = schedules.find(sch =>
+          sch.dayType === dayType &&
+          sch.time === time &&
+          sch.col === index + 1
+        );
+      }
       if (schedule) {
-        const facultyList = await apiGet("faculty");
         const coursesList = await apiGet("courses");
-        const faculty = facultyList.find((f) => f.id === schedule.facultyId);
-        const course = coursesList.find((c) => c.id === schedule.courseId);
-        td.textContent = `${
-          course ? course.subject + " (" + course.unit_category + ") - " + course.units : "No Course"
-        } (${faculty ? faculty.name : "No Faculty"})`;
+        const course = coursesList.find(c => c.id === schedule.courseId);
+        td.textContent = course ? `${course.subject} - (${schedule.section}) - Type: ${schedule.unitType}` : "No Course";
         td.style.backgroundColor = schedule.color || "#e9f1fb";
       } else {
         td.textContent = "";
       }
-      td.classList.add("clickable-cell");
       tr.appendChild(td);
     }
     const extraTd = document.createElement("td");
@@ -841,7 +491,227 @@ async function buildRoomViewTable(dayType) {
 }
 
 /**************************************************************
- * 10) Modal Show/Hide
+ * ROOM VIEW Modal: Open, populate, and save with complementary validation
+ **************************************************************/
+const modalRoomView = document.getElementById("modal-roomview");
+
+async function openRoomViewModal(dayType, time, roomName, col) {
+  let roomsList = await apiGet("rooms");
+  const room = roomsList.find(r => r.name === roomName);
+  const schedules = await apiGet("schedules");
+  let existing;
+  if (room) {
+    existing = schedules.find(sch =>
+      sch.dayType === dayType &&
+      sch.time === time &&
+      sch.roomId === room.id
+    );
+  } else {
+    existing = schedules.find(sch =>
+      sch.dayType === dayType &&
+      sch.time === time &&
+      sch.col === col
+    );
+  }
+  document.getElementById("roomview-dayType").value = dayType;
+  document.getElementById("roomview-time").value = time;
+  document.getElementById("roomview-col").value = col;
+  document.getElementById("roomview-roomId").value = room ? room.id : "";
+  if (existing) {
+    document.getElementById("roomview-id").value = existing.id;
+    document.getElementById("btn-delete-roomview").style.display = "block";
+  } else {
+    document.getElementById("roomview-id").value = "";
+    document.getElementById("btn-delete-roomview").style.display = "none";
+  }
+  // Populate the course dropdown from course_offerings
+  await populateRoomViewCourseDropdown();
+  // Pre-select values if editing an existing schedule
+  if (existing) {
+    document.getElementById("roomview-course").value = existing.courseId;
+    document.getElementById("roomview-course").dispatchEvent(new Event("change"));
+    await populateRoomViewSectionDropdown();
+    document.getElementById("roomview-section").value = existing.section;
+    if (existing.unitType === "PureLec") {
+      document.getElementById("roomview-unitCategory").value = "PureLec";
+      document.getElementById("roomview-radio-group").style.display = "none";
+    } else {
+      document.getElementById("roomview-unitCategory").value = "Lec/Lab";
+      document.getElementById("roomview-radio-group").style.display = "flex";
+      document.querySelector(`input[name="roomviewType"][value="${existing.unitType}"]`).checked = true;
+    }
+  } else {
+    document.getElementById("roomview-course").value = "";
+    document.getElementById("roomview-section").innerHTML = `<option value="">-- Select Section --</option>`;
+    document.getElementById("roomview-unitCategory").value = "Lec/Lab";
+    document.getElementById("roomview-radio-group").style.display = "flex";
+    document.querySelector('input[name="roomviewType"][value="Lec"]').checked = true;
+  }
+  showModal(modalRoomView);
+}
+
+document.getElementById("roomview-course").addEventListener("change", function() {
+  const selectedOption = this.options[this.selectedIndex];
+  const unitCategory = selectedOption.getAttribute("data-unit-category");
+  const roomviewUnitCategory = document.getElementById("roomview-unitCategory");
+  const roomviewRadioGroup = document.getElementById("roomview-radio-group");
+  if (unitCategory === "PureLec") {
+    roomviewUnitCategory.value = "PureLec";
+    roomviewRadioGroup.style.display = "none";
+  } else {
+    roomviewUnitCategory.value = "Lec/Lab";
+    roomviewRadioGroup.style.display = "flex";
+    const lecRadio = document.querySelector('input[name="roomviewType"][value="Lec"]');
+    if (lecRadio) lecRadio.checked = true;
+  }
+  populateRoomViewSectionDropdown();
+});
+
+document.getElementById("btn-delete-roomview").addEventListener("click", async () => {
+  const id = document.getElementById("roomview-id").value;
+  if (!id) return;
+  if (!confirm("Are you sure you want to delete this schedule entry?")) return;
+  await apiDelete("schedules", id);
+  hideModal(modalRoomView);
+  renderRoomViewTables();
+});
+
+async function populateRoomViewCourseDropdown() {
+  const roomviewCourseSelect = document.getElementById("roomview-course");
+  const offerings = await apiGet("course_offerings");
+  const courses = await apiGet("courses");
+  const uniqueCourseIds = [...new Set(offerings.map(off => off.courseId))];
+  roomviewCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
+  uniqueCourseIds.forEach(courseId => {
+    const course = courses.find(c => c.id == courseId);
+    if (course) {
+      roomviewCourseSelect.innerHTML += `<option value="${course.id}" data-unit-category="${course.unit_category}">${course.subject} (${course.unit_category}) - ${course.units}</option>`;
+    }
+  });
+}
+
+async function populateRoomViewSectionDropdown() {
+  const roomviewSectionSelect = document.getElementById("roomview-section");
+  roomviewSectionSelect.innerHTML = `<option value="">-- Select Section --</option>`;
+  const courseId = document.getElementById("roomview-course").value;
+  if (!courseId) return;
+  const offerings = await apiGet("course_offerings");
+  const filtered = offerings.filter(off => off.courseId == courseId);
+  const distinctSections = [...new Set(filtered.map(off => off.section))];
+  distinctSections.forEach(sec => {
+    roomviewSectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`;
+  });
+}
+
+document.getElementById("btn-save-roomview").addEventListener("click", async () => {
+  const roomviewCourseSelect = document.getElementById("roomview-course");
+  const roomviewUnitCategorySelect = document.getElementById("roomview-unitCategory");
+  const roomviewSectionSelect = document.getElementById("roomview-section");
+  const courseId = roomviewCourseSelect.value;
+  const unitCategory = roomviewUnitCategorySelect.value;
+  let unitType = (unitCategory === "Lec/Lab") ? document.querySelector('input[name="roomviewType"]:checked').value : "PureLec";
+  const section = roomviewSectionSelect.value;
+  if (!courseId || !section) {
+    alert("Please select a course and section.");
+    return;
+  }
+  const dayType = document.getElementById("roomview-dayType").value;
+  const time = document.getElementById("roomview-time").value;
+  const col = document.getElementById("roomview-col").value;
+  const roomId = document.getElementById("roomview-roomId").value;
+  const schedules = await apiGet("schedules");
+  let existing = schedules.find(sch => sch.dayType === dayType && sch.time === time && sch.col == col);
+  const data = {
+    dayType,
+    time,
+    col: parseInt(col, 10),
+    facultyId: null,
+    roomId: roomId ? parseInt(roomId, 10) : null,
+    courseId: parseInt(courseId, 10),
+    color: "#e9f1fb",
+    unitType,
+    section
+  };
+  if (existing) {
+    await apiPut("schedules", existing.id, data);
+  } else {
+    await apiPost("schedules", data);
+  }
+  hideModal(modalRoomView);
+  renderRoomViewTables();
+  await validateAllComplementary();
+});
+
+/**************************************************************
+ * Complementary Validation for Lec/Lab offerings
+ **************************************************************/
+async function validateAllComplementary() {
+  const schedules = await apiGet("schedules");
+  const lecLabSchedules = schedules.filter(sch => sch.unitType === "Lec" || sch.unitType === "Lab");
+  let conflictMessages = [];
+  for (let sch of lecLabSchedules) {
+    const complementary = (sch.unitType === "Lec") ? "Lab" : "Lec";
+    const compEntry = schedules.find(s =>
+      s.dayType === sch.dayType &&
+      s.col === sch.col &&
+      s.courseId === sch.courseId &&
+      s.unitType === complementary
+    );
+    if (!compEntry) {
+      const courses = await apiGet("courses");
+      const rooms = await apiGet("rooms");
+      const course = courses.find(c => c.id === sch.courseId);
+      const allRooms = getAllRoomColumns();
+      const room = rooms.find(r => r.id === sch.roomId);
+      const subjectName = course ? course.subject : "Unknown Subject";
+      const section = sch.section || "Unknown Section";
+      // If room not found in the database, use the header column name based on sch.col
+      const roomName = room ? room.name : (allRooms[sch.col - 1] || "Unknown Room");
+      const times = getTimesArray(sch.dayType);
+      const currentIndex = times.indexOf(sch.time);
+      let recommendedTime = "None available";
+      const roomSchedules = schedules.filter(s => s.dayType === sch.dayType && s.col === sch.col);
+      for (let i = currentIndex + 1; i < times.length; i++) {
+        if (!roomSchedules.some(s => s.time === times[i])) {
+          recommendedTime = times[i];
+          break;
+        }
+      }
+      if (sch.unitType === "Lec") {
+        conflictMessages.push(`Lab portion missing for ${subjectName} - (${section}) in ${roomName}. Recommended slot: ${recommendedTime}.`);
+      } else {
+        conflictMessages.push(`Lec portion missing for ${subjectName} - (${section}) in ${roomName}. Recommended slot: ${recommendedTime}.`);
+      }
+    }
+  }
+  if (conflictMessages.length > 0) {
+    showConflictNotification(conflictMessages.join("\n"));
+  } else {
+    clearConflictNotification();
+  }
+}
+
+function getTimesArray(dayType) {
+  return ["7:30 - 8:50","8:50 - 10:10","10:10 - 11:30","11:30 - 12:50",
+          "12:50 - 2:10","2:10 - 3:30","3:30 - 4:50","4:50 - 6:10","6:10 - 7:30"];
+}
+
+/**************************************************************
+ * Conflict notification popup (permanent until fixed)
+ **************************************************************/
+function showConflictNotification(message) {
+  const popup = document.getElementById("conflict-popup");
+  popup.textContent = message;
+  popup.classList.remove("hidden");
+}
+
+function clearConflictNotification() {
+  const popup = document.getElementById("conflict-popup");
+  popup.classList.add("hidden");
+}
+
+/**************************************************************
+ * Modal Show/Hide
  **************************************************************/
 document.querySelectorAll(".close-button").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -864,10 +734,12 @@ function hideModal(modal) {
 }
 
 /**************************************************************
- * 11) INITIAL PAGE LOAD
+ * INITIAL PAGE LOAD
  **************************************************************/
 (async function initialLoad() {
   hideAllSections();
-  sectionSchedule.classList.remove("hidden"); // Default view
-  await renderScheduleTables();
+  sectionRoomView.classList.remove("hidden");
+  renderRoomViewHeaders();
+  renderRoomViewTables();
+  await validateAllComplementary();
 })();

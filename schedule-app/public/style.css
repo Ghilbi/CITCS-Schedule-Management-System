@@ -241,7 +241,7 @@ table tr:hover td {
   font-size: 14px;
 }
 
-/* Make text/inputs full width only for textboxes & selects */
+/* Full-width inputs */
 .modal-content input[type="text"],
 .modal-content select {
   width: 100%;
@@ -289,17 +289,19 @@ table tr:hover td {
   background-color: #d32f2f;
 }
 
+/* Conflict notification popup */
 #conflict-popup {
   position: fixed;
   top: 20px;
   right: 20px;
-  background-color: #ffebee;
-  color: #c62828;
-  padding: 10px;
+  background-color: #ffdddd;
+  color: #a10000;
+  padding: 10px 16px;
+  border: 1px solid #a10000;
   border-radius: 4px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  z-index: 1000;
-  max-width: 400px;
+  z-index: 1100;
+  max-width: 300px;
   font-size: 14px;
   line-height: 1.5;
 }

@@ -37,7 +37,6 @@ db.serialize(() => {
     units TEXT NOT NULL
   )`);
 
-  // Updated schedules table with extra fields for unitType and section
   db.run(`CREATE TABLE IF NOT EXISTS schedules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     dayType TEXT NOT NULL,

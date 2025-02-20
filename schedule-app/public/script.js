@@ -44,7 +44,6 @@ function getAllRoomColumns() {
 /**************************************************************
  * Navigation
  **************************************************************/
-// Manage Rooms removed
 const sectionFaculty = document.getElementById("section-faculty");
 const sectionCourses = document.getElementById("section-courses");
 const sectionCourseOffering = document.getElementById("section-course-offering");
@@ -201,6 +200,7 @@ btnSaveCourse.addEventListener("click", async () => {
   }
   hideModal(modalCourse);
   await renderCoursesTable();
+  await validateAllComplementary();
 });
 
 window.editCourse = async function(id) {
@@ -223,6 +223,7 @@ window.deleteCourse = async function(id) {
   if (!confirm("Are you sure?")) return;
   await apiDelete("courses", id);
   await renderCoursesTable();
+  await validateAllComplementary();
 };
 
 /**************************************************************
@@ -270,10 +271,8 @@ courseOfferingCourseSelect.addEventListener("change", function() {
     courseOfferingPurelecRadio.checked = true;
     courseOfferingUnitsInput.value = "3";
   } else if (unitCategory === "Lec/Lab") {
-    labelLec.style.display = "inline-block";
-    labelLab.style.display = "inline-block";
-    courseOfferingLecRadio.checked = true;
-    courseOfferingUnitsInput.value = "2";
+    // For Lec/Lab courses, we auto-add two entries so ignore unit input.
+    courseOfferingUnitsInput.value = "";
   }
 });
 
@@ -330,19 +329,31 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   const id = courseOfferingIdInput.value;
   const courseId = courseOfferingCourseSelect.value;
   const section = courseOfferingSectionInput.value.trim();
-  const type = document.querySelector('input[name="courseOfferingType"]:checked') ? document.querySelector('input[name="courseOfferingType"]:checked').value : "";
+  const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
+  const unitCategory = selectedOption ? selectedOption.getAttribute("data-unit-category") : "";
+  const type = document.querySelector('input[name="courseOfferingType"]:checked') 
+               ? document.querySelector('input[name="courseOfferingType"]:checked').value 
+               : "";
   const units = courseOfferingUnitsInput.value;
-  if (!courseId || !section || !type || !units) {
+  if (!courseId || !section) {
     alert("Please fill out all fields.");
     return;
   }
-  if (id) {
-    await apiPut("course_offerings", id, { courseId, section, type, units });
+  
+  // If the selected course is Lec/Lab and we're adding a new offering, auto-add two entries:
+  if (!id && unitCategory === "Lec/Lab") {
+    await apiPost("course_offerings", { courseId, section, type: "Lec", units: 2 });
+    await apiPost("course_offerings", { courseId, section, type: "Lab", units: 1 });
   } else {
-    await apiPost("course_offerings", { courseId, section, type, units });
+    if (id) {
+      await apiPut("course_offerings", id, { courseId, section, type, units });
+    } else {
+      await apiPost("course_offerings", { courseId, section, type, units });
+    }
   }
   hideModal(modalCourseOffering);
   await renderCourseOfferingTable();
+  await validateAllComplementary();
 });
 
 window.editCourseOffering = async function(id) {
@@ -371,6 +382,7 @@ window.deleteCourseOffering = async function(id) {
   if (!confirm("Are you sure?")) return;
   await apiDelete("course_offerings", id);
   await renderCourseOfferingTable();
+  await validateAllComplementary();
 };
 
 /**************************************************************
@@ -535,9 +547,12 @@ async function openRoomViewModal(dayType, time, roomName, col) {
     if (existing.unitType === "PureLec") {
       document.getElementById("roomview-unitCategory").value = "PureLec";
       document.getElementById("roomview-radio-group").style.display = "none";
+      document.getElementById("roomview-units-container").style.display = "block";
+      document.getElementById("roomview-units").value = "3";
     } else {
       document.getElementById("roomview-unitCategory").value = "Lec/Lab";
       document.getElementById("roomview-radio-group").style.display = "flex";
+      document.getElementById("roomview-units-container").style.display = "none";
       document.querySelector(`input[name="roomviewType"][value="${existing.unitType}"]`).checked = true;
     }
   } else {
@@ -545,6 +560,7 @@ async function openRoomViewModal(dayType, time, roomName, col) {
     document.getElementById("roomview-section").innerHTML = `<option value="">-- Select Section --</option>`;
     document.getElementById("roomview-unitCategory").value = "Lec/Lab";
     document.getElementById("roomview-radio-group").style.display = "flex";
+    document.getElementById("roomview-units-container").style.display = "none";
     document.querySelector('input[name="roomviewType"][value="Lec"]').checked = true;
   }
   showModal(modalRoomView);
@@ -555,12 +571,16 @@ document.getElementById("roomview-course").addEventListener("change", function()
   const unitCategory = selectedOption.getAttribute("data-unit-category");
   const roomviewUnitCategory = document.getElementById("roomview-unitCategory");
   const roomviewRadioGroup = document.getElementById("roomview-radio-group");
+  const roomviewUnitsContainer = document.getElementById("roomview-units-container");
   if (unitCategory === "PureLec") {
     roomviewUnitCategory.value = "PureLec";
     roomviewRadioGroup.style.display = "none";
+    roomviewUnitsContainer.style.display = "block";
+    document.getElementById("roomview-units").value = "3";
   } else {
     roomviewUnitCategory.value = "Lec/Lab";
     roomviewRadioGroup.style.display = "flex";
+    roomviewUnitsContainer.style.display = "none";
     const lecRadio = document.querySelector('input[name="roomviewType"][value="Lec"]');
     if (lecRadio) lecRadio.checked = true;
   }
@@ -574,8 +594,12 @@ document.getElementById("btn-delete-roomview").addEventListener("click", async (
   await apiDelete("schedules", id);
   hideModal(modalRoomView);
   renderRoomViewTables();
+  await validateAllComplementary();
 });
 
+/**************************************************************
+ * Populate RoomView Course & Section dropdowns
+ **************************************************************/
 async function populateRoomViewCourseDropdown() {
   const roomviewCourseSelect = document.getElementById("roomview-course");
   const offerings = await apiGet("course_offerings");
@@ -603,23 +627,45 @@ async function populateRoomViewSectionDropdown() {
   });
 }
 
+/**************************************************************
+ * SAVE schedule (with front-end duplicate check using conflict popup)
+ **************************************************************/
 document.getElementById("btn-save-roomview").addEventListener("click", async () => {
   const roomviewCourseSelect = document.getElementById("roomview-course");
   const roomviewUnitCategorySelect = document.getElementById("roomview-unitCategory");
   const roomviewSectionSelect = document.getElementById("roomview-section");
   const courseId = roomviewCourseSelect.value;
   const unitCategory = roomviewUnitCategorySelect.value;
-  let unitType = (unitCategory === "Lec/Lab") ? document.querySelector('input[name="roomviewType"]:checked').value : "PureLec";
+  let unitType = (unitCategory === "Lec/Lab")
+    ? document.querySelector('input[name="roomviewType"]:checked').value
+    : "PureLec";
   const section = roomviewSectionSelect.value;
   if (!courseId || !section) {
-    alert("Please select a course and section.");
+    showConflictNotification("Please select a course and section before saving.");
     return;
   }
   const dayType = document.getElementById("roomview-dayType").value;
   const time = document.getElementById("roomview-time").value;
   const col = document.getElementById("roomview-col").value;
   const roomId = document.getElementById("roomview-roomId").value;
+
   const schedules = await apiGet("schedules");
+
+  const existingId = document.getElementById("roomview-id").value;
+  const existingDuplicate = schedules.find(sch =>
+    sch.dayType === dayType &&
+    sch.time === time &&
+    sch.courseId === parseInt(courseId, 10) &&
+    sch.section === section &&
+    sch.id.toString() !== existingId
+  );
+  if (existingDuplicate) {
+    showConflictNotification(
+      "Cannot schedule the same subject & section in the same timeslot.\nPlease choose a different timeslot or section."
+    );
+    return;
+  }
+
   let existing = schedules.find(sch => sch.dayType === dayType && sch.time === time && sch.col == col);
   const data = {
     dayType,
@@ -632,6 +678,7 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     unitType,
     section
   };
+
   if (existing) {
     await apiPut("schedules", existing.id, data);
   } else {
@@ -643,47 +690,65 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
 });
 
 /**************************************************************
- * Complementary Validation for Lec/Lab offerings
+ * Complementary Validation for Lec/Lab + Duplicate Check
  **************************************************************/
 async function validateAllComplementary() {
   const schedules = await apiGet("schedules");
   const lecLabSchedules = schedules.filter(sch => sch.unitType === "Lec" || sch.unitType === "Lab");
   let conflictMessages = [];
+  
   for (let sch of lecLabSchedules) {
     const complementary = (sch.unitType === "Lec") ? "Lab" : "Lec";
     const compEntry = schedules.find(s =>
       s.dayType === sch.dayType &&
-      s.col === sch.col &&
       s.courseId === sch.courseId &&
+      s.section === sch.section &&
       s.unitType === complementary
     );
     if (!compEntry) {
       const courses = await apiGet("courses");
-      const rooms = await apiGet("rooms");
       const course = courses.find(c => c.id === sch.courseId);
-      const allRooms = getAllRoomColumns();
-      const room = rooms.find(r => r.id === sch.roomId);
       const subjectName = course ? course.subject : "Unknown Subject";
       const section = sch.section || "Unknown Section";
-      // If room not found in the database, use the header column name based on sch.col
-      const roomName = room ? room.name : (allRooms[sch.col - 1] || "Unknown Room");
       const times = getTimesArray(sch.dayType);
       const currentIndex = times.indexOf(sch.time);
       let recommendedTime = "None available";
-      const roomSchedules = schedules.filter(s => s.dayType === sch.dayType && s.col === sch.col);
+      const sectionSchedules = schedules.filter(s => s.dayType === sch.dayType && s.section === sch.section);
       for (let i = currentIndex + 1; i < times.length; i++) {
-        if (!roomSchedules.some(s => s.time === times[i])) {
+        if (!sectionSchedules.some(s => s.time === times[i])) {
           recommendedTime = times[i];
           break;
         }
       }
       if (sch.unitType === "Lec") {
-        conflictMessages.push(`Lab portion missing for ${subjectName} - (${section}) in ${roomName}. Recommended slot: ${recommendedTime}.`);
+        conflictMessages.push(`Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
       } else {
-        conflictMessages.push(`Lec portion missing for ${subjectName} - (${section}) in ${roomName}. Recommended slot: ${recommendedTime}.`);
+        conflictMessages.push(`Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
       }
     }
   }
+  
+  const courses = await apiGet("courses");
+  let scheduleMap = new Map();
+  for (let sch of schedules) {
+    if (sch.courseId && sch.section) {
+      let key = `${sch.dayType}|${sch.time}|${sch.courseId}|${sch.section}`;
+      if (!scheduleMap.has(key)) scheduleMap.set(key, []);
+      scheduleMap.get(key).push(sch);
+    }
+  }
+  scheduleMap.forEach((group, key) => {
+    if (group.length > 1) {
+      const parts = key.split('|');
+      const time = parts[1];
+      const courseId = parts[2];
+      const section = parts[3];
+      const course = courses.find(c => c.id == courseId);
+      const subjectName = course ? course.subject : "Unknown Subject";
+      conflictMessages.push(`Duplicate schedule: ${subjectName} - (${section}) is scheduled at ${time} more than once.`);
+    }
+  });
+  
   if (conflictMessages.length > 0) {
     showConflictNotification(conflictMessages.join("\n"));
   } else {
@@ -692,12 +757,21 @@ async function validateAllComplementary() {
 }
 
 function getTimesArray(dayType) {
-  return ["7:30 - 8:50","8:50 - 10:10","10:10 - 11:30","11:30 - 12:50",
-          "12:50 - 2:10","2:10 - 3:30","3:30 - 4:50","4:50 - 6:10","6:10 - 7:30"];
+  return [
+    "7:30 - 8:50",
+    "8:50 - 10:10",
+    "10:10 - 11:30",
+    "11:30 - 12:50",
+    "12:50 - 2:10",
+    "2:10 - 3:30",
+    "3:30 - 4:50",
+    "4:50 - 6:10",
+    "6:10 - 7:30"
+  ];
 }
 
 /**************************************************************
- * Conflict notification popup (permanent until fixed)
+ * Conflict notification popup
  **************************************************************/
 function showConflictNotification(message) {
   const popup = document.getElementById("conflict-popup");

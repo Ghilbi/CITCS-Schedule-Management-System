@@ -184,6 +184,11 @@
         <option value="Lec/Lab">Lec/Lab</option>
         <option value="PureLec">PureLec</option>
       </select>
+      <!-- New Units container: shown only for PureLec courses -->
+      <div id="roomview-units-container">
+        <label for="roomview-units">Units:</label>
+        <input type="text" id="roomview-units" readonly />
+      </div>
       <div class="radio-group" id="roomview-radio-group" style="display:none;">
         <label>
           <input type="radio" name="roomviewType" value="Lec" checked /> Lec

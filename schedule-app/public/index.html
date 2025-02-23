@@ -18,7 +18,6 @@
   <!-- Navigation Buttons -->
   <nav>
     <button id="btn-faculty">Manage Faculty</button>
-    <!-- Manage Rooms removed because room view now includes rooms -->
     <button id="btn-courses">Manage Courses</button>
     <button id="btn-course-offering">Manage Course Offering</button>
     <button id="btn-room-view">Room View</button>
@@ -51,6 +50,9 @@
           <th>Subject</th>
           <th>Unit Category</th>
           <th>Units</th>
+          <th>Year Level</th>
+          <th>Degree</th>
+          <th>Trimester</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -70,6 +72,7 @@
           <th>Section</th>
           <th>Type</th>
           <th>Units</th>
+          <th>Trimester</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -101,7 +104,7 @@
   <!-- MODALS -->
   <div class="modal hidden" id="modal-faculty">
     <div class="modal-content">
-      <span class="close-button" data-close-modal="modal-faculty">&times;</span>
+      <span class="close-button" data-close-modal="modal-faculty">×</span>
       <h3 id="modal-faculty-title">Add/Edit Faculty</h3>
       <label for="faculty-name">Faculty Name:</label>
       <input type="text" id="faculty-name" />
@@ -112,7 +115,7 @@
 
   <div class="modal hidden" id="modal-course">
     <div class="modal-content">
-      <span class="close-button" data-close-modal="modal-course">&times;</span>
+      <span class="close-button" data-close-modal="modal-course">×</span>
       <h3 id="modal-course-title">Add/Edit Course</h3>
       <label for="course-subject">Subject:</label>
       <input type="text" id="course-subject" />
@@ -129,6 +132,36 @@
       </div>
       <label for="course-units">Units:</label>
       <input type="text" id="course-units" />
+      <label>Year Level:</label>
+      <div class="radio-group">
+        <label for="year-1st">
+          <input type="radio" id="year-1st" name="yearLevel" value="1st yr" checked />
+          1st yr
+        </label>
+        <label for="year-2nd">
+          <input type="radio" id="year-2nd" name="yearLevel" value="2nd yr" />
+          2nd yr
+        </label>
+        <label for="year-3rd">
+          <input type="radio" id="year-3rd" name="yearLevel" value="3rd yr" />
+          3rd yr
+        </label>
+      </div>
+      <label for="course-degree">Degree:</label>
+      <select id="course-degree">
+        <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+        <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+        <option value="BSIT(ERP)">BSIT(ERP)</option>
+        <option value="BSCS">BSCS</option>
+        <option value="BSDA">BSDA</option>
+        <option value="BMMA">BMMA</option>
+      </select>
+      <label for="course-trimester">Trimester:</label>
+      <select id="course-trimester">
+        <option value="1st Trimester">1st Trimester</option>
+        <option value="2nd Trimester">2nd Trimester</option>
+        <option value="3rd Trimester">3rd Trimester</option>
+      </select>
       <input type="hidden" id="course-id" />
       <button id="btn-save-course" class="save-btn">Save</button>
     </div>
@@ -136,7 +169,7 @@
 
   <div class="modal hidden" id="modal-course-offering">
     <div class="modal-content">
-      <span class="close-button" data-close-modal="modal-course-offering">&times;</span>
+      <span class="close-button" data-close-modal="modal-course-offering">×</span>
       <h3 id="modal-course-offering-title">Add/Edit Course Offering</h3>
       <label for="courseOffering-course">Course:</label>
       <select id="courseOffering-course">
@@ -161,6 +194,8 @@
       </div>
       <label for="courseOffering-units">Units:</label>
       <input type="text" id="courseOffering-units" readonly />
+      <label for="courseOffering-trimester">Trimester:</label>
+      <input type="text" id="courseOffering-trimester" readonly />
       <input type="hidden" id="courseOffering-id" />
       <button id="btn-save-courseOffering" class="save-btn">Save</button>
     </div>
@@ -168,7 +203,7 @@
 
   <div class="modal hidden" id="modal-roomview">
     <div class="modal-content">
-      <span class="close-button" data-close-modal="modal-roomview">&times;</span>
+      <span class="close-button" data-close-modal="modal-roomview">×</span>
       <h3 id="modal-roomview-title">Assign Course Offering</h3>
       <input type="hidden" id="roomview-id" />
       <input type="hidden" id="roomview-dayType" />

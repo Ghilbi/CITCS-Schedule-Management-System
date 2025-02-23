@@ -136,8 +136,8 @@ table tr:hover td {
 /* Room view table styling */
 #room-view-mwf-table,
 #room-view-tths-table {
-  width: 95%;
-  max-width: 1200px;
+  width: 98%;
+  max-width: 1400px; /* Increased to accommodate wider cells */
   border-collapse: collapse;
   margin: 20px auto;
   table-layout: fixed;
@@ -157,6 +157,12 @@ table tr:hover td {
   background-color: #f4f4f4;
 }
 
+#room-view-mwf-table th div,
+#room-view-tths-table th div {
+  color: #666;
+  margin-top: 2px;
+}
+
 /* Header input fields for room view */
 #room-view-mwf-table th input.extra-column-input,
 #room-view-tths-table th input.extra-column-input {
@@ -169,6 +175,32 @@ table tr:hover td {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Add separation between room pairs (every 2nd column after the time column) */
+#room-view-mwf-table th:nth-child(2n+3),
+#room-view-mwf-table td:nth-child(2n+3),
+#room-view-tths-table th:nth-child(2n+3),
+#room-view-tths-table td:nth-child(2n+3) {
+  border-right: 3px solid #888; /* Thicker border for separation between pairs */
+}
+
+/* Make cells wider but maintain full-width */
+#room-view-mwf-table th:not(:first-child),
+#room-view-mwf-table td:not(:first-child),
+#room-view-tths-table th:not(:first-child),
+#room-view-tths-table td:not(:first-child) {
+  min-width: 160px; /* Increased from 140px to make cells wider */
+  width: 75px;
+}
+
+/* Keep time column fixed */
+#room-view-mwf-table th:first-child,
+#room-view-mwf-table td:first-child,
+#room-view-tths-table th:first-child,
+#room-view-tths-table td:first-child {
+  width: 160px;
+  min-width: 160px;
 }
 
 /* Radio group styling for the Course modal */

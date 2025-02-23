@@ -38,7 +38,13 @@ const predefinedRooms = ["M301", "M303", "M304", "M305", "M306", "M306", "S311",
 let extraColumns = []; // Additional room columns if user chooses
 
 function getAllRoomColumns() {
-  return predefinedRooms.concat(extraColumns);
+  const baseRooms = predefinedRooms.concat(extraColumns);
+  const doubled = [];
+  baseRooms.forEach(room => {
+    doubled.push(`${room} A`);
+    doubled.push(`${room} B`);
+  });
+  return doubled;
 }
 
 /**************************************************************
@@ -154,6 +160,8 @@ const modalCourse = document.getElementById("modal-course");
 const courseIdInput = document.getElementById("course-id");
 const courseSubjectInput = document.getElementById("course-subject");
 const courseUnitsInput = document.getElementById("course-units");
+const courseDegreeSelect = document.getElementById("course-degree");
+const courseTrimesterSelect = document.getElementById("course-trimester");
 const btnSaveCourse = document.getElementById("btn-save-course");
 
 async function renderCoursesTable() {
@@ -166,6 +174,9 @@ async function renderCoursesTable() {
       <td>${c.subject}</td>
       <td>${c.unit_category}</td>
       <td>${c.units}</td>
+      <td>${c.year_level}</td>
+      <td>${c.degree}</td>
+      <td>${c.trimester}</td>
       <td>
         <button onclick="editCourse(${c.id})">Edit</button>
         <button onclick="deleteCourse(${c.id})">Delete</button>
@@ -180,6 +191,9 @@ btnAddCourse.addEventListener("click", () => {
   courseSubjectInput.value = "";
   courseUnitsInput.value = "";
   document.getElementById("purelec").checked = true;
+  document.getElementById("year-1st").checked = true;
+  courseDegreeSelect.value = "BSIT(Webtech)";
+  courseTrimesterSelect.value = "1st Trimester";
   document.getElementById("modal-course-title").textContent = "Add Course";
   showModal(modalCourse);
 });
@@ -189,14 +203,17 @@ btnSaveCourse.addEventListener("click", async () => {
   const subject = courseSubjectInput.value.trim();
   const units = courseUnitsInput.value.trim();
   const unitCategory = document.querySelector('input[name="unitCategory"]:checked').value;
+  const yearLevel = document.querySelector('input[name="yearLevel"]:checked').value;
+  const degree = courseDegreeSelect.value;
+  const trimester = courseTrimesterSelect.value;
   if (!subject || !units) {
     alert("Please fill out subject and units.");
     return;
   }
   if (id) {
-    await apiPut("courses", id, { subject, unitCategory, units });
+    await apiPut("courses", id, { subject, unitCategory, units, yearLevel, degree, trimester });
   } else {
-    await apiPost("courses", { subject, unitCategory, units });
+    await apiPost("courses", { subject, unitCategory, units, yearLevel, degree, trimester });
   }
   hideModal(modalCourse);
   await renderCoursesTable();
@@ -215,6 +232,9 @@ window.editCourse = async function(id) {
     document.getElementById("leclab").checked = true;
   }
   courseUnitsInput.value = found.units;
+  document.getElementById(`year-${found.year_level.replace(" ", "-").toLowerCase()}`).checked = true;
+  courseDegreeSelect.value = found.degree;
+  courseTrimesterSelect.value = found.trimester;
   document.getElementById("modal-course-title").textContent = "Edit Course";
   showModal(modalCourse);
 };
@@ -236,6 +256,7 @@ const courseOfferingIdInput = document.getElementById("courseOffering-id");
 const courseOfferingCourseSelect = document.getElementById("courseOffering-course");
 const courseOfferingSectionInput = document.getElementById("courseOffering-section");
 const courseOfferingUnitsInput = document.getElementById("courseOffering-units");
+const courseOfferingTrimesterInput = document.getElementById("courseOffering-trimester");
 const btnSaveCourseOffering = document.getElementById("btn-save-courseOffering");
 
 // Radio buttons and labels for course offering type
@@ -256,13 +277,14 @@ async function populateCourseOfferingCourses() {
   let coursesList = await apiGet("courses");
   courseOfferingCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
   coursesList.forEach(c => {
-    courseOfferingCourseSelect.innerHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}">${c.subject} (${c.unit_category})</option>`;
+    courseOfferingCourseSelect.innerHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}" data-trimester="${c.trimester}">${c.subject} (${c.unit_category}) - ${c.trimester}</option>`;
   });
 }
 
-courseOfferingCourseSelect.addEventListener("change", function() {
+courseOfferingCourseSelect.addEventListener("change", async function() {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption.getAttribute("data-unit-category");
+  const trimester = selectedOption.getAttribute("data-trimester");
   labelLec.style.display = "none";
   labelLab.style.display = "none";
   labelPurelec.style.display = "none";
@@ -271,9 +293,12 @@ courseOfferingCourseSelect.addEventListener("change", function() {
     courseOfferingPurelecRadio.checked = true;
     courseOfferingUnitsInput.value = "3";
   } else if (unitCategory === "Lec/Lab") {
-    // For Lec/Lab courses, we auto-add two entries so ignore unit input.
-    courseOfferingUnitsInput.value = "";
+    labelLec.style.display = "inline-block";
+    labelLab.style.display = "inline-block";
+    courseOfferingLecRadio.checked = true;
+    courseOfferingUnitsInput.value = "2";
   }
+  courseOfferingTrimesterInput.value = trimester || "";
 });
 
 document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
@@ -297,6 +322,7 @@ btnAddCourseOffering.addEventListener("click", async () => {
   labelLab.style.display = "none";
   labelPurelec.style.display = "none";
   courseOfferingUnitsInput.value = "";
+  courseOfferingTrimesterInput.value = "";
   document.getElementById("modal-course-offering-title").textContent = "Add Course Offering";
   await populateCourseOfferingCourses();
   showModal(modalCourseOffering);
@@ -309,6 +335,7 @@ async function renderCourseOfferingTable() {
   offerings.forEach(off => {
     const course = coursesList.find(c => c.id == off.courseId);
     const courseDisplay = course ? course.subject : off.courseId;
+    const trimester = course ? course.trimester : off.trimester;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${off.id}</td>
@@ -316,6 +343,7 @@ async function renderCourseOfferingTable() {
       <td>${off.section}</td>
       <td>${off.type}</td>
       <td>${off.units}</td>
+      <td>${trimester}</td>
       <td>
         <button onclick="editCourseOffering(${off.id})">Edit</button>
         <button onclick="deleteCourseOffering(${off.id})">Delete</button>
@@ -331,24 +359,24 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   const section = courseOfferingSectionInput.value.trim();
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption ? selectedOption.getAttribute("data-unit-category") : "";
+  const trimester = selectedOption ? selectedOption.getAttribute("data-trimester") : "";
   const type = document.querySelector('input[name="courseOfferingType"]:checked') 
                ? document.querySelector('input[name="courseOfferingType"]:checked').value 
                : "";
   const units = courseOfferingUnitsInput.value;
-  if (!courseId || !section) {
+  if (!courseId || !section || !type) {
     alert("Please fill out all fields.");
     return;
   }
   
-  // If the selected course is Lec/Lab and we're adding a new offering, auto-add two entries:
   if (!id && unitCategory === "Lec/Lab") {
-    await apiPost("course_offerings", { courseId, section, type: "Lec", units: 2 });
-    await apiPost("course_offerings", { courseId, section, type: "Lab", units: 1 });
+    await apiPost("course_offerings", { courseId, section, type: "Lec", units: 2, trimester });
+    await apiPost("course_offerings", { courseId, section, type: "Lab", units: 1, trimester });
   } else {
     if (id) {
-      await apiPut("course_offerings", id, { courseId, section, type, units });
+      await apiPut("course_offerings", id, { courseId, section, type, units, trimester });
     } else {
-      await apiPost("course_offerings", { courseId, section, type, units });
+      await apiPost("course_offerings", { courseId, section, type, units, trimester });
     }
   }
   hideModal(modalCourseOffering);
@@ -374,6 +402,7 @@ window.editCourseOffering = async function(id) {
     courseOfferingPurelecRadio.checked = true;
   }
   courseOfferingUnitsInput.value = offering.units;
+  courseOfferingTrimesterInput.value = offering.trimester;
   document.getElementById("modal-course-offering-title").textContent = "Edit Course Offering";
   showModal(modalCourseOffering);
 };
@@ -404,23 +433,29 @@ function buildRoomViewHeader(dayType) {
   timeTh.textContent = "Time";
   headerRow.appendChild(timeTh);
   columns.forEach((roomName) => {
+    const baseRoomName = roomName.replace(/ (A|B)$/, '');
     const th = document.createElement("th");
     const input = document.createElement("input");
     input.type = "text";
     input.classList.add("extra-column-input");
-    input.value = roomName;
-    if (predefinedRooms.includes(roomName)) {
+    input.value = baseRoomName;
+    if (predefinedRooms.includes(baseRoomName)) {
       input.disabled = true;
     } else {
       input.addEventListener("change", () => {
-        const idx = extraColumns.indexOf(roomName);
+        const idx = extraColumns.indexOf(baseRoomName);
         if (idx !== -1) {
           extraColumns[idx] = input.value;
+          renderRoomViewHeaders();
           renderRoomViewTables();
         }
       });
     }
     th.appendChild(input);
+    const abSpan = document.createElement("div");
+    abSpan.textContent = roomName.endsWith(" A") ? "A" : "B";
+    abSpan.style.fontSize = "0.8em";
+    th.appendChild(abSpan);
     headerRow.appendChild(th);
   });
   const addTh = document.createElement("th");
@@ -462,14 +497,17 @@ async function buildRoomViewTable(dayType) {
     const timeTd = document.createElement("td");
     timeTd.textContent = time;
     tr.appendChild(timeTd);
+    
     for (const [index, roomName] of columns.entries()) {
+      const baseRoomName = roomName.replace(/ (A|B)$/, '');
       const td = document.createElement("td");
       td.classList.add("clickable-cell");
       td.setAttribute("data-dayType", dayType);
       td.setAttribute("data-time", time);
       td.setAttribute("data-col", index + 1);
       td.addEventListener("click", () => openRoomViewModal(dayType, time, roomName, index + 1));
-      const room = rooms.find(r => r.name === roomName);
+      
+      const room = rooms.find(r => r.name === baseRoomName);
       let schedule;
       if (room) {
         schedule = schedules.find(sch =>
@@ -495,6 +533,7 @@ async function buildRoomViewTable(dayType) {
       }
       tr.appendChild(td);
     }
+    
     const extraTd = document.createElement("td");
     extraTd.textContent = "";
     tr.appendChild(extraTd);
@@ -536,9 +575,7 @@ async function openRoomViewModal(dayType, time, roomName, col) {
     document.getElementById("roomview-id").value = "";
     document.getElementById("btn-delete-roomview").style.display = "none";
   }
-  // Populate the course dropdown from course_offerings
   await populateRoomViewCourseDropdown();
-  // Pre-select values if editing an existing schedule
   if (existing) {
     document.getElementById("roomview-course").value = existing.courseId;
     document.getElementById("roomview-course").dispatchEvent(new Event("change"));
@@ -609,7 +646,7 @@ async function populateRoomViewCourseDropdown() {
   uniqueCourseIds.forEach(courseId => {
     const course = courses.find(c => c.id == courseId);
     if (course) {
-      roomviewCourseSelect.innerHTML += `<option value="${course.id}" data-unit-category="${course.unit_category}">${course.subject} (${course.unit_category}) - ${course.units}</option>`;
+      roomviewCourseSelect.innerHTML += `<option value="${course.id}" data-unit-category="${course.unit_category}">${course.subject} (${course.unit_category}) - ${course.trimester}</option>`;
     }
   });
 }
@@ -690,67 +727,86 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
 });
 
 /**************************************************************
- * Complementary Validation for Lec/Lab + Duplicate Check
+ * Complementary Validation for Lec/Lab + Duplicate Check (Separated by A and B)
  **************************************************************/
 async function validateAllComplementary() {
   const schedules = await apiGet("schedules");
-  const lecLabSchedules = schedules.filter(sch => sch.unitType === "Lec" || sch.unitType === "Lab");
-  let conflictMessages = [];
-  
-  for (let sch of lecLabSchedules) {
-    const complementary = (sch.unitType === "Lec") ? "Lab" : "Lec";
-    const compEntry = schedules.find(s =>
-      s.dayType === sch.dayType &&
-      s.courseId === sch.courseId &&
-      s.section === sch.section &&
-      s.unitType === complementary
-    );
-    if (!compEntry) {
-      const courses = await apiGet("courses");
-      const course = courses.find(c => c.id === sch.courseId);
-      const subjectName = course ? course.subject : "Unknown Subject";
-      const section = sch.section || "Unknown Section";
-      const times = getTimesArray(sch.dayType);
-      const currentIndex = times.indexOf(sch.time);
-      let recommendedTime = "None available";
-      const sectionSchedules = schedules.filter(s => s.dayType === sch.dayType && s.section === sch.section);
-      for (let i = currentIndex + 1; i < times.length; i++) {
-        if (!sectionSchedules.some(s => s.time === times[i])) {
-          recommendedTime = times[i];
-          break;
+  const rooms = await apiGet("rooms");
+  const courses = await apiGet("courses");
+  const allColumns = getAllRoomColumns();
+
+  const groupA = schedules.filter(sch => {
+    const colIndex = sch.col - 1;
+    return colIndex >= 0 && allColumns[colIndex].endsWith(" A");
+  });
+  const groupB = schedules.filter(sch => {
+    const colIndex = sch.col - 1;
+    return colIndex >= 0 && allColumns[colIndex].endsWith(" B");
+  });
+
+  function validateGroup(schedulesGroup, groupName) {
+    const lecLabSchedules = schedulesGroup.filter(sch => sch.unitType === "Lec" || sch.unitType === "Lab");
+    let conflictMessages = [];
+
+    for (let sch of lecLabSchedules) {
+      const complementary = sch.unitType === "Lec" ? "Lab" : "Lec";
+      const compEntry = schedulesGroup.find(s =>
+        s.dayType === sch.dayType &&
+        s.courseId === sch.courseId &&
+        s.section === sch.section &&
+        s.unitType === complementary
+      );
+      if (!compEntry) {
+        const course = courses.find(c => c.id === sch.courseId);
+        const subjectName = course ? course.subject : "Unknown Subject";
+        const section = sch.section || "Unknown Section";
+        const times = getTimesArray(sch.dayType);
+        const currentIndex = times.indexOf(sch.time);
+        let recommendedTime = "None available";
+        const sectionSchedules = schedulesGroup.filter(s => s.dayType === sch.dayType && s.section === sch.section);
+        for (let i = currentIndex + 1; i < times.length; i++) {
+          if (!sectionSchedules.some(s => s.time === times[i])) {
+            recommendedTime = times[i];
+            break;
+          }
+        }
+        if (sch.unitType === "Lec") {
+          conflictMessages.push(`[${groupName}] Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+        } else {
+          conflictMessages.push(`[${groupName}] Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
         }
       }
-      if (sch.unitType === "Lec") {
-        conflictMessages.push(`Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
-      } else {
-        conflictMessages.push(`Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+    }
+
+    let scheduleMap = new Map();
+    for (let sch of schedulesGroup) {
+      if (sch.courseId && sch.section) {
+        let key = `${sch.dayType}|${sch.time}|${sch.courseId}|${sch.section}`;
+        if (!scheduleMap.has(key)) scheduleMap.set(key, []);
+        scheduleMap.get(key).push(sch);
       }
     }
+    scheduleMap.forEach((group, key) => {
+      if (group.length > 1) {
+        const parts = key.split('|');
+        const time = parts[1];
+        const courseId = parts[2];
+        const section = parts[3];
+        const course = courses.find(c => c.id == courseId);
+        const subjectName = course ? course.subject : "Unknown Subject";
+        conflictMessages.push(`[${groupName}] Duplicate schedule: ${subjectName} - (${section}) is scheduled at ${time} more than once.`);
+      }
+    });
+
+    return conflictMessages;
   }
-  
-  const courses = await apiGet("courses");
-  let scheduleMap = new Map();
-  for (let sch of schedules) {
-    if (sch.courseId && sch.section) {
-      let key = `${sch.dayType}|${sch.time}|${sch.courseId}|${sch.section}`;
-      if (!scheduleMap.has(key)) scheduleMap.set(key, []);
-      scheduleMap.get(key).push(sch);
-    }
-  }
-  scheduleMap.forEach((group, key) => {
-    if (group.length > 1) {
-      const parts = key.split('|');
-      const time = parts[1];
-      const courseId = parts[2];
-      const section = parts[3];
-      const course = courses.find(c => c.id == courseId);
-      const subjectName = course ? course.subject : "Unknown Subject";
-      conflictMessages.push(`Duplicate schedule: ${subjectName} - (${section}) is scheduled at ${time} more than once.`);
-    }
-  });
-  
-  if (conflictMessages.length > 0) {
-    showConflictNotification(conflictMessages.join("\n"));
+
+  const groupAConflicts = validateGroup(groupA, "Group A");
+  const groupBConflicts = validateGroup(groupB, "Group B");
+  const allConflicts = [...groupAConflicts, ...groupBConflicts];
+
+  if (allConflicts.length > 0) {
+    showConflictNotification(allConflicts.join("\n"));
   } else {
     clearConflictNotification();
   }

@@ -51,6 +51,7 @@ db.serialize(() => {
     color TEXT,
     unitType TEXT,
     section TEXT,
+    section2 TEXT,  -- Added second section field
     FOREIGN KEY(facultyId) REFERENCES faculty(id),
     FOREIGN KEY(roomId) REFERENCES rooms(id),
     FOREIGN KEY(courseId) REFERENCES courses(id)
@@ -104,8 +105,8 @@ app.post('/api/:table', (req, res) => {
       params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester];
       break;
     case 'schedules':
-      query = 'INSERT INTO schedules (dayType, time, col, facultyId, roomId, courseId, color, unitType, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section];
+      query = 'INSERT INTO schedules (dayType, time, col, facultyId, roomId, courseId, color, unitType, section, section2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2];
       break;
     case 'course_offerings':
       query = 'INSERT INTO course_offerings (courseId, section, type, units, trimester) VALUES (?, ?, ?, ?, ?)';
@@ -149,8 +150,8 @@ app.put('/api/:table/:id', (req, res) => {
       params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, id];
       break;
     case 'schedules':
-      query = 'UPDATE schedules SET dayType = ?, time = ?, col = ?, facultyId = ?, roomId = ?, courseId = ?, color = ?, unitType = ?, section = ? WHERE id = ?';
-      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, id];
+      query = 'UPDATE schedules SET dayType = ?, time = ?, col = ?, facultyId = ?, roomId = ?, courseId = ?, color = ?, unitType = ?, section = ?, section2 = ? WHERE id = ?';
+      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2, id];
       break;
     case 'course_offerings':
       query = 'UPDATE course_offerings SET courseId = ?, section = ?, type = ?, units = ?, trimester = ? WHERE id = ?';

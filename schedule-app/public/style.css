@@ -69,6 +69,58 @@ nav button:hover {
   background-color: #1565c0;
 }
 
+/* Trimester Tabs */
+.trimester-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.tab-btn {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.tab-btn.active {
+  background-color: #1e88e5;
+  color: #fff;
+  border-color: #1e88e5;
+}
+
+/* Controls for search, filter, sort */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.controls input[type="text"],
+.controls select {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 200px;
+}
+
+.controls input[type="text"]:focus,
+.controls select:focus {
+  outline: none;
+  border-color: #1e88e5;
+  box-shadow: 0 0 0 2px rgba(30,136,229,0.2);
+}
+
 /* Tables */
 table {
   margin: 20px auto;
@@ -103,12 +155,20 @@ table tr:hover td {
   background-color: #fafafa;
 }
 
+/* Schedule table container */
+.table-container {
+  width: 95%;
+  max-width: 1400px;
+  margin: 20px auto;
+  overflow-x: auto;
+  position: relative;
+}
+
 /* Schedule table styling */
 .schedule-table {
-  width: 95%;
-  max-width: 1200px;
+  width: 100%;
   border-collapse: collapse;
-  margin: 20px auto;
+  table-layout: auto;
 }
 
 .schedule-table th,
@@ -127,45 +187,34 @@ table tr:hover td {
   transition: background-color 0.2s;
   text-align: center;
   padding: 6px;
+  min-width: 160px;
 }
 
 .schedule-table td.clickable-cell:hover {
   background-color: #e9f1fb;
 }
 
-/* Room view table styling */
-#room-view-mwf-table,
-#room-view-tths-table {
-  width: 98%;
-  max-width: 1400px; /* Increased to accommodate wider cells */
-  border-collapse: collapse;
-  margin: 20px auto;
-  table-layout: fixed;
-}
-
-#room-view-mwf-table th,
-#room-view-mwf-table td,
-#room-view-tths-table th,
-#room-view-tths-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-#room-view-mwf-table th,
-#room-view-tths-table th {
+/* Fixed time column */
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+  position: sticky;
+  left: 0;
+  width: 120px;
+  min-width: 120px;
   background-color: #f4f4f4;
+  z-index: 2;
+  border-right: 2px solid #ddd;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
-#room-view-mwf-table th div,
-#room-view-tths-table th div {
-  color: #666;
-  margin-top: 2px;
+/* Room columns */
+.schedule-table th:not(:first-child),
+.schedule-table td:not(:first-child) {
+  min-width: 160px;
 }
 
 /* Header input fields for room view */
-#room-view-mwf-table th input.extra-column-input,
-#room-view-tths-table th input.extra-column-input {
+.schedule-table th input.extra-column-input {
   width: 100%;
   padding: 4px;
   box-sizing: border-box;
@@ -177,30 +226,16 @@ table tr:hover td {
   text-overflow: ellipsis;
 }
 
-/* Add separation between room pairs (every 2nd column after the time column) */
-#room-view-mwf-table th:nth-child(2n+3),
-#room-view-mwf-table td:nth-child(2n+3),
-#room-view-tths-table th:nth-child(2n+3),
-#room-view-tths-table td:nth-child(2n+3) {
-  border-right: 3px solid #888; /* Thicker border for separation between pairs */
+.schedule-table th div {
+  color: #666;
+  margin-top: 2px;
+  font-size: 0.8em;
 }
 
-/* Make cells wider but maintain full-width */
-#room-view-mwf-table th:not(:first-child),
-#room-view-mwf-table td:not(:first-child),
-#room-view-tths-table th:not(:first-child),
-#room-view-tths-table td:not(:first-child) {
-  min-width: 160px; /* Increased from 140px to make cells wider */
-  width: 75px;
-}
-
-/* Keep time column fixed */
-#room-view-mwf-table th:first-child,
-#room-view-mwf-table td:first-child,
-#room-view-tths-table th:first-child,
-#room-view-tths-table td:first-child {
-  width: 160px;
-  min-width: 160px;
+/* Add separation between room pairs */
+.schedule-table th:nth-child(2n+3),
+.schedule-table td:nth-child(2n+3) {
+  border-right: 3px solid #888;
 }
 
 /* Radio group styling for the Course modal */

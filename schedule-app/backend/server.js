@@ -1,189 +1,309 @@
-const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Schedule App (Faculty/Room/Course CRUD)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Schedule Management</h1>
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+  <nav>
+    <button id="btn-faculty">Manage Faculty</button>
+    <button id="btn-courses">Manage Courses</button>
+    <button id="btn-course-offering">Manage Course Offering</button>
+    <button id="btn-room-view">Room View</button>
+  </nav>
 
-// Middleware to parse JSON and serve static files
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+  <section id="section-faculty" class="hidden">
+    <h2>Manage Faculty</h2>
+    <button id="btn-add-faculty" class="add-btn">Add New Faculty</button>
+    <table id="table-faculty">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Faculty Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-// Initialize (or create) SQLite database
-const db = new sqlite3.Database('./database.db', (err) => {
-  if (err) {
-    console.error("Error opening database", err);
-  } else {
-    console.log("Connected to SQLite database.");
-  }
-});
+  <section id="section-courses" class="hidden">
+    <h2>Manage Courses</h2>
+    <button id="btn-add-course" class="add-btn">Add New Course</button>
+    <div class="controls">
+      <input type="text" id="course-search" placeholder="Search courses..." />
+      <select id="course-filter-degree">
+        <option value="">Filter by Degree</option>
+        <option value="BSIT">BSIT</option>
+        <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+        <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+        <option value="BSIT(ERP)">BSIT(ERP)</option>
+        <option value="BSCS">BSCS</option>
+        <option value="BSDA">BSDA</option>
+        <option value="BMMA">BMMA</option>
+      </select>
+      <select id="course-sort">
+        <option value="">Sort by</option>
+        <option value="subject-asc">Subject (A-Z)</option>
+        <option value="subject-desc">Subject (Z-A)</option>
+        <option value="units-asc">Units (Low-High)</option>
+        <option value="units-desc">Units (High-Low)</option>
+      </select>
+    </div>
+    <table id="table-courses">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Subject</th>
+          <th>Unit Category</th>
+          <th>Units</th>
+          <th>Year Level</th>
+          <th>Degree</th>
+          <th>Trimester</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-// Create tables if they do not exist
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS faculty (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL
-  )`);
+  <section id="section-course-offering" class="hidden">
+    <h2>Manage Course Offering</h2>
+    <button id="btn-add-courseOffering" class="add-btn">Add New Course Offering</button>
+    <div class="trimester-tabs">
+      <button class="tab-btn active" data-trimester="all">All</button>
+      <button class="tab-btn" data-trimester="1st Trimester">1st Trimester</button>
+      <button class="tab-btn" data-trimester="2nd Trimester">2nd Trimester</button>
+      <button class="tab-btn" data-trimester="3rd Trimester">3rd Trimester</button>
+    </div>
+    <div class="controls">
+      <input type="text" id="offering-search" placeholder="Search offerings..." />
+      <select id="offering-filter-type">
+        <option value="">Filter by Type</option>
+        <option value="Lec">Lec</option>
+        <option value="Lab">Lab</option>
+        <option value="PureLec">PureLec</option>
+      </select>
+      <select id="offering-sort">
+        <option value="">Sort by</option>
+        <option value="course-asc">Course (A-Z)</option>
+        <option value="course-desc">Course (Z-A)</option>
+        <option value="section-asc">Section (A-Z)</option>
+        <option value="section-desc">Section (Z-A)</option>
+      </select>
+    </div>
+    <table id="table-courseOffering">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Course ID</th>
+          <th>Section</th>
+          <th>Type</th>
+          <th>Units</th>
+          <th>Trimester</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-  db.run(`CREATE TABLE IF NOT EXISTS rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL
-  )`);
+  <section id="section-room-view" class="hidden">
+    <h2>Room View</h2>
+    <button id="btn-manage-rooms" class="add-btn">Manage Rooms</button>
+    <button id="btn-view-sections" class="add-btn">View Sections</button>
+    <div class="trimester-tabs">
+      <button class="tab-btn active" data-trimester="1st Trimester">1st Trimester</button>
+      <button class="tab-btn" data-trimester="2nd Trimester">2nd Trimester</button>
+      <button class="tab-btn" data-trimester="3rd Trimester">3rd Trimester</button>
+    </div>
+    <!-- MWF ROOM VIEW -->
+    <h3>MWF Room View</h3>
+    <div class="table-container">
+      <table class="schedule-table" id="room-view-mwf-table">
+        <thead id="room-view-mwf-thead"></thead>
+        <tbody id="room-view-mwf-tbody"></tbody>
+      </table>
+    </div>
+    <!-- TTHS ROOM VIEW -->
+    <h3>TTHS Room View</h3>
+    <div class="table-container">
+      <table class="schedule-table" id="room-view-tths-table">
+        <thead id="room-view-tths-thead"></thead>
+        <tbody id="room-view-tths-tbody"></tbody>
+      </table>
+    </div>
+  </section>
 
-  db.run(`CREATE TABLE IF NOT EXISTS courses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    subject TEXT NOT NULL,
-    unit_category TEXT NOT NULL,
-    units TEXT NOT NULL,
-    year_level TEXT NOT NULL,
-    degree TEXT NOT NULL,
-    trimester TEXT NOT NULL
-  )`);
+  <div id="conflict-popup" class="hidden"></div>
 
-  db.run(`CREATE TABLE IF NOT EXISTS schedules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dayType TEXT NOT NULL,
-    time TEXT NOT NULL,
-    col INTEGER NOT NULL,
-    facultyId INTEGER,
-    roomId INTEGER,
-    courseId INTEGER,
-    color TEXT,
-    unitType TEXT,
-    section TEXT,
-    section2 TEXT,  -- Added second section field
-    FOREIGN KEY(facultyId) REFERENCES faculty(id),
-    FOREIGN KEY(roomId) REFERENCES rooms(id),
-    FOREIGN KEY(courseId) REFERENCES courses(id)
-  )`);
+  <div class="modal hidden" id="modal-faculty">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-faculty">×</span>
+      <h3 id="modal-faculty-title">Add/Edit Faculty</h3>
+      <label for="faculty-name">Faculty Name:</label>
+      <input type="text" id="faculty-name" />
+      <input type="hidden" id="faculty-id" />
+      <button id="btn-save-faculty" class="save-btn">Save</button>
+    </div>
+  </div>
 
-  db.run(`CREATE TABLE IF NOT EXISTS course_offerings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    courseId INTEGER NOT NULL,
-    section TEXT NOT NULL,
-    type TEXT NOT NULL,
-    units INTEGER NOT NULL,
-    trimester TEXT NOT NULL,
-    FOREIGN KEY(courseId) REFERENCES courses(id)
-  )`);
-});
+  <div class="modal hidden" id="modal-course">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-course">×</span>
+      <h3 id="modal-course-title">Add/Edit Course</h3>
+      <label for="course-subject">Subject:</label>
+      <input type="text" id="course-subject" />
+      <label>Unit Category:</label>
+      <div class="radio-group">
+        <label for="purelec"><input type="radio" id="purelec" name="unitCategory" value="PureLec" checked /> PureLec</label>
+        <label for="leclab"><input type="radio" id="leclab" name="unitCategory" value="Lec/Lab" /> Lec/Lab</label>
+      </div>
+      <label for="course-units">Units:</label>
+      <input type="text" id="course-units" />
+      <label>Year Level:</label>
+      <div class="radio-group">
+        <label for="year-1st"><input type="radio" id="year-1st" name="yearLevel" value="1st yr" checked /> 1st yr</label>
+        <label for="year-2nd"><input type="radio" id="year-2nd" name="yearLevel" value="2nd yr" /> 2nd yr</label>
+        <label for="year-3rd"><input type="radio" id="year-3rd" name="yearLevel" value="3rd yr" /> 3rd yr</label>
+      </div>
+      <label for="course-degree">Degree:</label>
+      <select id="course-degree">
+        <option value="BSIT">BSIT</option>
+        <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+        <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+        <option value="BSIT(ERP)">BSIT(ERP)</option>
+        <option value="BSCS">BSCS</option>
+        <option value="BSDA">BSDA</option>
+        <option value="BMMA">BMMA</option>
+      </select>
+      <label for="course-trimester">Trimester:</label>
+      <select id="course-trimester">
+        <option value="1st Trimester">1st Trimester</option>
+        <option value="2nd Trimester">2nd Trimester</option>
+        <option value="3rd Trimester">3rd Trimester</option>
+      </select>
+      <input type="hidden" id="course-id" />
+      <button id="btn-save-course" class="save-btn">Save</button>
+    </div>
+  </div>
 
-// Only allow valid table names
-const validTables = ['faculty', 'rooms', 'courses', 'schedules', 'course_offerings'];
-function isValidTable(table) {
-  return validTables.includes(table);
-}
+  <div class="modal hidden" id="modal-course-offering">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-course-offering">×</span>
+      <h3 id="modal-course-offering-title">Add/Edit Course Offering</h3>
+      <label for="courseOffering-course">Course:</label>
+      <select id="courseOffering-course">
+        <option value="">-- Select Course --</option>
+      </select>
+      <label for="courseOffering-section">Section:</label>
+      <input type="text" id="courseOffering-section" placeholder="e.g., 1A" />
+      <label>Type:</label>
+      <div class="radio-group" id="courseOffering-type-group">
+        <label id="label-lec" style="display:none;"><input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" /> Lec</label>
+        <label id="label-lab" style="display:none;"><input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" /> Lab</label>
+        <label id="label-purelec" style="display:none;"><input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" /> PureLec</label>
+      </div>
+      <label for="courseOffering-units">Units:</label>
+      <input type="text" id="courseOffering-units" readonly />
+      <label for="courseOffering-trimester">Trimester:</label>
+      <input type="text" id="courseOffering-trimester" readonly />
+      <input type="hidden" id="courseOffering-id" />
+      <button id="btn-save-courseOffering" class="save-btn">Save</button>
+    </div>
+  </div>
 
-// GET all items from a table
-app.get('/api/:table', (req, res) => {
-  const table = req.params.table;
-  if (!isValidTable(table)) return res.status(400).json({ error: 'Invalid table name' });
-  db.all(`SELECT * FROM ${table}`, [], (err, rows) => {
-    if (err) res.status(500).json({ error: err.message });
-    else res.json(rows);
-  });
-});
+  <div class="modal hidden" id="modal-roomview">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-roomview">×</span>
+      <h3 id="modal-roomview-title">Assign Course Offering</h3>
+      <input type="hidden" id="roomview-id" />
+      <input type="hidden" id="roomview-dayType" />
+      <input type="hidden" id="roomview-time" />
+      <input type="hidden" id="roomview-col" />
+      <input type="hidden" id="roomview-roomId" />
+      <label for="roomview-course">Course Offering:</label>
+      <select id="roomview-course">
+        <option value="">-- Select Course Offering --</option>
+      </select>
+      <label for="roomview-section">Section 1:</label>
+      <select id="roomview-section">
+        <option value="">-- Select Section --</option>
+      </select>
+      <label for="roomview-section2">Section 2 (Optional):</label>
+      <select id="roomview-section2">
+        <option value="">-- Select Section --</option>
+      </select>
+      <button id="btn-save-roomview" class="save-btn">Save</button>
+      <button id="btn-delete-roomview" class="delete-btn" style="display: none;">Delete</button>
+    </div>
+  </div>
 
-// POST a new item into a table
-app.post('/api/:table', (req, res) => {
-  const table = req.params.table;
-  if (!isValidTable(table)) return res.status(400).json({ error: 'Invalid table name' });
-  const data = req.body;
-  let query = '', params = [];
+  <div class="modal hidden" id="modal-manage-rooms">
+    <div class="modal-content" style="width: 500px;">
+      <span class="close-button" data-close-modal="modal-manage-rooms">×</span>
+      <h3>Manage Rooms</h3>
+      <button id="btn-add-room" class="add-btn" style="margin-bottom: 20px;">Add New Room</button>
+      <table id="table-rooms">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Room Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-  switch (table) {
-    case 'faculty':
-      query = 'INSERT INTO faculty (name) VALUES (?)';
-      params = [data.name];
-      break;
-    case 'rooms':
-      query = 'INSERT INTO rooms (name) VALUES (?)';
-      params = [data.name];
-      break;
-    case 'courses':
-      query = 'INSERT INTO courses (subject, unit_category, units, year_level, degree, trimester) VALUES (?, ?, ?, ?, ?, ?)';
-      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester];
-      break;
-    case 'schedules':
-      query = 'INSERT INTO schedules (dayType, time, col, facultyId, roomId, courseId, color, unitType, section, section2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2];
-      break;
-    case 'course_offerings':
-      query = 'INSERT INTO course_offerings (courseId, section, type, units, trimester) VALUES (?, ?, ?, ?, ?)';
-      params = [data.courseId, data.section, data.type, data.units, data.trimester];
-      break;
-    default:
-      return res.status(400).json({ error: 'Invalid table' });
-  }
-  
-  db.run(query, params, function(err) {
-    if (err) res.status(500).json({ error: err.message });
-    else {
-      const newId = this.lastID;
-      db.get(`SELECT * FROM ${table} WHERE id = ?`, [newId], (err, row) => {
-        if (err) res.status(500).json({ error: err.message });
-        else res.json(row);
-      });
-    }
-  });
-});
+  <div class="modal hidden" id="modal-add-room">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-add-room">×</span>
+      <h3 id="modal-room-title">Add New Room</h3>
+      <label for="room-name">Room Name:</label>
+      <input type="text" id="room-name" placeholder="e.g., M308" />
+      <input type="hidden" id="room-id" />
+      <button id="btn-save-room" class="save-btn">Save</button>
+    </div>
+  </div>
 
-// PUT (update) an item in a table
-app.put('/api/:table/:id', (req, res) => {
-  const table = req.params.table;
-  const id = req.params.id;
-  if (!isValidTable(table)) return res.status(400).json({ error: 'Invalid table name' });
-  const data = req.body;
-  let query = '', params = [];
-  
-  switch (table) {
-    case 'faculty':
-      query = 'UPDATE faculty SET name = ? WHERE id = ?';
-      params = [data.name, id];
-      break;
-    case 'rooms':
-      query = 'UPDATE rooms SET name = ? WHERE id = ?';
-      params = [data.name, id];
-      break;
-    case 'courses':
-      query = 'UPDATE courses SET subject = ?, unit_category = ?, units = ?, year_level = ?, degree = ?, trimester = ? WHERE id = ?';
-      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, id];
-      break;
-    case 'schedules':
-      query = 'UPDATE schedules SET dayType = ?, time = ?, col = ?, facultyId = ?, roomId = ?, courseId = ?, color = ?, unitType = ?, section = ?, section2 = ? WHERE id = ?';
-      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2, id];
-      break;
-    case 'course_offerings':
-      query = 'UPDATE course_offerings SET courseId = ?, section = ?, type = ?, units = ?, trimester = ? WHERE id = ?';
-      params = [data.courseId, data.section, data.type, data.units, data.trimester, id];
-      break;
-    default:
-      return res.status(400).json({ error: 'Invalid table' });
-  }
-  
-  db.run(query, params, function(err) {
-    if (err) res.status(500).json({ error: err.message });
-    else {
-      db.get(`SELECT * FROM ${table} WHERE id = ?`, [id], (err, row) => {
-        if (err) res.status(500).json({ error: err.message });
-        else res.json(row);
-      });
-    }
-  });
-});
+  <div class="modal hidden" id="modal-section-selection">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-section-selection">×</span>
+      <h3>Select Section</h3>
+      <select id="section-select">
+        <option value="">-- Select Section --</option>
+      </select>
+      <button id="btn-view-section-schedule" class="save-btn">View Schedule</button>
+    </div>
+  </div>
 
-// DELETE an item from a table
-app.delete('/api/:table/:id', (req, res) => {
-  const table = req.params.table;
-  const id = req.params.id;
-  if (!isValidTable(table)) return res.status(400).json({ error: 'Invalid table name' });
-  db.run(`DELETE FROM ${table} WHERE id = ?`, [id], function(err) {
-    if (err) res.status(500).json({ error: err.message });
-    else res.json({ success: true });
-  });
-});
+  <div class="modal hidden" id="modal-section-schedule">
+    <div class="modal-content" style="width: 600px;">
+      <span class="close-button" data-close-modal="modal-section-schedule">×</span>
+      <h3 id="modal-section-schedule-title">Section Schedule</h3>
+      <table id="section-schedule-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Subject</th>
+            <th>Type</th>
+            <th>Room</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+  <script src="script.js"></script>
+</body>
+</html>

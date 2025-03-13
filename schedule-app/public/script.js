@@ -127,7 +127,9 @@ btnAddFaculty.addEventListener("click", () => {
 btnSaveFaculty.addEventListener("click", async () => {
   const id = facultyIdInput.value;
   const name = facultyNameInput.value.trim();
-  if (!name) {
+ 
+
+if (!name) {
     alert("Enter a faculty name.");
     return;
   }
@@ -353,7 +355,7 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption.getAttribute("data-unit-category");
   const trimester = selectedOption.getAttribute("data-trimester");
-  labelLec.style.display = "none";
+  labelLec.style.HELPdisplay = "none";
   labelLab.style.display = "none";
   labelPurelec.style.display = "none";
   if (unitCategory === "PureLec") {
@@ -620,14 +622,13 @@ async function renderRoomViewTables() {
         let schedule = filteredSchedules.find(sch =>
           sch.dayType === dayType &&
           sch.time === time &&
-          sch.col === index + 1 &&
-          (!room || sch.roomId === room.id)
+          sch.col === index + 1
         );
 
         if (schedule) {
           const course = courses.find(c => c.id === schedule.courseId);
           const sections = [schedule.section, schedule.section2].filter(s => s).join(", ");
-          td.textContent = course ? `${course.subject} - (${sections}) - Type: ${schedule.unitType}` : "No Course";
+          td.textContent = course ? `${course.subject} - ${sections} - Type: ${schedule.unitType}` : "No Course";
           td.style.backgroundColor = schedule.color || "#e9f1fb";
         } else {
           td.textContent = "";
@@ -646,26 +647,17 @@ const modalRoomView = document.getElementById("modal-roomview");
 
 async function openRoomViewModal(dayType, time, roomName, col) {
   let roomsList = await apiGet("rooms");
-  const room = roomsList.find(r => r.name === roomName.replace(/ (A|B)$/, ''));
+  const baseRoomName = roomName.replace(/ (A|B)$/, '');
+  const room = roomsList.find(r => r.name === baseRoomName);
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
-  let existing;
-  if (room) {
-    existing = schedules.find(sch =>
-      sch.dayType === dayType &&
-      sch.time === time &&
-      sch.roomId === room.id &&
-      sch.col === col &&
-      courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester
-    );
-  } else {
-    existing = schedules.find(sch =>
-      sch.dayType === dayType &&
-      sch.time === time &&
-      sch.col === col &&
-      courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester
-    );
-  }
+  let existing = schedules.find(sch =>
+    sch.dayType === dayType &&
+    sch.time === time &&
+    sch.col === col &&
+    courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester
+  );
+
   document.getElementById("roomview-dayType").value = dayType;
   document.getElementById("roomview-time").value = time;
   document.getElementById("roomview-col").value = col;
@@ -758,7 +750,7 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
   const courseOfferingId = roomviewCourseSelect.value;
   const section = roomviewSectionSelect.value;
   const section2 = roomviewSection2Select.value || null;
-  
+
   if (!courseOfferingId || !section) {
     showConflictNotification("Please select a course offering and at least one section before saving.");
     return;
@@ -785,34 +777,52 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
   const roomId = document.getElementById("roomview-roomId").value;
 
   const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses"); // Fetch courses here to ensure it's defined
-
+  const courses = await apiGet("courses");
+  const rooms = await apiGet("rooms");
+  const allColumns = await getAllRoomColumns();
   const existingId = document.getElementById("roomview-id").value;
+
   const sectionsToCheck = [section, section2].filter(s => s);
   for (const sec of sectionsToCheck) {
-    const existingDuplicate = schedules.find(sch =>
-      sch.dayType === dayType &&
-      sch.time === time &&
+    const existingSubjectSectionUnitType = schedules.find(sch =>
       sch.courseId === courseId &&
       (sch.section === sec || sch.section2 === sec) &&
       sch.unitType === unitType &&
-      sch.col === parseInt(col, 10) &&
+      courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester &&
       sch.id.toString() !== existingId
     );
-    if (existingDuplicate) {
+    if (existingSubjectSectionUnitType) {
+      const course = courses.find(c => c.id === courseId);
+      const subjectName = course ? course.subject : "Unknown Subject";
+      const room = rooms.find(r => r.id === existingSubjectSectionUnitType.roomId);
+      const baseRoomName = room ? room.name : "Unassigned";
+      const colIndex = existingSubjectSectionUnitType.col - 1;
+      const fullRoomName = colIndex >= 0 && colIndex < allColumns.length 
+        ? allColumns[colIndex] 
+        : `${baseRoomName} (Unknown Group)`;
+      const group = fullRoomName.endsWith(" A") ? "Group A" : fullRoomName.endsWith(" B") ? "Group B" : "Unknown Group";
       showConflictNotification(
-        `Section ${sec} for this course offering is already scheduled in this timeslot and room.\nPlease choose a different timeslot, room, or section.`
+        `Duplicate detected: ${subjectName} - (${sec}) - ${unitType} is already scheduled in ${currentRoomViewTrimester}.\n` +
+        `Details: Days: ${existingSubjectSectionUnitType.dayType}, Room: ${fullRoomName}, Group: ${group}, Time: ${existingSubjectSectionUnitType.time}`
       );
       return;
     }
   }
 
-  const existing = schedules.find(sch => 
-    sch.dayType === dayType && 
-    sch.time === time && 
+  const existingTimeRoomConflict = schedules.find(sch =>
+    sch.dayType === dayType &&
+    sch.time === time &&
     sch.col === parseInt(col, 10) &&
-    courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester
+    courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester &&
+    sch.id.toString() !== existingId
   );
+  if (existingTimeRoomConflict) {
+    showConflictNotification(
+      `This timeslot (${time}) and room are already occupied in ${dayType}. Please choose a different timeslot or room.`
+    );
+    return;
+  }
+
   const data = {
     dayType,
     time,
@@ -826,8 +836,8 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     section2
   };
 
-  if (existing) {
-    await apiPut("schedules", existing.id, data);
+  if (existingId) {
+    await apiPut("schedules", existingId, data);
   } else {
     await apiPost("schedules", data);
   }
@@ -935,6 +945,107 @@ window.deleteRoom = async function(id) {
 };
 
 /**************************************************************
+ * SECTION VIEW FUNCTIONALITY
+ **************************************************************/
+const btnViewSections = document.getElementById("btn-view-sections");
+const modalSectionSelection = document.getElementById("modal-section-selection");
+const sectionSelect = document.getElementById("section-select");
+const btnViewSectionSchedule = document.getElementById("btn-view-section-schedule");
+const modalSectionSchedule = document.getElementById("modal-section-schedule");
+const sectionScheduleTableBody = document.querySelector("#section-schedule-table tbody");
+
+btnViewSections.addEventListener("click", async () => {
+  await populateSectionDropdown();
+  showModal(modalSectionSelection);
+});
+
+async function populateSectionDropdown() {
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const filteredSchedules = schedules.filter(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    return course && course.trimester === currentRoomViewTrimester;
+  });
+  
+  const sections = new Set();
+  filteredSchedules.forEach(sch => {
+    if (sch.section) sections.add(sch.section);
+    if (sch.section2) sections.add(sch.section2);
+  });
+  
+  sectionSelect.innerHTML = `<option value="">-- Select Section --</option>`;
+  [...sections].sort().forEach(section => {
+    sectionSelect.innerHTML += `<option value="${section}">${section}</option>`;
+  });
+}
+
+btnViewSectionSchedule.addEventListener("click", async () => {
+  const selectedSection = sectionSelect.value;
+  if (!selectedSection) {
+    showConflictNotification("Please select a section.");
+    return;
+  }
+  
+  hideModal(modalSectionSelection);
+  await renderSectionSchedule(selectedSection);
+  showModal(modalSectionSchedule);
+});
+
+async function renderSectionSchedule(section) {
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const rooms = await apiGet("rooms");
+  const allColumns = await getAllRoomColumns();
+  
+  const sectionSchedules = schedules.filter(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    return course && 
+           course.trimester === currentRoomViewTrimester && 
+           (sch.section === section || sch.section2 === section);
+  });
+
+  sectionSchedules.sort((a, b) => {
+    const dayOrder = { "MWF": 1, "TTHS": 2 };
+    const timeOrder = getTimesArray("MWF").indexOf(a.time) - getTimesArray("MWF").indexOf(b.time);
+    return dayOrder[a.dayType] - dayOrder[b.dayType] || timeOrder;
+  });
+
+  document.getElementById("modal-section-schedule-title").textContent = `Schedule for Section ${section}`;
+  sectionScheduleTableBody.innerHTML = "";
+
+  sectionSchedules.forEach(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    const colIndex = sch.col - 1; // col is 1-based, array is 0-based
+    let fullRoomName = "Unassigned";
+    
+    // Use column position as primary source for room name
+    if (colIndex >= 0 && colIndex < allColumns.length) {
+      fullRoomName = allColumns[colIndex];
+    } else if (sch.roomId) {
+      // Fallback to room database if column index is invalid
+      const room = rooms.find(r => r.id === sch.roomId);
+      fullRoomName = room ? room.name : "Unassigned";
+    }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${sch.dayType}</td>
+      <td>${sch.time}</td>
+      <td>${course ? course.subject : "Unknown"}</td>
+      <td>${sch.unitType}</td>
+      <td>${fullRoomName}</td>
+    `;
+    sectionScheduleTableBody.appendChild(tr);
+  });
+
+  if (sectionSchedules.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="5">No schedule found for this section.</td>`;
+    sectionScheduleTableBody.appendChild(tr);
+  }
+}
+
+/**************************************************************
  * Complementary Validation for Lec/Lab + Duplicate Check
  **************************************************************/
 async function validateAllComplementary() {
@@ -998,7 +1109,7 @@ async function validateAllComplementary() {
       if (sch.courseId) {
         const sections = [sch.section, sch.section2].filter(s => s);
         for (const sec of sections) {
-          let key = `${sch.dayType}|${sch.time}|${sch.courseId}|${sec}`;
+          let key = `${sch.dayType}|${sch.time}|${sch.courseId}|${sec}|${sch.unitType}`;
           if (!scheduleMap.has(key)) scheduleMap.set(key, []);
           scheduleMap.get(key).push(sch);
         }
@@ -1010,9 +1121,10 @@ async function validateAllComplementary() {
         const time = parts[1];
         const courseId = parts[2];
         const section = parts[3];
+        const unitType = parts[4];
         const course = courses.find(c => c.id == courseId);
         const subjectName = course ? course.subject : "Unknown Subject";
-        conflictMessages.push(`[${groupName}] Duplicate schedule: ${subjectName} - (${section}) is scheduled at ${time} more than once.`);
+        conflictMessages.push(`[${groupName}] Duplicate schedule: ${subjectName} - (${section}) - ${unitType} is scheduled at ${time} more than once.`);
       }
     });
 

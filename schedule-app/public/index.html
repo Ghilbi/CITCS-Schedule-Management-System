@@ -117,6 +117,7 @@
   <section id="section-room-view" class="hidden">
     <h2>Room View</h2>
     <button id="btn-manage-rooms" class="add-btn">Manage Rooms</button>
+    <button id="btn-view-sections" class="add-btn">View Sections</button>
     <div class="trimester-tabs">
       <button class="tab-btn active" data-trimester="1st Trimester">1st Trimester</button>
       <button class="tab-btn" data-trimester="2nd Trimester">2nd Trimester</button>
@@ -270,6 +271,36 @@
       <input type="text" id="room-name" placeholder="e.g., M308" />
       <input type="hidden" id="room-id" />
       <button id="btn-save-room" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-section-selection">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-section-selection">×</span>
+      <h3>Select Section</h3>
+      <select id="section-select">
+        <option value="">-- Select Section --</option>
+      </select>
+      <button id="btn-view-section-schedule" class="save-btn">View Schedule</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-section-schedule">
+    <div class="modal-content" style="width: 600px;">
+      <span class="close-button" data-close-modal="modal-section-schedule">×</span>
+      <h3 id="modal-section-schedule-title">Section Schedule</h3>
+      <table id="section-schedule-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Subject</th>
+            <th>Type</th>
+            <th>Room</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 

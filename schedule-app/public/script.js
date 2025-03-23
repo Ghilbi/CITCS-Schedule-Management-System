@@ -58,12 +58,14 @@ const sectionFaculty = document.getElementById("section-faculty");
 const sectionCourses = document.getElementById("section-courses");
 const sectionCourseOffering = document.getElementById("section-course-offering");
 const sectionRoomView = document.getElementById("section-room-view");
+const sectionSectionView = document.getElementById("section-section-view"); // New Section Added
 
 function hideAllSections() {
   sectionFaculty.classList.add("hidden");
   sectionCourses.classList.add("hidden");
   sectionCourseOffering.classList.add("hidden");
   sectionRoomView.classList.add("hidden");
+  sectionSectionView.classList.add("hidden"); // Added to hide function
 }
 
 document.getElementById("btn-faculty").addEventListener("click", async () => {
@@ -81,6 +83,13 @@ document.getElementById("btn-course-offering").addEventListener("click", async (
   sectionCourseOffering.classList.remove("hidden");
   await renderCourseOfferingTable();
   setupTrimesterTabs();
+});
+// New Event Listener for Section View
+document.getElementById("btn-section-view").addEventListener("click", async () => {
+  hideAllSections();
+  sectionSectionView.classList.remove("hidden");
+  setupSectionViewTrimesterTabs();
+  await renderSectionViewTables();
 });
 document.getElementById("btn-room-view").addEventListener("click", async () => {
   hideAllSections();
@@ -292,7 +301,7 @@ window.editCourse = async function(id) {
 
 window.deleteCourse = async function(id) {
   if (!confirm("Are you sure?")) return;
-  await apiDelete("courses", id);
+  fulfilledapiDelete("courses", id);
   await renderCoursesTable();
   await validateAllComplementary();
 };
@@ -355,7 +364,7 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption.getAttribute("data-unit-category");
   const trimester = selectedOption.getAttribute("data-trimester");
-  labelLec.style.HELPdisplay = "none";
+  labelLec.style.display = "none";
   labelLab.style.display = "none";
   labelPurelec.style.display = "none";
   if (unitCategory === "PureLec") {
@@ -945,7 +954,7 @@ window.deleteRoom = async function(id) {
 };
 
 /**************************************************************
- * SECTION VIEW FUNCTIONALITY
+ * SECTION VIEW FUNCTIONALITY (Existing)
  **************************************************************/
 const btnViewSections = document.getElementById("btn-view-sections");
 const modalSectionSelection = document.getElementById("modal-section-selection");
@@ -1044,6 +1053,300 @@ async function renderSectionSchedule(section) {
     sectionScheduleTableBody.appendChild(tr);
   }
 }
+
+/**************************************************************
+ * NEW SECTION VIEW: Trimester Tabs, Headers, and Tables
+ **************************************************************/
+let currentSectionViewTrimester = "1st Trimester";
+
+function setupSectionViewTrimesterTabs() {
+  const tabs = document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", async () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      currentSectionViewTrimester = tab.getAttribute("data-trimester");
+      await renderSectionViewTables();
+    });
+  });
+}
+
+async function getUniqueSectionsForTrimester(trimester) {
+  const offerings = await apiGet("course_offerings");
+  const sections = new Set();
+  offerings.forEach(off => {
+    if (off.trimester === trimester) {
+      sections.add(off.section);
+    }
+  });
+  return [...sections].sort();
+}
+
+async function renderSectionViewTables() {
+  const sections = await getUniqueSectionsForTrimester(currentSectionViewTrimester);
+  const times = [
+    "7:30 - 8:50", "8:50 - 10:10", "10:10 - 11:30", "11:30 - 12:50",
+    "12:50 - 2:10", "2:10 - 3:30", "3:30 - 4:50", "4:50 - 6:10", "6:10 - 7:30"
+  ];
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const allColumns = await getAllRoomColumns();
+
+  const dayTypes = ["MWF", "TTHS"];
+  for (const dayType of dayTypes) {
+    const thead = document.getElementById(
+      dayType === "MWF" ? "section-view-mwf-thead" : "section-view-tths-thead"
+    );
+    const tbody = document.getElementById(
+      dayType === "MWF" ? "section-view-mwf-tbody" : "section-view-tths-tbody"
+    );
+    
+    // Build Header
+    thead.innerHTML = "";
+    const headerRow = document.createElement("tr");
+    const timeTh = document.createElement("th");
+    timeTh.textContent = "Time";
+    headerRow.appendChild(timeTh);
+    sections.forEach(section => {
+      const th = document.createElement("th");
+      th.textContent = section;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    // Build Table Body
+    tbody.innerHTML = "";
+    for (let time of times) {
+      const tr = document.createElement("tr");
+      const timeTd = document.createElement("td");
+      timeTd.textContent = time;
+      tr.appendChild(timeTd);
+      
+      for (const section of sections) {
+        const td = document.createElement("td");
+        td.classList.add("clickable-cell");
+        td.setAttribute("data-dayType", dayType);
+        td.setAttribute("data-time", time);
+        td.setAttribute("data-section", section);
+        td.addEventListener("click", () => openSectionViewModal(dayType, time, section));
+        
+        const scheduleEntries = schedules.filter(sch => {
+          const course = courses.find(c => c.id === sch.courseId);
+          return course && course.trimester === currentSectionViewTrimester &&
+                 sch.dayType === dayType &&
+                 sch.time === time &&
+                 (sch.section === section || sch.section2 === section);
+        });
+        
+        if (scheduleEntries.length > 0) {
+          const sch = scheduleEntries[0]; // Assuming one schedule per section per time slot
+          const course = courses.find(c => c.id === sch.courseId);
+          const colIndex = sch.col - 1;
+          const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown";
+          td.textContent = course ? `${course.subject} - ${sch.unitType} - ${roomName}` : "Unknown";
+          td.style.backgroundColor = sch.color || "#e9f1fb";
+        } else {
+          td.textContent = "";
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  }
+}
+
+/**************************************************************
+ * NEW SECTION VIEW Modal: Open, populate, and save
+ **************************************************************/
+const modalSectionView = document.getElementById("modal-sectionview");
+
+async function openSectionViewModal(dayType, time, section) {
+  document.getElementById("sectionview-dayType").value = dayType;
+  document.getElementById("sectionview-time").value = time;
+  document.getElementById("sectionview-section").value = section;
+  
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const existing = schedules.find(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    return course && course.trimester === currentSectionViewTrimester &&
+           sch.dayType === dayType &&
+           sch.time === time &&
+           (sch.section === section || sch.section2 === section);
+  });
+  
+  if (existing) {
+    document.getElementById("sectionview-id").value = existing.id;
+    document.getElementById("btn-delete-sectionview").style.display = "block";
+  } else {
+    document.getElementById("sectionview-id").value = "";
+    document.getElementById("btn-delete-sectionview").style.display = "none";
+  }
+  
+  await populateSectionViewCourseOfferingDropdown(section);
+  await populateSectionViewRoomDropdown();
+  
+  if (existing) {
+    const offerings = await apiGet("course_offerings");
+    const matchingOffering = offerings.find(off => 
+      off.courseId === existing.courseId && 
+      off.type === existing.unitType &&
+      off.section === section
+    );
+    if (matchingOffering) {
+      document.getElementById("sectionview-courseOffering").value = matchingOffering.id;
+      await populateSectionViewSection2Dropdown(matchingOffering.courseId, matchingOffering.type);
+      document.getElementById("sectionview-section2").value = existing.section2 || "";
+    }
+    const allColumns = await getAllRoomColumns();
+    const colIndex = existing.col - 1;
+    if (colIndex >= 0 && colIndex < allColumns.length) {
+      document.getElementById("sectionview-room").value = allColumns[colIndex];
+    }
+  } else {
+    document.getElementById("sectionview-courseOffering").value = "";
+    document.getElementById("sectionview-section2").innerHTML = `<option value="">-- Select Section --</option>`;
+    document.getElementById("sectionview-room").value = "";
+  }
+  showModal(modalSectionView);
+}
+
+async function populateSectionViewCourseOfferingDropdown(section) {
+  const offerings = await apiGet("course_offerings");
+  const courses = await apiGet("courses");
+  const sectionviewCourseOfferingSelect = document.getElementById("sectionview-courseOffering");
+  sectionviewCourseOfferingSelect.innerHTML = `<option value="">-- Select Course Offering --</option>`;
+  
+  const filteredOfferings = offerings.filter(off => off.section === section && off.trimester === currentSectionViewTrimester);
+  
+  filteredOfferings.forEach(off => {
+    const course = courses.find(c => c.id === off.courseId);
+    if (course) {
+      const displayText = `${course.subject} - ${off.type}`;
+      sectionviewCourseOfferingSelect.innerHTML += `<option value="${off.id}" data-course-id="${off.courseId}" data-unit-type="${off.type}">${displayText}</option>`;
+    }
+  });
+}
+
+async function populateSectionViewSection2Dropdown(courseId, unitType) {
+  const offerings = await apiGet("course_offerings");
+  const sectionviewSection2Select = document.getElementById("sectionview-section2");
+  sectionviewSection2Select.innerHTML = `<option value="">-- Select Section --</option>`;
+  
+  const relatedOfferings = offerings.filter(off => off.courseId === courseId && off.type === unitType && off.trimester === currentSectionViewTrimester);
+  const distinctSections = [...new Set(relatedOfferings.map(off => off.section))];
+  distinctSections.forEach(sec => {
+    if (sec !== document.getElementById("sectionview-section").value) {
+      sectionviewSection2Select.innerHTML += `<option value="${sec}">${sec}</option>`;
+    }
+  });
+}
+
+async function populateSectionViewRoomDropdown() {
+  const allColumns = await getAllRoomColumns();
+  const sectionviewRoomSelect = document.getElementById("sectionview-room");
+  sectionviewRoomSelect.innerHTML = `<option value="">-- Select Room --</option>`;
+  allColumns.forEach(roomName => {
+    sectionviewRoomSelect.innerHTML += `<option value="${roomName}">${roomName}</option>`;
+  });
+}
+
+document.getElementById("sectionview-courseOffering").addEventListener("change", async function() {
+  const selectedOption = this.options[this.selectedIndex];
+  const courseId = selectedOption.getAttribute("data-course-id");
+  const unitType = selectedOption.getAttribute("data-unit-type");
+  if (courseId && unitType) {
+    await populateSectionViewSection2Dropdown(courseId, unitType);
+  } else {
+    document.getElementById("sectionview-section2").innerHTML = `<option value="">-- Select Section --</option>`;
+  }
+});
+
+document.getElementById("btn-save-sectionview").addEventListener("click", async () => {
+  const sectionviewCourseOfferingSelect = document.getElementById("sectionview-courseOffering");
+  const sectionviewSection2Select = document.getElementById("sectionview-section2");
+  const sectionviewRoomSelect = document.getElementById("sectionview-room");
+  const courseOfferingId = sectionviewCourseOfferingSelect.value;
+  const section2 = sectionviewSection2Select.value || null;
+  const roomName = sectionviewRoomSelect.value;
+  
+  if (!courseOfferingId || !roomName) {
+    showConflictNotification("Please select a course offering and a room.");
+    return;
+  }
+  
+  const offerings = await apiGet("course_offerings");
+  const selectedOffering = offerings.find(off => off.id == courseOfferingId);
+  if (!selectedOffering) {
+    showConflictNotification("Invalid course offering selected.");
+    return;
+  }
+  
+  const courseId = selectedOffering.courseId;
+  const unitType = selectedOffering.type;
+  const section = document.getElementById("sectionview-section").value;
+  
+  const dayType = document.getElementById("sectionview-dayType").value;
+  const time = document.getElementById("sectionview-time").value;
+  
+  const allColumns = await getAllRoomColumns();
+  const col = allColumns.indexOf(roomName) + 1; // 1-based index
+  
+  if (col === 0) {
+    showConflictNotification("Invalid room selected.");
+    return;
+  }
+  
+  const baseRoomName = roomName.replace(/ (A|B)$/, '');
+  const rooms = await apiGet("rooms");
+  const room = rooms.find(r => r.name === baseRoomName);
+  const roomId = room ? room.id : null;
+  
+  const schedules = await apiGet("schedules");
+  const existingId = document.getElementById("sectionview-id").value;
+  const conflict = schedules.find(sch => 
+    sch.dayType === dayType &&
+    sch.time === time &&
+    sch.col === col &&
+    sch.id.toString() !== existingId
+  );
+  if (conflict) {
+    showConflictNotification("This room is already scheduled at this time.");
+    return;
+  }
+  
+  const data = {
+    dayType,
+    time,
+    col,
+    facultyId: null,
+    roomId,
+    courseId,
+    color: "#e9f1fb",
+    unitType,
+    section,
+    section2
+  };
+  
+  if (existingId) {
+    await apiPut("schedules", existingId, data);
+  } else {
+    await apiPost("schedules", data);
+  }
+  hideModal(modalSectionView);
+  await renderSectionViewTables();
+  await validateAllComplementary();
+});
+
+document.getElementById("btn-delete-sectionview").addEventListener("click", async () => {
+  const id = document.getElementById("sectionview-id").value;
+  if (!id) return;
+  if (!confirm("Are you sure you want to delete this schedule entry?")) return;
+  await apiDelete("schedules", id);
+  hideModal(modalSectionView);
+  await renderSectionViewTables();
+  await validateAllComplementary();
+});
 
 /**************************************************************
  * Complementary Validation for Lec/Lab + Duplicate Check

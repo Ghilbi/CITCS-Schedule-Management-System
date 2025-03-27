@@ -77,7 +77,16 @@ nav button:hover {
   margin: 20px 0;
 }
 
-.tab-btn {
+/* Year Level Tabs */
+.year-level-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 20px;
+}
+
+.tab-btn,
+.year-tab-btn {
   background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -87,11 +96,13 @@ nav button:hover {
   transition: background-color 0.2s, border-color 0.2s;
 }
 
-.tab-btn:hover {
+.tab-btn:hover,
+.year-tab-btn:hover {
   background-color: #f0f0f0;
 }
 
-.tab-btn.active {
+.tab-btn.active,
+.year-tab-btn.active {
   background-color: #1e88e5;
   color: #fff;
   border-color: #1e88e5;

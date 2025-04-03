@@ -92,23 +92,17 @@ document.getElementById("btn-section-view").addEventListener("click", async () =
   hideAllSections();
   // Then show section view and initialize it
   sectionSectionView.classList.remove("hidden");
-  // Reset tabs to their initial state
-  document.querySelectorAll("#section-section-view .tab-btn").forEach(t => {
-    t.classList.remove("active");
-  });
-  document.querySelector("#section-section-view .tab-btn[data-trimester='1st Trimester']").classList.add("active");
-  currentSectionViewTrimester = "1st Trimester";
   
-  document.querySelectorAll("#section-section-view .year-tab-btn").forEach(t => {
-    t.classList.remove("active");
-  });
-  document.querySelector("#section-section-view .year-tab-btn[data-year='1st yr']").classList.add("active");
+  // Set default values if needed
+  currentSectionViewTrimester = "1st Trimester";
   currentSectionViewYearLevel = "1st yr";
   
-  // Set up tab event listeners
+  // Set up tab event listeners (this will also handle the active classes)
   setupSectionViewTrimesterTabs();
+  
   // Render the tables with the current settings
   await renderSectionViewTables();
+  await validateAllComplementary();
 });
 document.getElementById("btn-room-view").addEventListener("click", async () => {
   hideAllSections();
@@ -370,14 +364,145 @@ async function populateCourseOfferingCourses() {
   let coursesList = await apiGet("courses");
   courseOfferingCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
   
+  // Get the selected degree filter value
+  const degreeFilter = document.getElementById("courseOffering-degree").value;
+  
+  // Filter by trimester if needed
   if (currentTrimesterFilter !== "all") {
     coursesList = coursesList.filter(c => c.trimester === currentTrimesterFilter);
+  }
+  
+  // Filter by degree if selected
+  if (degreeFilter) {
+    coursesList = coursesList.filter(c => c.degree === degreeFilter);
   }
   
   coursesList.forEach(c => {
     courseOfferingCourseSelect.innerHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}" data-trimester="${c.trimester}">${c.subject} (${c.unit_category}) - ${c.trimester}</option>`;
   });
 }
+
+// Add event listener for the degree dropdown
+document.getElementById("courseOffering-degree").addEventListener("change", populateCourseOfferingCourses);
+
+// Add event listener for the "Add All Courses" button
+document.getElementById("btn-add-all-courses").addEventListener("click", async function() {
+  const selectedDegree = document.getElementById("courseOffering-degree").value;
+  const selectedYearLevel = document.querySelector('input[name="bulkAddYearLevel"]:checked').value;
+  
+  if (!selectedDegree) {
+    alert("Please select a degree first.");
+    return;
+  }
+  
+  // Get the sections text and parse it
+  const sectionsInput = document.getElementById("courseOffering-multiple-sections").value.trim();
+  if (!sectionsInput) {
+    alert("Please enter at least one section.");
+    return;
+  }
+  
+  // Split by comma and trim each section
+  const sections = sectionsInput.split(',').map(section => section.trim()).filter(section => section);
+  
+  if (sections.length === 0) {
+    alert("Please enter at least one valid section.");
+    return;
+  }
+  
+  // Build confirmation message
+  let confirmMessage = `This will add ALL courses for the ${selectedDegree} degree`;
+  if (selectedYearLevel) {
+    confirmMessage += ` in ${selectedYearLevel}`;
+  }
+  confirmMessage += ` with ${sections.length} section(s): ${sections.join(', ')}. Continue?`;
+  
+  // Get confirmation from the user
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  try {
+    // Get all courses for the selected degree
+    let courses = await apiGet("courses");
+    
+    // Filter by the selected degree and current trimester
+    courses = courses.filter(course => 
+      course.degree === selectedDegree && 
+      (currentTrimesterFilter === "all" || course.trimester === currentTrimesterFilter)
+    );
+    
+    // Apply year level filter if one is selected
+    if (selectedYearLevel) {
+      courses = courses.filter(course => course.year_level === selectedYearLevel);
+    }
+    
+    if (courses.length === 0) {
+      let message = `No courses found for ${selectedDegree}`;
+      if (selectedYearLevel) {
+        message += ` in ${selectedYearLevel}`;
+      }
+      message += ` in the current trimester filter.`;
+      alert(message);
+      return;
+    }
+    
+    // Count how many courses will be added
+    let addedCount = 0;
+    
+    // Add each course as a course offering for each section
+    for (const course of courses) {
+      for (const section of sections) {
+        if (course.unit_category === "PureLec") {
+          await apiPost("course_offerings", {
+            courseId: course.id,
+            section: section,
+            type: "PureLec",
+            units: 3,
+            trimester: course.trimester
+          });
+          addedCount++;
+        } else if (course.unit_category === "Lec/Lab") {
+          // Add lecture part
+          await apiPost("course_offerings", {
+            courseId: course.id,
+            section: section,
+            type: "Lec",
+            units: 2,
+            trimester: course.trimester
+          });
+          
+          // Add lab part
+          await apiPost("course_offerings", {
+            courseId: course.id,
+            section: section,
+            type: "Lab",
+            units: 1,
+            trimester: course.trimester
+          });
+          addedCount += 2; // Counting both Lec and Lab
+        }
+      }
+    }
+    
+    // Close the modal and refresh the table
+    hideModal(modalCourseOffering);
+    await renderCourseOfferingTable();
+    
+    // Build success message
+    let successMessage = `Successfully added ${addedCount} course offerings for ${selectedDegree}`;
+    if (selectedYearLevel) {
+      successMessage += ` in ${selectedYearLevel}`;
+    }
+    successMessage += ` with ${sections.length} section(s).`;
+    
+    // Show success message
+    alert(successMessage);
+  } catch (error) {
+    console.error("Error adding all courses:", error);
+    alert("An error occurred while adding all courses. Please try again.");
+  }
+});
 
 courseOfferingCourseSelect.addEventListener("change", async function() {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
@@ -416,6 +541,9 @@ btnAddCourseOffering.addEventListener("click", async () => {
   courseOfferingIdInput.value = "";
   courseOfferingCourseSelect.value = "";
   courseOfferingSectionInput.value = "";
+  document.getElementById("courseOffering-degree").value = ""; // Reset degree filter
+  document.querySelector('input[id="year-all"]').checked = true; // Reset year level to "All Years"
+  document.getElementById("courseOffering-multiple-sections").value = "1A"; // Reset to default value
   labelLec.style.display = "none";
   labelLab.style.display = "none";
   labelPurelec.style.display = "none";
@@ -534,6 +662,12 @@ window.editCourseOffering = async function(id) {
   const offerings = await apiGet("course_offerings");
   const offering = offerings.find(off => off.id == id);
   if (!offering) return;
+  
+  // Reset the degree filter when editing
+  document.getElementById("courseOffering-degree").value = "";
+  // Reset year level to "All Years"
+  document.querySelector('input[id="year-all"]').checked = true;
+  
   courseOfferingIdInput.value = offering.id;
   await populateCourseOfferingCourses();
   courseOfferingCourseSelect.value = offering.courseId;
@@ -820,10 +954,10 @@ async function populateRoomViewCourseDropdown() {
       if (!seenCombinations.has(combination)) {
         seenCombinations.add(combination);
         uniqueOfferings.push(off);
-      }
+    }
     });
   });
-  
+
   // Add the offerings to the dropdown
   uniqueOfferings.forEach(off => {
     const course = courses.find(c => c.id === off.courseId);
@@ -880,9 +1014,9 @@ async function populateRoomViewSectionDropdown() {
   
   // Add the sections to the dropdowns
   [...availableSections].forEach(sec => {
-    roomviewSectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`;
-    roomviewSection2Select.innerHTML += `<option value="${sec}">${sec}</option>`;
-  });
+      roomviewSectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`;
+      roomviewSection2Select.innerHTML += `<option value="${sec}">${sec}</option>`;
+    });
 }
 
 document.getElementById("btn-save-roomview").addEventListener("click", async () => {
@@ -931,7 +1065,7 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     return sch.col === 0 && // Section View entries
            sch.dayType === dayType &&
            sch.time === time &&
-           sch.courseId === courseId &&
+      sch.courseId === courseId &&
            sch.unitType === unitType &&
            (sch.section === section || sch.section2 === section ||
             (section2 && (sch.section === section2 || sch.section2 === section2))) &&
@@ -957,8 +1091,8 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     const existingSubjectSectionUnitType = schedules.find(sch => {
       const schCourse = courses.find(c => c.id === sch.courseId);
       return sch.courseId === courseId &&
-        (sch.section === sec || sch.section2 === sec) &&
-        sch.unitType === unitType &&
+      (sch.section === sec || sch.section2 === sec) &&
+      sch.unitType === unitType &&
         schCourse && schCourse.trimester === currentRoomViewTrimester &&
         schCourse.year_level === currentRoomViewYearLevel &&
         sch.col > 0 && // Only check against Room View entries
@@ -986,8 +1120,8 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
   const existingTimeRoomConflict = schedules.find(sch => {
     const schCourse = courses.find(c => c.id === sch.courseId);
     return sch.dayType === dayType &&
-      sch.time === time &&
-      sch.col === parseInt(col, 10) &&
+    sch.time === time &&
+    sch.col === parseInt(col, 10) &&
       schCourse && schCourse.trimester === currentRoomViewTrimester &&
       schCourse.year_level === currentRoomViewYearLevel &&
       sch.col > 0 && // Only check against Room View entries 
@@ -999,11 +1133,11 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     if (conflictCourse) {
       const colIndex = existingTimeRoomConflict.col - 1;
       const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
-      showConflictNotification(
+    showConflictNotification(
         `Room ${roomName} at ${dayType} ${time} already has ${conflictCourse.subject} scheduled.\n` +
         `Please choose a different room, day, or time.`
-      );
-      return;
+    );
+    return;
     }
   }
 
@@ -1223,103 +1357,7 @@ window.deleteRoom = async function(id) {
 /**************************************************************
  * SECTION VIEW FUNCTIONALITY (Existing)
  **************************************************************/
-const btnViewSections = document.getElementById("btn-view-sections");
-const modalSectionSelection = document.getElementById("modal-section-selection");
-const sectionSelect = document.getElementById("section-select");
-const btnViewSectionSchedule = document.getElementById("btn-view-section-schedule");
-const modalSectionSchedule = document.getElementById("modal-section-schedule");
-const sectionScheduleTableBody = document.querySelector("#section-schedule-table tbody");
-
-btnViewSections.addEventListener("click", async () => {
-  await populateSectionDropdown();
-  showModal(modalSectionSelection);
-});
-
-async function populateSectionDropdown() {
-  const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses");
-  const filteredSchedules = schedules.filter(sch => {
-    const course = courses.find(c => c.id === sch.courseId);
-    return course && course.trimester === currentRoomViewTrimester;
-  });
-  
-  const sections = new Set();
-  filteredSchedules.forEach(sch => {
-    if (sch.section) sections.add(sch.section);
-    if (sch.section2) sections.add(sch.section2);
-  });
-  
-  sectionSelect.innerHTML = `<option value="">-- Select Section --</option>`;
-  [...sections].sort().forEach(section => {
-    sectionSelect.innerHTML += `<option value="${section}">${section}</option>`;
-  });
-}
-
-btnViewSectionSchedule.addEventListener("click", async () => {
-  const selectedSection = sectionSelect.value;
-  if (!selectedSection) {
-    showConflictNotification("Please select a section.");
-    return;
-  }
-  
-  hideModal(modalSectionSelection);
-  await renderSectionSchedule(selectedSection);
-  showModal(modalSectionSchedule);
-});
-
-async function renderSectionSchedule(section) {
-  const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses");
-  const rooms = await apiGet("rooms");
-  const allColumns = await getAllRoomColumns();
-  
-  const sectionSchedules = schedules.filter(sch => {
-    const course = courses.find(c => c.id === sch.courseId);
-    return course && 
-           course.trimester === currentRoomViewTrimester && 
-           (sch.section === section || sch.section2 === section);
-  });
-
-  sectionSchedules.sort((a, b) => {
-    const dayOrder = { "MWF": 1, "TTHS": 2 };
-    const timeOrder = getTimesArray("MWF").indexOf(a.time) - getTimesArray("MWF").indexOf(b.time);
-    return dayOrder[a.dayType] - dayOrder[b.dayType] || timeOrder;
-  });
-
-  document.getElementById("modal-section-schedule-title").textContent = `Schedule for Section ${section}`;
-  sectionScheduleTableBody.innerHTML = "";
-
-  sectionSchedules.forEach(sch => {
-    const course = courses.find(c => c.id === sch.courseId);
-    const colIndex = sch.col - 1; // col is 1-based, array is 0-based
-    let fullRoomName = "Unassigned";
-    
-    // Use column position as primary source for room name
-    if (colIndex >= 0 && colIndex < allColumns.length) {
-      fullRoomName = allColumns[colIndex];
-    } else if (sch.roomId) {
-      // Fallback to room database if column index is invalid
-      const room = rooms.find(r => r.id === sch.roomId);
-      fullRoomName = room ? room.name : "Unassigned";
-    }
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${sch.dayType}</td>
-      <td>${sch.time}</td>
-      <td>${course ? course.subject : "Unknown"}</td>
-      <td>${sch.unitType}</td>
-      <td>${fullRoomName}</td>
-    `;
-    sectionScheduleTableBody.appendChild(tr);
-  });
-
-  if (sectionSchedules.length === 0) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="5">No schedule found for this section.</td>`;
-    sectionScheduleTableBody.appendChild(tr);
-  }
-}
+// Removed View Sections functionality
 
 /**************************************************************
  * NEW SECTION VIEW: Trimester Tabs, Headers, and Tables
@@ -1328,54 +1366,49 @@ let currentSectionViewTrimester = "1st Trimester";
 let currentSectionViewYearLevel = "1st yr";
 
 function setupSectionViewTrimesterTabs() {
-  // Clone all tabs to remove existing event listeners
-  const tabs = document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn");
-  tabs.forEach(tab => {
+  // Reset current trimester and year level to default if needed
+  if (!currentSectionViewTrimester) currentSectionViewTrimester = "1st Trimester";
+  if (!currentSectionViewYearLevel) currentSectionViewYearLevel = "1st yr";
+  
+  // Clone and replace the trimester tab elements to remove existing event listeners
+  const trimesterTabs = document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn");
+  trimesterTabs.forEach(tab => {
     const newTab = tab.cloneNode(true);
     tab.parentNode.replaceChild(newTab, tab);
   });
   
-  // Get fresh references to tabs
-  const freshTabs = document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn");
-  freshTabs.forEach(tab => {
-    tab.addEventListener("click", async () => {
-      freshTabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      currentSectionViewTrimester = tab.getAttribute("data-trimester");
-      await renderSectionViewTables();
-    });
-  });
-  
-  // Clone all year tabs to remove existing event listeners
+  // Clone and replace the year level tab elements to remove existing event listeners
   const yearTabs = document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn");
   yearTabs.forEach(tab => {
     const newTab = tab.cloneNode(true);
     tab.parentNode.replaceChild(newTab, tab);
   });
   
-  // Get fresh references to year tabs
-  const freshYearTabs = document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn");
-  freshYearTabs.forEach(tab => {
-    tab.addEventListener("click", async () => {
-      freshYearTabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      currentSectionViewYearLevel = tab.getAttribute("data-year");
+  // Add trimester tab functionality for Section View (to the new elements)
+  document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentSectionViewTrimester = btn.dataset.trimester;
       await renderSectionViewTables();
+      await validateAllComplementary();
     });
   });
-
-  // Ensure only one tab is active by default
-  const activeTab = document.querySelector(`#section-section-view .trimester-tabs .tab-btn[data-trimester="${currentSectionViewTrimester}"]`);
-  if (activeTab) {
-    freshTabs.forEach(t => t.classList.remove("active"));
-    activeTab.classList.add("active");
-  }
   
-  const activeYearTab = document.querySelector(`#section-section-view .year-level-tabs .year-tab-btn[data-year="${currentSectionViewYearLevel}"]`);
-  if (activeYearTab) {
-    freshYearTabs.forEach(t => t.classList.remove("active"));
-    activeYearTab.classList.add("active");
-  }
+  // Add year level tab functionality for Section View (to the new elements)
+  document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentSectionViewYearLevel = btn.dataset.year;
+      await renderSectionViewTables();
+      await validateAllComplementary();
+    });
+  });
+  
+  // Re-apply active classes based on current selections
+  document.querySelector(`#section-section-view .trimester-tabs .tab-btn[data-trimester="${currentSectionViewTrimester}"]`).classList.add("active");
+  document.querySelector(`#section-section-view .year-level-tabs .year-tab-btn[data-year="${currentSectionViewYearLevel}"]`).classList.add("active");
 }
 
 async function getUniqueSectionsForTrimesterAndYear(trimester, yearLevel) {
@@ -1387,7 +1420,7 @@ async function getUniqueSectionsForTrimesterAndYear(trimester, yearLevel) {
     if (off.trimester === trimester) {
       const course = courses.find(c => c.id === off.courseId);
       if (course && course.year_level === yearLevel) {
-        sections.add(off.section);
+      sections.add(off.section);
       }
     }
   });
@@ -1398,7 +1431,7 @@ async function getUniqueSectionsForTrimesterAndYear(trimester, yearLevel) {
 async function renderSectionViewTables() {
   // Clear the container first to prevent duplication
   const container = document.getElementById("section-view-container");
-  container.innerHTML = "";
+  container.innerHTML = ""; // Completely empty the container before adding new content
 
   const sections = await getUniqueSectionsForTrimesterAndYear(currentSectionViewTrimester, currentSectionViewYearLevel);
   
@@ -1419,6 +1452,7 @@ async function renderSectionViewTables() {
   ];
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const allColumns = await getAllRoomColumns();
 
   const dayTypes = ["MWF", "TTHS"];
   for (const dayType of dayTypes) {
@@ -1477,8 +1511,65 @@ async function renderSectionViewTables() {
         if (scheduleEntries.length > 0) {
           const sch = scheduleEntries[0]; // Assuming one schedule per section per time slot
           const course = courses.find(c => c.id === sch.courseId);
-          td.textContent = course ? `${course.subject} - ${sch.unitType}` : "Unknown";
-          td.style.backgroundColor = sch.color || "#e9f1fb";
+          
+          // Find if there's a corresponding Room View entry
+          const roomViewEntry = schedules.find(roomSch => {
+            return roomSch.courseId === sch.courseId &&
+                   roomSch.unitType === sch.unitType &&
+                   roomSch.section === sch.section &&
+                   roomSch.section2 === sch.section2 &&
+                   roomSch.dayType === dayType &&
+                   roomSch.time === time &&
+                   roomSch.col > 0; // Room View entry
+          });
+          
+          let cellContent = course ? `${course.subject} - ${sch.unitType}` : "Unknown";
+          
+          // Add section2 info if it exists
+          if (sch.section2) {
+            cellContent += `<br><span class="secondary-section">With: ${sch.section2}</span>`;
+          }
+          
+          // If there's a room assigned, add it to the display
+          if (roomViewEntry && roomViewEntry.col > 0) {
+            const colIndex = roomViewEntry.col - 1;
+            if (colIndex >= 0 && colIndex < allColumns.length) {
+              const roomName = allColumns[colIndex];
+              cellContent += `<br><span class="room-label">Room: ${roomName}</span>`;
+            }
+          } else {
+            // Highlight missing room assignment with a red border
+            td.style.border = "2px solid #ff6666";
+            cellContent += `<br><span class="room-label" style="color:#ff6666;">No room assigned</span>`;
+          }
+          
+          // Check for missing complementary component (Lec/Lab)
+          if (sch.unitType === "Lec" || sch.unitType === "Lab") {
+            const complementary = sch.unitType === "Lec" ? "Lab" : "Lec";
+            const compEntry = schedules.find(s => {
+              const sCourse = courses.find(c => c.id === s.courseId);
+              return s.col === 0 && // Section view entry
+                     s.dayType === dayType &&
+                     s.courseId === sch.courseId &&
+                     (s.section === section || s.section2 === section) &&
+                     s.unitType === complementary &&
+                     sCourse && 
+                     sCourse.trimester === currentSectionViewTrimester &&
+                     sCourse.year_level === currentSectionViewYearLevel;
+            });
+            
+            if (!compEntry) {
+              // Add warning indicator for missing complementary component
+              td.style.backgroundColor = "#fff3cd"; // Light yellow warning color
+              td.title = `Missing ${complementary} component for this course`;
+              cellContent = `⚠️ ${cellContent}`;
+            }
+          }
+          
+          td.innerHTML = cellContent;
+          if (!td.style.backgroundColor) {
+            td.style.backgroundColor = sch.color || "#e9f1fb";
+          }
         } else {
           td.textContent = "";
         }
@@ -1503,11 +1594,15 @@ async function openSectionViewModal(dayType, time, section) {
   document.getElementById("sectionview-time").value = time;
   document.getElementById("sectionview-section").value = section;
   
+  // Reset room group filter to "All Rooms"
+  document.getElementById("room-group-all").checked = true;
+  
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
   const existing = schedules.find(sch => {
     const course = courses.find(c => c.id === sch.courseId);
     return course && course.trimester === currentSectionViewTrimester &&
+           course && course.year_level === currentSectionViewYearLevel &&
            sch.dayType === dayType &&
            sch.time === time &&
            (sch.section === section || sch.section2 === section) &&
@@ -1536,12 +1631,125 @@ async function openSectionViewModal(dayType, time, section) {
       await populateSectionViewSection2Dropdown(matchingOffering.courseId, matchingOffering.type);
       document.getElementById("sectionview-section2").value = existing.section2 || "";
     }
+    
+    // Check if there's a corresponding entry in Room View
+    const roomViewEntry = schedules.find(sch => {
+      const course = courses.find(c => c.id === sch.courseId);
+      return sch.courseId === existing.courseId &&
+             sch.unitType === existing.unitType &&
+             sch.section === existing.section &&
+             sch.section2 === existing.section2 &&
+             sch.dayType === dayType &&
+             sch.time === time &&
+             course && 
+             course.trimester === currentSectionViewTrimester &&
+             course.year_level === currentSectionViewYearLevel &&
+             sch.col > 0; // Room View entry
+    });
+    
+    await populateSectionViewRoomDropdown();
+    
+    if (roomViewEntry) {
+      // Select the room in the dropdown if it exists in Room View
+      const roomColumns = await getAllRoomColumns();
+      const colIndex = roomViewEntry.col - 1;
+      if (colIndex >= 0 && colIndex < roomColumns.length) {
+        document.getElementById("sectionview-room").value = roomViewEntry.col;
+      }
+    }
   } else {
     document.getElementById("sectionview-courseOffering").value = "";
     document.getElementById("sectionview-section2").innerHTML = `<option value="">-- Select Section --</option>`;
+    await populateSectionViewRoomDropdown();
   }
   showModal(modalSectionView);
 }
+
+// New function to populate the room dropdown
+async function populateSectionViewRoomDropdown() {
+  const roomSelect = document.getElementById("sectionview-room");
+  roomSelect.innerHTML = `<option value="">-- Select Room --</option>`;
+  
+  const dayType = document.getElementById("sectionview-dayType").value;
+  const time = document.getElementById("sectionview-time").value;
+  const existingId = document.getElementById("sectionview-id").value;
+  
+  // Get the selected room group
+  const selectedRoomGroup = document.querySelector('input[name="roomGroup"]:checked').value;
+  
+  const allColumns = await getAllRoomColumns();
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  
+  // Get the existing entry if editing
+  const existingRoomViewEntry = existingId ? 
+    schedules.find(sch => {
+      const course = courses.find(c => c.id === sch.courseId);
+      return sch.id.toString() === existingId && 
+             sch.col === 0 && // Section View entry
+             course && 
+             course.trimester === currentSectionViewTrimester && 
+             course.year_level === currentSectionViewYearLevel;
+    }) : null;
+
+  // Find the corresponding Room View entry if it exists
+  let correspondingRoomCol = null;
+  if (existingRoomViewEntry) {
+    const roomEntry = schedules.find(sch => {
+      const course = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === dayType &&
+             sch.time === time &&
+             sch.courseId === existingRoomViewEntry.courseId &&
+             sch.unitType === existingRoomViewEntry.unitType &&
+             sch.section === existingRoomViewEntry.section &&
+             sch.section2 === existingRoomViewEntry.section2 &&
+             course && 
+             course.trimester === currentSectionViewTrimester && 
+             course.year_level === currentSectionViewYearLevel &&
+             sch.col > 0; // Room View entry
+    });
+    
+    if (roomEntry) {
+      correspondingRoomCol = roomEntry.col;
+    }
+  }
+  
+  // Find all occupied rooms for this day type and time across ALL year levels in the current trimester
+  const occupiedCols = schedules.filter(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    return sch.dayType === dayType &&
+           sch.time === time &&
+           sch.col > 0 && // Room View entries only
+           course && 
+           course.trimester === currentSectionViewTrimester; // Check all year levels in current trimester
+  }).map(sch => sch.col);
+  
+  // Add room columns to the dropdown, excluding occupied ones
+  // (unless it's the one already assigned to this entry)
+  allColumns.forEach((roomName, index) => {
+    const colValue = index + 1; // Column values start at 1
+    
+    // Check if the room belongs to the selected group (if a group is selected)
+    const isGroupA = roomName.endsWith(" A");
+    const isGroupB = roomName.endsWith(" B");
+    const matchesSelectedGroup = 
+      selectedRoomGroup === "all" || 
+      (selectedRoomGroup === "A" && isGroupA) || 
+      (selectedRoomGroup === "B" && isGroupB);
+    
+    // Only add the room if:
+    // 1. It matches the selected group, AND
+    // 2. It's not occupied OR it's the one already assigned to this entry
+    if (matchesSelectedGroup && (!occupiedCols.includes(colValue) || colValue === correspondingRoomCol)) {
+      roomSelect.innerHTML += `<option value="${colValue}">${roomName}</option>`;
+    }
+  });
+}
+
+// Add event listeners for the room group radio buttons
+document.querySelectorAll('input[name="roomGroup"]').forEach(radio => {
+  radio.addEventListener('change', populateSectionViewRoomDropdown);
+});
 
 async function populateSectionViewCourseOfferingDropdown(section) {
   const offerings = await apiGet("course_offerings");
@@ -1567,15 +1775,44 @@ async function populateSectionViewCourseOfferingDropdown(section) {
 
 async function populateSectionViewSection2Dropdown(courseId, type) {
   const offerings = await apiGet("course_offerings");
+  const courses = await apiGet("courses");
   const sectionviewSection2Select = document.getElementById("sectionview-section2");
+  const currentSection = document.getElementById("sectionview-section").value;
+  
   sectionviewSection2Select.innerHTML = `<option value="">-- Select Section --</option>`;
   
-  const relatedOfferings = offerings.filter(off => off.courseId === courseId && off.type === type && off.trimester === currentSectionViewTrimester);
-  const distinctSections = [...new Set(relatedOfferings.map(off => off.section))];
-  distinctSections.forEach(sec => {
-    if (sec !== document.getElementById("sectionview-section").value) {
-      sectionviewSection2Select.innerHTML += `<option value="${sec}">${sec}</option>`;
+  // Get all sections for the current year level and trimester
+  const allSections = [];
+  const sectionsUsed = new Set(); // To track sections we've already added
+  
+  // Add a helper text option explaining the functionality 
+  const helperOption = document.createElement("option");
+  helperOption.disabled = true;
+  helperOption.innerHTML = "--- All sections in current year level ---";
+  helperOption.style.fontStyle = "italic";
+  helperOption.style.color = "#666";
+  sectionviewSection2Select.appendChild(helperOption);
+  
+  // Get unique sections from all offerings in the current year and trimester
+  offerings.forEach(off => {
+    const course = courses.find(c => c.id === off.courseId);
+    if (course && 
+        course.trimester === currentSectionViewTrimester && 
+        course.year_level === currentSectionViewYearLevel && 
+        off.section !== currentSection && 
+        !sectionsUsed.has(off.section)) {
+      
+      sectionsUsed.add(off.section);
+      allSections.push(off.section);
     }
+  });
+  
+  // Sort sections alphabetically
+  allSections.sort();
+  
+  // Add all unique sections to the dropdown
+  allSections.forEach(section => {
+    sectionviewSection2Select.innerHTML += `<option value="${section}">${section}</option>`;
   });
 }
 
@@ -1593,8 +1830,10 @@ document.getElementById("sectionview-courseOffering").addEventListener("change",
 document.getElementById("btn-save-sectionview").addEventListener("click", async () => {
   const sectionviewCourseOfferingSelect = document.getElementById("sectionview-courseOffering");
   const sectionviewSection2Select = document.getElementById("sectionview-section2");
+  const sectionviewRoomSelect = document.getElementById("sectionview-room");
   const courseOfferingId = sectionviewCourseOfferingSelect.value;
   const section2 = sectionviewSection2Select.value || null;
+  const selectedRoomCol = sectionviewRoomSelect.value || null;
   
   if (!courseOfferingId) {
     showConflictNotification("Please select a course offering.");
@@ -1617,6 +1856,8 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
   
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const rooms = await apiGet("rooms");
+  const allColumns = await getAllRoomColumns();
   const existingId = document.getElementById("sectionview-id").value;
   
   // Check for conflicting schedules for this section, but only within Section View
@@ -1635,12 +1876,31 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
     return;
   }
   
-  const data = {
+  // Check if section2 is busy at this time slot
+  if (section2) {
+    const section2Conflict = schedules.find(sch => 
+      sch.dayType === dayType &&
+      sch.time === time &&
+      (sch.section === section2 || sch.section2 === section2) &&
+      sch.col === 0 && // Only check Section View entries
+      sch.id.toString() !== existingId
+    );
+    
+    if (section2Conflict) {
+      const conflictCourse = courses.find(c => c.id === section2Conflict.courseId);
+      showConflictNotification(`Section "${section2}" already has a class at ${dayType} ${time}.\n` +
+        `Conflict with: ${conflictCourse?.subject || 'Unknown'} - ${section2Conflict.unitType}`);
+      return;
+    }
+  }
+  
+  // First, save to Section View
+  const sectionViewData = {
     dayType,
     time,
     col: 0, // Use 0 to indicate Section View entries
     facultyId: null,
-    roomId: null, // No room association
+    roomId: null, // No room association in Section View
     courseId,
     color: "#e9f1fb",
     unitType,
@@ -1648,22 +1908,326 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
     section2
   };
   
+  let sectionViewEntryId;
   if (existingId) {
-    await apiPut("schedules", existingId, data);
+    await apiPut("schedules", existingId, sectionViewData);
+    sectionViewEntryId = existingId;
   } else {
-    await apiPost("schedules", data);
+    const newEntry = await apiPost("schedules", sectionViewData);
+    sectionViewEntryId = newEntry.id;
   }
+  
+  // Now handle the Room View assignment if a room was selected
+  if (selectedRoomCol) {
+    const currentCourse = courses.find(c => c.id === courseId);
+    
+    // If the room has been selected, we need to check if we should create a new entry or update an existing one
+    const existingRoomViewEntry = schedules.find(sch => {
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === dayType &&
+        sch.time === time &&
+        sch.courseId === courseId &&
+        sch.unitType === unitType &&
+        (sch.section === section || sch.section2 === section) &&
+        schCourse && schCourse.trimester === currentSectionViewTrimester &&
+        schCourse.year_level === currentSectionViewYearLevel &&
+        sch.col > 0; // Room View entries
+    });
+    
+    // Run all the room view validations before saving
+    
+    // Check for subjects in different year levels
+    if (currentCourse && currentCourse.year_level !== currentSectionViewYearLevel) {
+      showConflictNotification(`Year level mismatch: This course (${currentCourse?.subject || 'Unknown'}) is for ${currentCourse?.year_level || 'unknown'} year level, but you're currently in ${currentSectionViewYearLevel} view.`);
+      return;
+    }
+    
+    // Check for room conflicts in the same year level
+    const roomConflict = schedules.find(sch => {
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === dayType &&
+        sch.time === time &&
+        sch.col.toString() === selectedRoomCol &&
+        schCourse && schCourse.trimester === currentSectionViewTrimester &&
+        schCourse.year_level === currentSectionViewYearLevel &&
+        sch.col > 0 && // Room View entries
+        sch.id.toString() !== (existingRoomViewEntry ? existingRoomViewEntry.id.toString() : "-1");
+    });
+    
+    if (roomConflict) {
+      const conflictCourse = courses.find(c => c.id === roomConflict.courseId);
+      const colIndex = parseInt(selectedRoomCol) - 1;
+      const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
+      showConflictNotification(
+        `Room ${roomName} at ${dayType} ${time} already has ${conflictCourse?.subject || 'Unknown'} scheduled.\n` +
+        `Please choose a different room, day, or time.`
+      );
+      return;
+    }
+    
+    // Check for cross-year conflicts
+    const crossYearRoomConflict = schedules.find(sch => {
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === dayType &&
+        sch.time === time &&
+        sch.col.toString() === selectedRoomCol &&
+        schCourse && schCourse.trimester === currentSectionViewTrimester &&
+        schCourse.year_level !== currentSectionViewYearLevel && // Different year level
+        sch.col > 0 && // Room View entries
+        sch.id.toString() !== (existingRoomViewEntry ? existingRoomViewEntry.id.toString() : "-1");
+    });
+    
+    if (crossYearRoomConflict) {
+      const conflictCourse = courses.find(c => c.id === crossYearRoomConflict.courseId);
+      const colIndex = parseInt(selectedRoomCol) - 1;
+      const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
+      showConflictNotification(
+        `Cross-year conflict: Room ${roomName} at ${dayType} ${time} is already occupied in ${conflictCourse?.year_level || 'unknown'}.\n` +
+        `Subject: ${conflictCourse?.subject || 'Unknown'}, Trimester: ${currentSectionViewTrimester}.\n` +
+        `Please choose a different room, day, or time.`
+      );
+      return;
+    }
+    
+    // Check for section conflicts across year levels
+    const sectionAssignedInOtherYearLevel = schedules.find(sch => {
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      return (sch.section === section || sch.section2 === section ||
+              (section2 && (sch.section === section2 || sch.section2 === section2))) &&
+        sch.dayType === dayType &&
+        sch.time === time &&
+        schCourse && schCourse.trimester === currentSectionViewTrimester &&
+        schCourse.year_level !== currentSectionViewYearLevel && // Different year level
+        sch.col > 0 && // Room View entries
+        sch.id.toString() !== (existingRoomViewEntry ? existingRoomViewEntry.id.toString() : "-1");
+    });
+    
+    if (sectionAssignedInOtherYearLevel) {
+      const conflictCourse = courses.find(c => c.id === sectionAssignedInOtherYearLevel.courseId);
+      const colIndex = sectionAssignedInOtherYearLevel.col - 1;
+      const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
+      showConflictNotification(
+        `Section conflict: Section ${section} is already assigned to room ${roomName} at ${dayType} ${time} for ${conflictCourse?.year_level || 'unknown'}.\n` +
+        `Subject: ${conflictCourse?.subject || 'Unknown'}, Type: ${sectionAssignedInOtherYearLevel.unitType}\n` +
+        `This is not allowed as a section cannot be in two places at once.`
+      );
+      return;
+    }
+    
+    // Determine the room ID based on the column selected
+    const colIndex = parseInt(selectedRoomCol) - 1;
+    const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : null;
+    const baseRoomName = roomName ? roomName.replace(/ (A|B)$/, '') : null;
+    let roomId = null;
+    
+    if (baseRoomName) {
+      const room = rooms.find(r => r.name === baseRoomName);
+      if (room) {
+        roomId = room.id;
+      }
+    }
+    
+    // Save to Room View
+    const roomViewData = {
+      dayType,
+      time,
+      col: parseInt(selectedRoomCol),
+      facultyId: null,
+      roomId: roomId,
+      courseId,
+      color: "#e9f1fb",
+      unitType,
+      section,
+      section2
+    };
+    
+    if (existingRoomViewEntry) {
+      await apiPut("schedules", existingRoomViewEntry.id, roomViewData);
+    } else {
+      await apiPost("schedules", roomViewData);
+    }
+  } else {
+    // If no room is selected but there was a room view entry before, delete it
+    const existingRoomViewEntry = schedules.find(sch => {
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === dayType &&
+        sch.time === time &&
+        sch.courseId === courseId &&
+        sch.unitType === unitType &&
+        (sch.section === section || sch.section2 === section) &&
+        schCourse && schCourse.trimester === currentSectionViewTrimester &&
+        schCourse.year_level === currentSectionViewYearLevel &&
+        sch.col > 0; // Room View entries
+    });
+    
+    if (existingRoomViewEntry) {
+      // Remove the room assignment
+      await apiDelete("schedules", existingRoomViewEntry.id);
+    }
+  }
+  
   hideModal(modalSectionView);
-  await renderSectionViewTables();
+  
+  // Only update the specific time slot that was changed, rather than refreshing the entire view
+  const sectionDayType = document.getElementById("sectionview-dayType").value;
+  const sectionTime = document.getElementById("sectionview-time").value;
+  const sectionName = document.getElementById("sectionview-section").value;
+  
+  // Get and update the specific cell that was changed
+  await updateSectionViewCell(sectionDayType, sectionTime, sectionName);
+  
+  // Update Room View as well since they're connected
+  await renderRoomViewTables();
+  await validateAllComplementary();
 });
+
+// Function to update a specific cell in the Section View table
+async function updateSectionViewCell(dayType, time, section) {
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const allColumns = await getAllRoomColumns();
+  
+  // Find the target cell in the table
+  const targetCell = document.querySelector(`.clickable-cell[data-daytype="${dayType}"][data-time="${time}"][data-section="${section}"]`);
+  if (!targetCell) return;
+  
+  // Find the schedule for this cell
+  const scheduleEntries = schedules.filter(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    return course && 
+           course.trimester === currentSectionViewTrimester &&
+           course.year_level === currentSectionViewYearLevel &&
+           sch.dayType === dayType &&
+           sch.time === time &&
+           (sch.section === section || sch.section2 === section) &&
+           sch.col === 0; // Only show Section View entries (col = 0)
+  });
+  
+  // Reset the cell styling
+  targetCell.style.backgroundColor = "";
+  targetCell.style.border = "";
+  targetCell.title = "";
+  
+  if (scheduleEntries.length > 0) {
+    const sch = scheduleEntries[0]; // Assuming one schedule per section per time slot
+    const course = courses.find(c => c.id === sch.courseId);
+    
+    // Find if there's a corresponding Room View entry
+    const roomViewEntry = schedules.find(roomSch => {
+      return roomSch.courseId === sch.courseId &&
+             roomSch.unitType === sch.unitType &&
+             roomSch.section === sch.section &&
+             roomSch.section2 === sch.section2 &&
+             roomSch.dayType === dayType &&
+             roomSch.time === time &&
+             roomSch.col > 0; // Room View entry
+    });
+    
+    let cellContent = course ? `${course.subject} - ${sch.unitType}` : "Unknown";
+    
+    // Add section2 info if it exists
+    if (sch.section2) {
+      cellContent += `<br><span class="secondary-section">With: ${sch.section2}</span>`;
+    }
+    
+    // If there's a room assigned, add it to the display
+    if (roomViewEntry && roomViewEntry.col > 0) {
+      const colIndex = roomViewEntry.col - 1;
+      if (colIndex >= 0 && colIndex < allColumns.length) {
+        const roomName = allColumns[colIndex];
+        cellContent += `<br><span class="room-label">Room: ${roomName}</span>`;
+      }
+    } else {
+      // Highlight missing room assignment with a red border
+      targetCell.style.border = "2px solid #ff6666";
+      cellContent += `<br><span class="room-label" style="color:#ff6666;">No room assigned</span>`;
+    }
+    
+    // Check for missing complementary component (Lec/Lab)
+    if (sch.unitType === "Lec" || sch.unitType === "Lab") {
+      const complementary = sch.unitType === "Lec" ? "Lab" : "Lec";
+      const compEntry = schedules.find(s => {
+        const sCourse = courses.find(c => c.id === s.courseId);
+        return s.col === 0 && // Section view entry
+               s.dayType === dayType &&
+               s.courseId === sch.courseId &&
+               (s.section === section || s.section2 === section) &&
+               s.unitType === complementary &&
+               sCourse && 
+               sCourse.trimester === currentSectionViewTrimester &&
+               sCourse.year_level === currentSectionViewYearLevel;
+      });
+      
+      if (!compEntry) {
+        // Add warning indicator for missing complementary component
+        targetCell.style.backgroundColor = "#fff3cd"; // Light yellow warning color
+        targetCell.title = `Missing ${complementary} component for this course`;
+        cellContent = `⚠️ ${cellContent}`;
+      }
+    }
+    
+    targetCell.innerHTML = cellContent;
+    if (!targetCell.style.backgroundColor) {
+      targetCell.style.backgroundColor = sch.color || "#e9f1fb";
+    }
+  } else {
+    targetCell.textContent = "";
+  }
+}
 
 document.getElementById("btn-delete-sectionview").addEventListener("click", async () => {
   const id = document.getElementById("sectionview-id").value;
   if (!id) return;
   if (!confirm("Are you sure you want to delete this schedule entry?")) return;
-  await apiDelete("schedules", id);
+  
+  // Get the existing entry details before deletion
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const existingEntry = schedules.find(sch => sch.id.toString() === id);
+  
+  // Save the values we need before deletion
+  let dayType, time, section = "";
+  if (existingEntry) {
+    dayType = existingEntry.dayType;
+    time = existingEntry.time;
+    section = existingEntry.section;
+    
+    // Delete the Section View entry
+    await apiDelete("schedules", id);
+    
+    // Check if there's a corresponding entry in Room View and delete it too
+    const courseId = existingEntry.courseId;
+    const unitType = existingEntry.unitType;
+    const section2 = existingEntry.section2;
+    
+    const roomViewEntry = schedules.find(sch => {
+      const course = courses.find(c => c.id === sch.courseId);
+      return sch.courseId === courseId &&
+             sch.unitType === unitType &&
+             sch.section === section &&
+             sch.section2 === section2 &&
+             sch.dayType === dayType &&
+             sch.time === time &&
+             course && 
+             course.trimester === currentSectionViewTrimester &&
+             course.year_level === currentSectionViewYearLevel &&
+             sch.col > 0; // Room View entry
+    });
+    
+    if (roomViewEntry) {
+      await apiDelete("schedules", roomViewEntry.id);
+    }
+  }
+  
   hideModal(modalSectionView);
-  await renderSectionViewTables();
+  
+  // Update the specific cell that was changed
+  if (dayType && time && section) {
+    await updateSectionViewCell(dayType, time, section);
+  }
+  
+  // Update Room View tables since they're connected
+  await renderRoomViewTables();
   await validateAllComplementary();
 });
 
@@ -1676,20 +2240,29 @@ async function validateAllComplementary() {
   const courses = await apiGet("courses");
   const allColumns = await getAllRoomColumns();
 
-  // Only include Room View schedules (col > 0) for validation
-  const filteredSchedules = schedules.filter(sch => {
+  // Get both Room View and Section View schedules - include Section View for validation
+  const roomViewSchedules = schedules.filter(sch => {
     const course = courses.find(c => c.id === sch.courseId);
     return course && 
            course.trimester === currentRoomViewTrimester && 
            course.year_level === currentRoomViewYearLevel &&
-           sch.col > 0; // Only validate Room View entries
+           sch.col > 0; // Only Room View entries
+  });
+  
+  const sectionViewSchedules = schedules.filter(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    return course && 
+           course.trimester === currentSectionViewTrimester && 
+           course.year_level === currentSectionViewYearLevel &&
+           sch.col === 0; // Only Section View entries
   });
 
-  const groupA = filteredSchedules.filter(sch => {
+  // Split Room View into groups
+  const groupA = roomViewSchedules.filter(sch => {
     const colIndex = sch.col - 1;
     return colIndex >= 0 && allColumns[colIndex].endsWith(" A");
   });
-  const groupB = filteredSchedules.filter(sch => {
+  const groupB = roomViewSchedules.filter(sch => {
     const colIndex = sch.col - 1;
     return colIndex >= 0 && allColumns[colIndex].endsWith(" B");
   });
@@ -1756,10 +2329,97 @@ async function validateAllComplementary() {
 
     return conflictMessages;
   }
+  
+  // Validate Section View for missing complementary components
+  function validateSectionView() {
+    const lecLabSchedules = sectionViewSchedules.filter(sch => sch.unitType === "Lec" || sch.unitType === "Lab");
+    let conflictMessages = [];
+
+    for (let sch of lecLabSchedules) {
+      const sections = [sch.section, sch.section2].filter(s => s);
+      for (const section of sections) {
+        const complementary = sch.unitType === "Lec" ? "Lab" : "Lec";
+        const compEntry = sectionViewSchedules.find(s =>
+          s.dayType === sch.dayType &&
+          s.courseId === sch.courseId &&
+          (s.section === section || s.section2 === section) &&
+          s.unitType === complementary
+        );
+        if (!compEntry) {
+          const course = courses.find(c => c.id === sch.courseId);
+          const subjectName = course ? course.subject : "Unknown Subject";
+          const times = getTimesArray(sch.dayType);
+          const currentIndex = times.indexOf(sch.time);
+          let recommendedTime = "None available";
+          const sectionSchedules = sectionViewSchedules.filter(s => s.dayType === sch.dayType && (s.section === section || s.section2 === section));
+          for (let i = currentIndex + 1; i < times.length; i++) {
+            if (!sectionSchedules.some(s => s.time === times[i])) {
+              recommendedTime = times[i];
+              break;
+            }
+          }
+          if (sch.unitType === "Lec") {
+            conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+          } else {
+            conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+          }
+        }
+      }
+    }
+
+    // Check for missing room assignments
+    for (let sch of sectionViewSchedules) {
+      const roomAssignment = schedules.find(roomSch => 
+        roomSch.dayType === sch.dayType &&
+        roomSch.time === sch.time && 
+        roomSch.courseId === sch.courseId &&
+        roomSch.unitType === sch.unitType &&
+        roomSch.section === sch.section &&
+        roomSch.section2 === sch.section2 &&
+        roomSch.col > 0 // Room View entry
+      );
+      
+      if (!roomAssignment) {
+        const course = courses.find(c => c.id === sch.courseId);
+        const subjectName = course ? course.subject : "Unknown Subject";
+        conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Missing room assignment for ${subjectName} - ${sch.unitType} - (${sch.section}) at ${sch.dayType} ${sch.time}.`);
+      }
+    }
+
+    // Check for duplicate sections in the same time slot
+    let sectionTimeMap = new Map();
+    for (let sch of sectionViewSchedules) {
+      const sections = [sch.section, sch.section2].filter(s => s);
+      for (const section of sections) {
+        let key = `${sch.dayType}|${sch.time}|${section}`;
+        if (!sectionTimeMap.has(key)) sectionTimeMap.set(key, []);
+        sectionTimeMap.get(key).push(sch);
+      }
+    }
+    
+    sectionTimeMap.forEach((schGroup, key) => {
+      if (schGroup.length > 1) {
+        const parts = key.split('|');
+        const dayType = parts[0];
+        const time = parts[1];
+        const section = parts[2];
+        
+        const subjects = schGroup.map(sch => {
+          const course = courses.find(c => c.id === sch.courseId);
+          return `${course?.subject || 'Unknown'} (${sch.unitType})`;
+        }).join(', ');
+        
+        conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Section "${section}" has multiple classes at ${dayType} ${time}: ${subjects}`);
+      }
+    });
+
+    return conflictMessages;
+  }
 
   const groupAConflicts = validateGroup(groupA, "Group A");
   const groupBConflicts = validateGroup(groupB, "Group B");
-  const allConflicts = [...groupAConflicts, ...groupBConflicts];
+  const sectionViewConflicts = validateSectionView();
+  const allConflicts = [...groupAConflicts, ...groupBConflicts, ...sectionViewConflicts];
 
   if (allConflicts.length > 0) {
     showConflictNotification(allConflicts.join("\n"));
@@ -1824,9 +2484,13 @@ function hideModal(modal) {
     });
   });
 
+  // Add event listeners for clear all buttons
+  document.getElementById('btn-clear-courses').addEventListener('click', clearAllCourses);
+  document.getElementById('btn-clear-courseOffering').addEventListener('click', clearAllCourseOfferings);
+
   // Add click event listeners for the navigation buttons
   document.getElementById('btn-faculty').addEventListener('click', () => {
-    hideAllSections();
+  hideAllSections();
     document.getElementById('section-faculty').classList.remove('hidden');
     renderFacultyTable();
   });
@@ -1857,42 +2521,21 @@ function hideModal(modal) {
     await renderFacultyViewTables();
   });
   
-  document.getElementById('btn-section-view').addEventListener('click', async () => {
-    hideAllSections();
-    document.getElementById('section-section-view').classList.remove('hidden');
-    currentSectionViewTrimester = "1st Trimester";
-    currentSectionViewYearLevel = "1st yr";
-    
-    // Reset tab states
-    const trimesterTabs = document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn");
-    trimesterTabs.forEach(tab => tab.classList.remove("active"));
-    document.querySelector(`#section-section-view .trimester-tabs .tab-btn[data-trimester="1st Trimester"]`).classList.add("active");
-    
-    const yearTabs = document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn");
-    yearTabs.forEach(tab => tab.classList.remove("active"));
-    document.querySelector(`#section-section-view .year-level-tabs .year-tab-btn[data-year="1st yr"]`).classList.add("active");
-    
-    setupSectionViewTrimesterTabs();
-    await renderSectionViewTables();
-  });
+  // Note: The btn-section-view click handler is defined elsewhere in the code,
+  // so we don't need to redefine it here to avoid duplicates.
 
   // Initialize app with Section View on page load
   hideAllSections();
   document.getElementById('section-section-view').classList.remove('hidden');
+  
+  // Set default values
   currentSectionViewTrimester = "1st Trimester";
   currentSectionViewYearLevel = "1st yr";
   
-  // Set active tabs for Section View
-  const trimesterTabs = document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn");
-  trimesterTabs.forEach(tab => tab.classList.remove("active"));
-  document.querySelector(`#section-section-view .trimester-tabs .tab-btn[data-trimester="1st Trimester"]`).classList.add("active");
-  
-  const yearTabs = document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn");
-  yearTabs.forEach(tab => tab.classList.remove("active"));
-  document.querySelector(`#section-section-view .year-level-tabs .year-tab-btn[data-year="1st yr"]`).classList.add("active");
-  
+  // Setup tabs and render tables
   setupSectionViewTrimesterTabs();
   await renderSectionViewTables();
+  await validateAllComplementary();
 })();
 
 /**************************************************************
@@ -1945,7 +2588,7 @@ async function renderFacultyViewTables() {
     // Create header
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
-    headerRow.innerHTML = "<th>Time</th>";
+  headerRow.innerHTML = "<th>Time</th>";
     faculty.forEach(f => {
       headerRow.innerHTML += `<th>${f.name}</th>`;
     });
@@ -1956,11 +2599,11 @@ async function renderFacultyViewTables() {
     const tbody = document.createElement("tbody");
     const times = getTimesArray(dayType);
     times.forEach(time => {
-      const row = document.createElement("tr");
-      row.innerHTML = `<td>${time}</td>`;
-      
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${time}</td>`;
+    
       faculty.forEach(f => {
-        const cell = document.createElement("td");
+      const cell = document.createElement("td");
         cell.dataset.facultyId = f.id;
         cell.dataset.dayType = dayType;
         cell.dataset.time = time;
@@ -1969,21 +2612,21 @@ async function renderFacultyViewTables() {
           const course = courses.find(c => c.id === s.courseId);
           return s.facultyId === f.id && 
                  s.dayType === dayType && 
-                 s.time === time &&
+        s.time === time && 
                  course && course.trimester === trimester;
         });
-        
-        if (schedule) {
-          const course = courses.find(c => c.id === schedule.courseId);
+      
+      if (schedule) {
+        const course = courses.find(c => c.id === schedule.courseId);
           // Include the unit type (Lec, Lab, or PureLec) in the display
           cell.textContent = course ? `${course.subject} ${schedule.section} (${schedule.unitType})` : "";
           cell.dataset.courseId = schedule.courseId;
         }
         
         cell.addEventListener("click", () => openFacultyViewModal(dayType, time, f.id));
-        row.appendChild(cell);
-      });
-
+      row.appendChild(cell);
+    });
+    
       tbody.appendChild(row);
     });
 
@@ -2025,7 +2668,7 @@ async function calculateFacultyTotalUnits() {
     // Skip if no faculty assigned or doesn't match current trimester
     if (!schedule.facultyId) return;
     
-    const course = courses.find(c => c.id === schedule.courseId);
+        const course = courses.find(c => c.id === schedule.courseId);
     if (!course || course.trimester !== currentFacultyViewTrimester) return;
     
     // Find matching offering to get units
@@ -2059,7 +2702,7 @@ async function openFacultyViewModal(dayType, time, facultyId) {
   const courses = await apiGet("courses");
   const existing = schedules.find(sch => 
     sch.facultyId === facultyId && 
-    sch.dayType === dayType && 
+    sch.dayType === dayType &&
     sch.time === time &&
     courses.find(c => c.id === sch.courseId)?.trimester === currentFacultyViewTrimester
   );
@@ -2412,4 +3055,46 @@ function setupFacultyViewTrimesterTabs() {
       await renderFacultyViewTables();
     });
   });
+}
+
+// Function to clear all courses from the database
+async function clearAllCourses() {
+  if (confirm("WARNING: This will delete ALL courses from the database. This action cannot be undone. Continue?")) {
+    try {
+      // Get all courses first
+      const courses = await apiGet("courses");
+      
+      // Delete each course
+      for (const course of courses) {
+        await apiDelete("courses", course.id);
+      }
+      
+      alert("All courses have been deleted successfully.");
+      renderCoursesTable();
+    } catch (error) {
+      console.error("Error clearing courses:", error);
+      alert("An error occurred while clearing courses.");
+    }
+  }
+}
+
+// Function to clear all course offerings from the database
+async function clearAllCourseOfferings() {
+  if (confirm("WARNING: This will delete ALL course offerings from the database. This action cannot be undone. Continue?")) {
+    try {
+      // Get all course offerings first
+      const offerings = await apiGet("course_offerings");
+      
+      // Delete each course offering
+      for (const offering of offerings) {
+        await apiDelete("course_offerings", offering.id);
+      }
+      
+      alert("All course offerings have been deleted successfully.");
+      renderCourseOfferingTable();
+    } catch (error) {
+      console.error("Error clearing course offerings:", error);
+      alert("An error occurred while clearing course offerings.");
+    }
+  }
 }

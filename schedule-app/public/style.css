@@ -454,6 +454,47 @@ table tr:hover td {
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 3px rgba(46, 125, 50, 0.15);
 }
 
+/* Textarea styling */
+.modal-content textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin-top: 6px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.modal-content textarea:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+
+/* Description column in tables */
+#table-courses td:nth-child(8) {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#table-courses td:nth-child(8):hover {
+  white-space: normal;
+  overflow: visible;
+  background-color: #fff;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
 /* Action button for modals */
 .action-btn {
   display: block;
@@ -646,4 +687,162 @@ button.delete-btn {
   color: #5f6368;
   margin: 6px 0 15px;
   font-style: italic;
+}
+
+/* Schedule Summary Styles */
+.section-filter {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e8eaed;
+}
+
+.section-filter select {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 14px;
+}
+
+.summary-table th,
+.summary-table td {
+  border: 1px solid #e8eaed;
+  padding: 10px;
+  text-align: left;
+}
+
+.summary-table th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #5f6368;
+  white-space: nowrap;
+}
+
+.summary-table td {
+  vertical-align: middle;
+}
+
+/* Description cell styling */
+.description-cell {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  position: relative;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+/* Increased modal width to accommodate longer descriptions */
+#modal-schedule-summary .modal-content {
+  width: 85%;
+  max-width: 1200px;
+}
+
+/* Adjust column widths to fit better with full descriptions */
+.summary-table th:nth-child(1), /* Course */
+.summary-table td:nth-child(1) {
+  width: 18%;
+}
+
+.summary-table th:nth-child(2), /* Description */
+.summary-table td:nth-child(2) {
+  width: 30%;
+  text-align: left;
+  padding: 10px 15px;
+}
+
+.summary-table th:nth-child(3), /* Units */
+.summary-table td:nth-child(3) {
+  width: 6%;
+  text-align: center;
+}
+
+.summary-table th:nth-child(4), /* Time */
+.summary-table td:nth-child(4) {
+  width: 13%;
+}
+
+.summary-table th:nth-child(5), /* Day */
+.summary-table td:nth-child(5) {
+  width: 6%;
+  text-align: center;
+}
+
+.summary-table th:nth-child(6), /* Room */
+.summary-table td:nth-child(6) {
+  width: 12%;
+  text-align: center;
+}
+
+.summary-table th:nth-child(7), /* Shared With */
+.summary-table td:nth-child(7) {
+  width: 10%;
+  text-align: center;
+}
+
+.summary-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.summary-table tr:hover {
+  background-color: #e8f5e9;
+}
+
+.summary-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.summary-section h4 {
+  margin: 0 0 10px 0;
+  color: #2e7d32;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Export button container */
+.export-container {
+  text-align: center;
+  margin: 0;
+  padding: 15px 0;
+  border-top: 1px solid #e8eaed;
+  background-color: #fff;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+}
+
+#btn-export-excel {
+  background-color: #1b5e20;
+  padding: 12px 24px;
+  font-size: 15px;
+  min-width: 250px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#btn-export-excel:hover {
+  background-color: #0d4814;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25);
 }

@@ -62,12 +62,26 @@ const sectionSectionView = document.getElementById("section-section-view");
 const sectionFacultyView = document.getElementById("section-faculty-view");
 
 function hideAllSections() {
-  sectionFaculty.classList.add("hidden");
-  sectionCourses.classList.add("hidden");
-  sectionCourseOffering.classList.add("hidden");
-  sectionRoomView.classList.add("hidden");
-  sectionSectionView.classList.add("hidden");
-  sectionFacultyView.classList.add("hidden");
+  document.getElementById("section-faculty").classList.add("hidden");
+  document.getElementById("section-courses").classList.add("hidden");
+  document.getElementById("section-course-offering").classList.add("hidden");
+  document.getElementById("section-section-view").classList.add("hidden");
+  document.getElementById("section-room-view").classList.add("hidden");
+  document.getElementById("section-faculty-view").classList.add("hidden");
+}
+
+function showSection(section) {
+  hideAllSections();
+  document.getElementById(`section-${section}`).classList.remove("hidden");
+  
+  // Additional actions for specific sections
+  if (section === "faculty") {
+    renderFacultyTable();
+  } else if (section === "courses") {
+    renderCoursesTable();
+  } else if (section === "course-offering") {
+    renderCourseOfferingTable();
+  }
 }
 
 document.getElementById("btn-faculty").addEventListener("click", async () => {
@@ -191,6 +205,7 @@ const courseSubjectInput = document.getElementById("course-subject");
 const courseUnitsInput = document.getElementById("course-units");
 const courseDegreeSelect = document.getElementById("course-degree");
 const courseTrimesterSelect = document.getElementById("course-trimester");
+const courseDescriptionTextarea = document.getElementById("course-description");
 const btnSaveCourse = document.getElementById("btn-save-course");
 const courseSearch = document.getElementById("course-search");
 const courseFilterDegree = document.getElementById("course-filter-degree");
@@ -206,7 +221,8 @@ async function renderCoursesTable() {
     coursesList = coursesList.filter(c => 
       c.subject.toLowerCase().includes(searchTerm) ||
       c.degree.toLowerCase().includes(searchTerm) ||
-      c.trimester.toLowerCase().includes(searchTerm)
+      c.trimester.toLowerCase().includes(searchTerm) ||
+      (c.description && c.description.toLowerCase().includes(searchTerm))
     );
   }
 
@@ -240,6 +256,7 @@ async function renderCoursesTable() {
       <td>${c.year_level}</td>
       <td>${c.degree}</td>
       <td>${c.trimester}</td>
+      <td>${c.description || ''}</td>
       <td>
         <button onclick="editCourse(${c.id})">Edit</button>
         <button onclick="deleteCourse(${c.id})">Delete</button>
@@ -253,6 +270,7 @@ btnAddCourse.addEventListener("click", () => {
   courseIdInput.value = "";
   courseSubjectInput.value = "";
   courseUnitsInput.value = "";
+  courseDescriptionTextarea.value = "";
   document.getElementById("purelec").checked = true;
   document.getElementById("year-1st").checked = true;
   courseDegreeSelect.value = "BSIT";
@@ -269,15 +287,19 @@ btnSaveCourse.addEventListener("click", async () => {
   const yearLevel = document.querySelector('input[name="yearLevel"]:checked').value;
   const degree = courseDegreeSelect.value;
   const trimester = courseTrimesterSelect.value;
+  const description = courseDescriptionTextarea.value.trim();
+  
   if (!subject || !units) {
     alert("Please fill out subject and units.");
     return;
   }
+  
   if (id) {
-    await apiPut("courses", id, { subject, unitCategory, units, yearLevel, degree, trimester });
+    await apiPut("courses", id, { subject, unitCategory, units, yearLevel, degree, trimester, description });
   } else {
-    await apiPost("courses", { subject, unitCategory, units, yearLevel, degree, trimester });
+    await apiPost("courses", { subject, unitCategory, units, yearLevel, degree, trimester, description });
   }
+  
   hideModal(modalCourse);
   await renderCoursesTable();
   await validateAllComplementary();
@@ -290,16 +312,20 @@ window.editCourse = async function(id) {
     console.error(`Course with ID ${id} not found`);
     return;
   }
+  
   courseIdInput.value = found.id;
   courseSubjectInput.value = found.subject;
   courseUnitsInput.value = found.units;
   courseDegreeSelect.value = found.degree;
   courseTrimesterSelect.value = found.trimester;
+  courseDescriptionTextarea.value = found.description || '';
+  
   if (found.unit_category === "PureLec") {
     document.getElementById("purelec").checked = true;
   } else if (found.unit_category === "Lec/Lab") {
     document.getElementById("leclab").checked = true;
   }
+  
   const yearLevelId = `year-${found.year_level.split(" ")[0].toLowerCase()}`;
   const yearRadio = document.getElementById(yearLevelId);
   if (yearRadio) {
@@ -308,6 +334,7 @@ window.editCourse = async function(id) {
     console.error(`Year level radio button with ID ${yearLevelId} not found`);
     document.getElementById("year-1st").checked = true;
   }
+  
   document.getElementById("modal-course-title").textContent = "Edit Course";
   showModal(modalCourse);
 };
@@ -459,7 +486,8 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
             section: section,
             type: "PureLec",
             units: 3,
-            trimester: course.trimester
+            trimester: course.trimester,
+            degree: course.degree
           });
           addedCount++;
         } else if (course.unit_category === "Lec/Lab") {
@@ -469,7 +497,8 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
             section: section,
             type: "Lec",
             units: 2,
-            trimester: course.trimester
+            trimester: course.trimester,
+            degree: course.degree
           });
           
           // Add lab part
@@ -478,7 +507,8 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
             section: section,
             type: "Lab",
             units: 1,
-            trimester: course.trimester
+            trimester: course.trimester,
+            degree: course.degree
           });
           addedCount += 2; // Counting both Lec and Lab
         }
@@ -504,10 +534,21 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
   }
 });
 
+// Add event listener for the course select dropdown to capture degree
 courseOfferingCourseSelect.addEventListener("change", async function() {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption.getAttribute("data-unit-category");
   const trimester = selectedOption.getAttribute("data-trimester");
+  
+  // Get course to retrieve degree
+  if (courseOfferingCourseSelect.value) {
+    const courses = await apiGet("courses");
+    const selectedCourse = courses.find(c => c.id == courseOfferingCourseSelect.value);
+    if (selectedCourse) {
+      document.getElementById("courseOffering-selected-degree").value = selectedCourse.degree;
+    }
+  }
+  
   labelLec.style.display = "none";
   labelLab.style.display = "none";
   labelPurelec.style.display = "none";
@@ -574,10 +615,12 @@ async function renderCourseOfferingTable() {
     filteredOfferings = filteredOfferings.filter(off => {
       const course = coursesList.find(c => c.id == off.courseId);
       const courseDisplay = course ? course.subject : off.courseId;
+      const degree = course ? course.degree : (off.degree || "");
       return (
         courseDisplay.toLowerCase().includes(searchTerm) ||
         off.section.toLowerCase().includes(searchTerm) ||
-        off.trimester.toLowerCase().includes(searchTerm)
+        off.trimester.toLowerCase().includes(searchTerm) ||
+        degree.toLowerCase().includes(searchTerm)
       );
     });
   }
@@ -610,6 +653,7 @@ async function renderCourseOfferingTable() {
     const course = coursesList.find(c => c.id == off.courseId);
     const courseDisplay = course ? course.subject : off.courseId;
     const trimester = course ? course.trimester : off.trimester;
+    const degree = off.degree || (course ? course.degree : "");
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${off.id}</td>
@@ -618,6 +662,7 @@ async function renderCourseOfferingTable() {
       <td>${off.type}</td>
       <td>${off.units}</td>
       <td>${trimester}</td>
+      <td>${degree}</td>
       <td>
         <button onclick="editCourseOffering(${off.id})">Edit</button>
         <button onclick="deleteCourseOffering(${off.id})">Delete</button>
@@ -634,6 +679,7 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption ? selectedOption.getAttribute("data-unit-category") : "";
   const trimester = selectedOption ? selectedOption.getAttribute("data-trimester") : "";
+  const degree = document.getElementById("courseOffering-selected-degree").value;
   const type = document.querySelector('input[name="courseOfferingType"]:checked') 
                ? document.querySelector('input[name="courseOfferingType"]:checked').value 
                : "";
@@ -644,13 +690,13 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   }
   
   if (!id && unitCategory === "Lec/Lab") {
-    await apiPost("course_offerings", { courseId, section, type: "Lec", units: 2, trimester });
-    await apiPost("course_offerings", { courseId, section, type: "Lab", units: 1, trimester });
+    await apiPost("course_offerings", { courseId, section, type: "Lec", units: 2, trimester, degree });
+    await apiPost("course_offerings", { courseId, section, type: "Lab", units: 1, trimester, degree });
   } else {
     if (id) {
-      await apiPut("course_offerings", id, { courseId, section, type, units, trimester });
+      await apiPut("course_offerings", id, { courseId, section, type, units, trimester, degree });
     } else {
-      await apiPost("course_offerings", { courseId, section, type, units, trimester });
+      await apiPost("course_offerings", { courseId, section, type, units, trimester, degree });
     }
   }
   hideModal(modalCourseOffering);
@@ -660,6 +706,7 @@ btnSaveCourseOffering.addEventListener("click", async () => {
 
 window.editCourseOffering = async function(id) {
   const offerings = await apiGet("course_offerings");
+  const courses = await apiGet("courses");
   const offering = offerings.find(off => off.id == id);
   if (!offering) return;
   
@@ -671,6 +718,17 @@ window.editCourseOffering = async function(id) {
   courseOfferingIdInput.value = offering.id;
   await populateCourseOfferingCourses();
   courseOfferingCourseSelect.value = offering.courseId;
+  
+  // Set the degree from the offering or get it from the associated course
+  if (offering.degree) {
+    document.getElementById("courseOffering-selected-degree").value = offering.degree;
+  } else {
+    const associatedCourse = courses.find(c => c.id == offering.courseId);
+    if (associatedCourse) {
+      document.getElementById("courseOffering-selected-degree").value = associatedCourse.degree;
+    }
+  }
+  
   const event = new Event('change');
   courseOfferingCourseSelect.dispatchEvent(event);
   courseOfferingSectionInput.value = offering.section;
@@ -742,6 +800,10 @@ function setupRoomViewTrimesterTabs() {
       await validateAllComplementary();
     });
   });
+
+  // Setup schedule summary button
+  const btnScheduleSummary = document.getElementById("btn-schedule-summary");
+  btnScheduleSummary.addEventListener("click", showScheduleSummary);
 
   // Ensure only one tab is active by default
   const activeTab = document.querySelector(`#section-room-view .trimester-tabs .tab-btn[data-trimester="${currentRoomViewTrimester}"]`);
@@ -1523,7 +1585,22 @@ async function renderSectionViewTables() {
                    roomSch.col > 0; // Room View entry
           });
           
-          let cellContent = course ? `${course.subject} - ${sch.unitType}` : "Unknown";
+          // Get course offering to get degree information
+          const offerings = await apiGet("course_offerings");
+          const courseOffering = offerings.find(off => 
+            off.courseId === sch.courseId && 
+            off.type === sch.unitType && 
+            (off.section === sch.section || off.section === sch.section2)
+          );
+          
+          // Get degree information from offering or course
+          const degree = courseOffering && courseOffering.degree ? 
+                        courseOffering.degree : 
+                        (course ? course.degree : "");
+                        
+          let cellContent = course ? 
+            `${course.subject} (${degree})<br>${sch.unitType}` : 
+            "Unknown";
           
           // Add section2 info if it exists
           if (sch.section2) {
@@ -1767,7 +1844,9 @@ async function populateSectionViewCourseOfferingDropdown(section) {
   filteredOfferings.forEach(off => {
     const course = courses.find(c => c.id === off.courseId);
     if (course) {
-      const displayText = `${course.subject} - ${off.type}`;
+      // Get degree from offering or course
+      const degree = off.degree || course.degree;
+      const displayText = `${course.subject} (${degree}) - ${off.type}`;
       sectionviewCourseOfferingSelect.innerHTML += `<option value="${off.id}" data-course-id="${off.courseId}" data-unit-type="${off.type}">${displayText}</option>`;
     }
   });
@@ -2240,7 +2319,13 @@ async function validateAllComplementary() {
   const courses = await apiGet("courses");
   const allColumns = await getAllRoomColumns();
 
-  // Get both Room View and Section View schedules - include Section View for validation
+  // Clear previous notifications
+  clearConflictNotification();
+  
+  // Get both Room View and Section View schedules for current trimester only
+  const currentTrimester = getCurrentViewTrimester();
+  
+  // Room View schedules for current trimester
   const roomViewSchedules = schedules.filter(sch => {
     const course = courses.find(c => c.id === sch.courseId);
     return course && 
@@ -2249,6 +2334,7 @@ async function validateAllComplementary() {
            sch.col > 0; // Only Room View entries
   });
   
+  // Section View schedules for current trimester
   const sectionViewSchedules = schedules.filter(sch => {
     const course = courses.find(c => c.id === sch.courseId);
     return course && 
@@ -2295,9 +2381,9 @@ async function validateAllComplementary() {
             }
           }
           if (sch.unitType === "Lec") {
-            conflictMessages.push(`[${groupName}] [${currentRoomViewYearLevel}] Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+            conflictMessages.push(`[${groupName}] [${currentRoomViewTrimester}] [${currentRoomViewYearLevel}] Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
           } else {
-            conflictMessages.push(`[${groupName}] [${currentRoomViewYearLevel}] Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+            conflictMessages.push(`[${groupName}] [${currentRoomViewTrimester}] [${currentRoomViewYearLevel}] Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
           }
         }
       }
@@ -2323,11 +2409,29 @@ async function validateAllComplementary() {
         const unitType = parts[4];
         const course = courses.find(c => c.id == courseId);
         const subjectName = course ? course.subject : "Unknown Subject";
-        conflictMessages.push(`[${groupName}] [${currentRoomViewYearLevel}] Duplicate schedule: ${subjectName} - (${section}) - ${unitType} is scheduled at ${time} more than once.`);
+        conflictMessages.push(`[${groupName}] [${currentRoomViewTrimester}] [${currentRoomViewYearLevel}] Duplicate schedule: ${subjectName} - (${section}) - ${unitType} is scheduled at ${time} more than once.`);
       }
     });
 
     return conflictMessages;
+  }
+  
+  // Determine which view is currently active to show appropriate validation
+  function getCurrentViewTrimester() {
+    const sectionViewVisible = !document.getElementById("section-section-view").classList.contains("hidden");
+    const roomViewVisible = !document.getElementById("section-room-view").classList.contains("hidden");
+    const facultyViewVisible = !document.getElementById("section-faculty-view").classList.contains("hidden");
+    
+    if (sectionViewVisible) {
+      return currentSectionViewTrimester;
+    } else if (roomViewVisible) {
+      return currentRoomViewTrimester;
+    } else if (facultyViewVisible) {
+      return currentFacultyViewTrimester;
+    }
+    
+    // Default to section view trimester
+    return currentSectionViewTrimester;
   }
   
   // Validate Section View for missing complementary components
@@ -2359,30 +2463,33 @@ async function validateAllComplementary() {
             }
           }
           if (sch.unitType === "Lec") {
-            conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+            conflictMessages.push(`[Section View] [${currentSectionViewTrimester}] [${currentSectionViewYearLevel}] Lab portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
           } else {
-            conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
+            conflictMessages.push(`[Section View] [${currentSectionViewTrimester}] [${currentSectionViewYearLevel}] Lec portion missing for ${subjectName} - (${section}). Recommended slot: ${recommendedTime}.`);
           }
         }
       }
     }
 
-    // Check for missing room assignments
-    for (let sch of sectionViewSchedules) {
-      const roomAssignment = schedules.find(roomSch => 
-        roomSch.dayType === sch.dayType &&
-        roomSch.time === sch.time && 
-        roomSch.courseId === sch.courseId &&
-        roomSch.unitType === sch.unitType &&
-        roomSch.section === sch.section &&
-        roomSch.section2 === sch.section2 &&
-        roomSch.col > 0 // Room View entry
-      );
-      
-      if (!roomAssignment) {
-        const course = courses.find(c => c.id === sch.courseId);
-        const subjectName = course ? course.subject : "Unknown Subject";
-        conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Missing room assignment for ${subjectName} - ${sch.unitType} - (${sch.section}) at ${sch.dayType} ${sch.time}.`);
+    // Check for missing room assignments but only if we're in the same trimester as Room View
+    // to avoid cross-trimester validation issues
+    if (currentSectionViewTrimester === currentRoomViewTrimester && 
+        currentSectionViewYearLevel === currentRoomViewYearLevel) {
+      for (let sch of sectionViewSchedules) {
+        const roomAssignment = roomViewSchedules.find(roomSch => 
+          roomSch.dayType === sch.dayType &&
+          roomSch.time === sch.time && 
+          roomSch.courseId === sch.courseId &&
+          roomSch.unitType === sch.unitType &&
+          roomSch.section === sch.section &&
+          roomSch.section2 === sch.section2
+        );
+        
+        if (!roomAssignment) {
+          const course = courses.find(c => c.id === sch.courseId);
+          const subjectName = course ? course.subject : "Unknown Subject";
+          conflictMessages.push(`[Section View] [${currentSectionViewTrimester}] [${currentSectionViewYearLevel}] Missing room assignment for ${subjectName} - ${sch.unitType} - (${sch.section}) at ${sch.dayType} ${sch.time}.`);
+        }
       }
     }
 
@@ -2409,17 +2516,27 @@ async function validateAllComplementary() {
           return `${course?.subject || 'Unknown'} (${sch.unitType})`;
         }).join(', ');
         
-        conflictMessages.push(`[Section View] [${currentSectionViewYearLevel}] Section "${section}" has multiple classes at ${dayType} ${time}: ${subjects}`);
+        conflictMessages.push(`[Section View] [${currentSectionViewTrimester}] [${currentSectionViewYearLevel}] Section "${section}" has multiple classes at ${dayType} ${time}: ${subjects}`);
       }
     });
 
     return conflictMessages;
   }
 
-  const groupAConflicts = validateGroup(groupA, "Group A");
-  const groupBConflicts = validateGroup(groupB, "Group B");
-  const sectionViewConflicts = validateSectionView();
-  const allConflicts = [...groupAConflicts, ...groupBConflicts, ...sectionViewConflicts];
+  // Only validate the current view to avoid cross-trimester issues
+  const activeSection = document.querySelector("section:not(.hidden)").id;
+  let allConflicts = [];
+  
+  if (activeSection === "section-room-view") {
+    const groupAConflicts = validateGroup(groupA, "Group A");
+    const groupBConflicts = validateGroup(groupB, "Group B");
+    allConflicts = [...groupAConflicts, ...groupBConflicts];
+  } else if (activeSection === "section-section-view") {
+    const sectionViewConflicts = validateSectionView();
+    allConflicts = [...sectionViewConflicts];
+  } else if (activeSection === "section-faculty-view") {
+    // Faculty view validation if needed
+  }
 
   if (allConflicts.length > 0) {
     showConflictNotification(allConflicts.join("\n"));
@@ -2476,66 +2593,47 @@ function hideModal(modal) {
  * INITIAL PAGE LOAD
  **************************************************************/
 (async function initialLoad() {
-  // Add the event listeners for modal close buttons
-  document.querySelectorAll('.close-button').forEach((button) => {
-    button.addEventListener('click', () => {
-      const modalId = button.getAttribute('data-close-modal');
-      hideModal(document.getElementById(modalId));
-    });
-  });
-
+  // Initial loading for all tables
+  await renderFacultyTable();
+  await renderCoursesTable();
+  await renderCourseOfferingTable();
+  await renderRoomsTable();
+  
+  // Setup trimester tabs
+  setupTrimesterTabs();
+  setupRoomViewTrimesterTabs();
+  setupSectionViewTrimesterTabs();
+  setupFacultyViewTrimesterTabs();
+  
+  // Setup modal close buttons
+  setupModalCloseButtons();
+  
   // Add event listeners for clear all buttons
   document.getElementById('btn-clear-courses').addEventListener('click', clearAllCourses);
   document.getElementById('btn-clear-courseOffering').addEventListener('click', clearAllCourseOfferings);
-
-  // Add click event listeners for the navigation buttons
-  document.getElementById('btn-faculty').addEventListener('click', () => {
-  hideAllSections();
-    document.getElementById('section-faculty').classList.remove('hidden');
-    renderFacultyTable();
+  
+  // Primary navigation menu event listeners
+  document.getElementById("btn-faculty").addEventListener("click", () => showSection("faculty"));
+  document.getElementById("btn-courses").addEventListener("click", () => showSection("courses"));
+  document.getElementById("btn-course-offering").addEventListener("click", () => showSection("course-offering"));
+  document.getElementById("btn-section-view").addEventListener("click", async () => {
+    showSection("section-view");
+    await renderSectionViewTables();
+    await validateAllComplementary();
   });
-
-  document.getElementById('btn-courses').addEventListener('click', () => {
-    hideAllSections();
-    document.getElementById('section-courses').classList.remove('hidden');
-    renderCoursesTable();
-  });
-
-  document.getElementById('btn-course-offering').addEventListener('click', () => {
-    hideAllSections();
-    document.getElementById('section-course-offering').classList.remove('hidden');
-    renderCourseOfferingTable();
-  });
-
-  document.getElementById('btn-room-view').addEventListener('click', async () => {
-    hideAllSections();
-    document.getElementById('section-room-view').classList.remove('hidden');
+  document.getElementById("btn-room-view").addEventListener("click", async () => {
+    showSection("room-view");
     await renderRoomViewTables();
     await validateAllComplementary();
   });
-
-  document.getElementById('btn-faculty-view').addEventListener('click', async () => {
-    hideAllSections();
-    document.getElementById('section-faculty-view').classList.remove('hidden');
-    setupFacultyViewTrimesterTabs();
+  document.getElementById("btn-faculty-view").addEventListener("click", async () => {
+    showSection("faculty-view");
     await renderFacultyViewTables();
+    await validateAllComplementary();
   });
   
-  // Note: The btn-section-view click handler is defined elsewhere in the code,
-  // so we don't need to redefine it here to avoid duplicates.
-
-  // Initialize app with Section View on page load
-  hideAllSections();
-  document.getElementById('section-section-view').classList.remove('hidden');
-  
-  // Set default values
-  currentSectionViewTrimester = "1st Trimester";
-  currentSectionViewYearLevel = "1st yr";
-  
-  // Setup tabs and render tables
-  setupSectionViewTrimesterTabs();
-  await renderSectionViewTables();
-  await validateAllComplementary();
+  // Show Faculty section by default
+  showSection("faculty");
 })();
 
 /**************************************************************
@@ -3096,5 +3194,477 @@ async function clearAllCourseOfferings() {
       console.error("Error clearing course offerings:", error);
       alert("An error occurred while clearing course offerings.");
     }
+  }
+}
+
+/* 
+ * Schedule Summary Functionality 
+ */
+async function showScheduleSummary() {
+  // Get the schedule summary modal
+  const modal = document.getElementById("modal-schedule-summary");
+  const summaryContent = document.getElementById("schedule-summary-content");
+  const sectionFilter = document.getElementById("summary-section-filter");
+  
+  // Clear previous content
+  summaryContent.innerHTML = "";
+  
+  // Get all sections for the current trimester and year level
+  const sections = await getUniqueSectionsForTrimesterAndYear(currentRoomViewTrimester, currentRoomViewYearLevel);
+  
+  // Populate section filter dropdown
+  sectionFilter.innerHTML = '<option value="">All Sections</option>';
+  sections.forEach(section => {
+    const option = document.createElement("option");
+    option.value = section;
+    option.textContent = section;
+    sectionFilter.appendChild(option);
+  });
+  
+  // Generate summary content for all sections initially
+  await generateScheduleSummary();
+  
+  // Add event listener to the section filter
+  sectionFilter.addEventListener("change", generateScheduleSummary);
+  
+  // Add event listener to export button
+  document.getElementById("btn-export-excel").addEventListener("click", exportAllSchedulesToExcel);
+  
+  // Show the modal
+  showModal(modal);
+}
+
+async function generateScheduleSummary() {
+  const summaryContent = document.getElementById("schedule-summary-content");
+  const selectedSection = document.getElementById("summary-section-filter").value;
+  
+  // Clear previous content
+  summaryContent.innerHTML = "";
+  
+  // Get data
+  const schedules = await apiGet("schedules");
+  const courses = await apiGet("courses");
+  const rooms = await apiGet("rooms");
+  const columns = await getAllRoomColumns();
+  const offerings = await apiGet("course_offerings");
+  
+  // Get all sections or filter by selected section
+  const sections = selectedSection ? 
+    [selectedSection] : 
+    await getUniqueSectionsForTrimesterAndYear(currentRoomViewTrimester, currentRoomViewYearLevel);
+  
+  if (sections.length === 0) {
+    summaryContent.innerHTML = '<div class="no-data-message">No sections found for the current trimester and year level.</div>';
+    return;
+  }
+  
+  for (const section of sections) {
+    // Create a section container
+    const sectionDiv = document.createElement("div");
+    sectionDiv.className = "summary-section";
+    
+    // Get degree for this section
+    let sectionDegree = "";
+    const sectionOffering = offerings.find(off => 
+      off.section === section && 
+      courses.find(c => c.id === off.courseId)?.trimester === currentRoomViewTrimester && 
+      courses.find(c => c.id === off.courseId)?.year_level === currentRoomViewYearLevel
+    );
+    
+    if (sectionOffering) {
+      sectionDegree = sectionOffering.degree || 
+                      courses.find(c => c.id === sectionOffering.courseId)?.degree || 
+                      "Unknown";
+    } else {
+      // Try to find degree from any schedule for this section
+      const scheduleForSection = schedules.find(sch => 
+        (sch.section === section || sch.section2 === section) &&
+        courses.find(c => c.id === sch.courseId)?.trimester === currentRoomViewTrimester && 
+        courses.find(c => c.id === sch.courseId)?.year_level === currentRoomViewYearLevel
+      );
+      
+      if (scheduleForSection) {
+        const course = courses.find(c => c.id === scheduleForSection.courseId);
+        sectionDegree = course?.degree || "Unknown";
+      } else {
+        sectionDegree = "Unknown";
+      }
+    }
+    
+    sectionDiv.innerHTML = `<h4>Section ${section} - ${sectionDegree}</h4>`;
+    
+    // Get all schedules for this section
+    const sectionSchedules = schedules.filter(sch => {
+      const course = courses.find(c => c.id === sch.courseId);
+      return (sch.section === section || sch.section2 === section) && 
+             course && 
+             course.trimester === currentRoomViewTrimester && 
+             course.year_level === currentRoomViewYearLevel;
+    });
+
+    if (sectionSchedules.length === 0) {
+      sectionDiv.innerHTML += '<div class="no-data-message">No schedules found for this section.</div>';
+      summaryContent.appendChild(sectionDiv);
+      continue;
+    }
+
+    // Create MWF and TTHS tables
+    const dayTypes = ["MWF", "TTHS"];
+    
+    for (const dayType of dayTypes) {
+      // Filter schedules for this day type and deduplicate entries
+      const dayTypeSchedules = sectionSchedules
+        .filter(sch => sch.dayType === dayType)
+        .reduce((unique, sch) => {
+          // Create a key that uniquely identifies a schedule entry
+          const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
+          
+          // If this is a Room View entry (col > 0), use it
+          // If we haven't seen this schedule before, or if this is a Room View entry, keep it
+          if (!unique.has(key) || sch.col > 0) {
+            unique.set(key, sch);
+          }
+          return unique;
+        }, new Map());
+
+      // Convert back to array
+      const uniqueDayTypeSchedules = Array.from(dayTypeSchedules.values());
+      
+      if (uniqueDayTypeSchedules.length === 0) continue;
+      
+      const dayTypeHeading = document.createElement("h5");
+      dayTypeHeading.textContent = `${dayType} Schedule`;
+      dayTypeHeading.style.marginTop = "15px";
+      dayTypeHeading.style.marginBottom = "8px";
+      sectionDiv.appendChild(dayTypeHeading);
+      
+      const table = document.createElement("table");
+      table.className = "summary-table";
+      
+      // Create table header
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      ["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"].forEach(headerText => {
+        const th = document.createElement("th");
+        th.textContent = headerText;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      
+      // Create table body
+      const tbody = document.createElement("tbody");
+      
+      // Sort schedules by course name first
+      const sortedSchedules = uniqueDayTypeSchedules.sort((a, b) => {
+        const courseA = courses.find(c => c.id === a.courseId)?.subject || "";
+        const courseB = courses.find(c => c.id === b.courseId)?.subject || "";
+        return courseA.localeCompare(courseB);
+      });
+      
+      // Add rows sorted by course name
+      for (const sch of sortedSchedules) {
+        const tr = document.createElement("tr");
+        const course = courses.find(c => c.id === sch.courseId);
+        
+        // Course
+        const tdCourse = document.createElement("td");
+        tdCourse.textContent = course ? `${course.subject} (${sch.unitType})` : "Unknown";
+        tr.appendChild(tdCourse);
+        
+        // Description
+        const tdDescription = document.createElement("td");
+        tdDescription.textContent = course && course.description ? course.description : "No description";
+        tdDescription.classList.add("description-cell");
+        tr.appendChild(tdDescription);
+        
+        // Units
+        const tdUnits = document.createElement("td");
+        const offering = offerings.find(off => 
+          off.courseId === sch.courseId && 
+          off.type === sch.unitType &&
+          (off.section === sch.section || off.section === sch.section2)
+        );
+        tdUnits.textContent = offering ? offering.units : "N/A";
+        tr.appendChild(tdUnits);
+        
+        // Time
+        const tdTime = document.createElement("td");
+        tdTime.textContent = sch.time;
+        tr.appendChild(tdTime);
+        
+        // Day
+        const tdDay = document.createElement("td");
+        tdDay.textContent = dayType;
+        tr.appendChild(tdDay);
+        
+        // Room
+        const tdRoom = document.createElement("td");
+        if (sch.col > 0) {
+          const colIndex = sch.col - 1;
+          if (colIndex >= 0 && colIndex < columns.length) {
+            tdRoom.textContent = columns[colIndex];
+          } else {
+            tdRoom.textContent = "Not assigned";
+            tdRoom.style.color = "#ff6666";
+          }
+        } else {
+          // Find matching room view entry
+          const roomViewEntry = schedules.find(roomSch => {
+            return roomSch.courseId === sch.courseId &&
+                   roomSch.unitType === sch.unitType &&
+                   roomSch.section === sch.section &&
+                   roomSch.section2 === sch.section2 &&
+                   roomSch.dayType === dayType &&
+                   roomSch.time === sch.time &&
+                   roomSch.col > 0;
+          });
+          
+          if (roomViewEntry && roomViewEntry.col > 0) {
+            const colIndex = roomViewEntry.col - 1;
+            if (colIndex >= 0 && colIndex < columns.length) {
+              tdRoom.textContent = columns[colIndex];
+            } else {
+              tdRoom.textContent = "Not assigned";
+              tdRoom.style.color = "#ff6666";
+            }
+          } else {
+            tdRoom.textContent = "Not assigned";
+            tdRoom.style.color = "#ff6666";
+          }
+        }
+        tr.appendChild(tdRoom);
+        
+        // Shared With
+        const tdShared = document.createElement("td");
+        const sharedSection = sch.section === section ? sch.section2 : sch.section;
+        tdShared.textContent = sharedSection || "None";
+        tr.appendChild(tdShared);
+        
+        tbody.appendChild(tr);
+      }
+      
+      table.appendChild(tbody);
+      sectionDiv.appendChild(table);
+    }
+    
+    summaryContent.appendChild(sectionDiv);
+  }
+  
+  // Add event handler for close button
+  document.querySelector('#modal-schedule-summary .close-button').addEventListener('click', () => {
+    hideModal(document.getElementById("modal-schedule-summary"));
+  });
+}
+
+// Add this new function to set up all close buttons including the schedule summary modal
+function setupModalCloseButtons() {
+  document.querySelectorAll('.close-button').forEach(btn => {
+    const modalId = btn.getAttribute('data-close-modal');
+    btn.addEventListener('click', () => {
+      hideModal(document.getElementById(modalId));
+    });
+  });
+}
+
+/*
+ * Excel Export Functionality
+ */
+async function exportAllSchedulesToExcel() {
+  try {
+    // Get all necessary data
+    const schedules = await apiGet("schedules");
+    const courses = await apiGet("courses");
+    const offerings = await apiGet("course_offerings");
+    const rooms = await apiGet("rooms");
+    const allColumns = await getAllRoomColumns();
+    
+    // Year levels and trimesters for export
+    const yearLevels = ["1st yr", "2nd yr", "3rd yr"];
+    const trimesters = ["1st Trimester", "2nd Trimester", "3rd Trimester"];
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Process each year level and trimester
+    for (const yearLevel of yearLevels) {
+      for (const trimester of trimesters) {
+        // Create worksheet for this year-trimester combination
+        const worksheetName = `${yearLevel}-${trimester.split(' ')[0]}`;
+        
+        // Get sections for current trimester and year level
+        const sections = await getUniqueSectionsForTrimesterAndYear(trimester, yearLevel);
+        
+        // Skip if no sections found
+        if (sections.length === 0) continue;
+        
+        // Create worksheet data
+        const wsData = [];
+        
+        // For each section, create separate section block
+        for (const section of sections) {
+          // Get schedules for this section to determine group
+          const sectionSchedules = schedules.filter(sch => {
+            const course = courses.find(c => c.id === sch.courseId);
+            return (sch.section === section || sch.section2 === section) && 
+                   course && 
+                   course.trimester === trimester && 
+                   course.year_level === yearLevel;
+          });
+          
+          // Skip if no schedules found for this section
+          if (sectionSchedules.length === 0) continue;
+          
+          // Get the degree for this specific section
+          const sectionOffering = offerings.find(off => 
+            off.section === section && 
+            courses.find(c => c.id === off.courseId)?.trimester === trimester &&
+            courses.find(c => c.id === off.courseId)?.year_level === yearLevel
+          );
+          
+          let degree = "Unknown";
+          if (sectionOffering) {
+            degree = sectionOffering.degree || 
+                    courses.find(c => c.id === sectionOffering.courseId)?.degree || 
+                    "Unknown";
+          } else {
+            // Try to find degree from any schedule for this section
+            const scheduleForSection = sectionSchedules.find(sch => true);
+            if (scheduleForSection) {
+              const course = courses.find(c => c.id === scheduleForSection.courseId);
+              degree = course?.degree || "Unknown";
+            }
+          }
+          
+          // Determine group (A or B) based on room assignments
+          let groupA = 0;
+          let groupB = 0;
+          
+          // Count rooms in group A and B
+          sectionSchedules.forEach(sch => {
+            if (sch.col > 0) {
+              const colIndex = sch.col - 1;
+              if (colIndex >= 0 && colIndex < allColumns.length) {
+                const roomName = allColumns[colIndex];
+                if (roomName.endsWith(" A")) {
+                  groupA++;
+                } else if (roomName.endsWith(" B")) {
+                  groupB++;
+                }
+              }
+            }
+          });
+          
+          // Determine group based on most common room assignments
+          const group = groupA >= groupB ? "A" : "B";
+          
+          // Add degree, year level, trimester header for this section
+          wsData.push([`${degree}, ${yearLevel}, ${trimester}`]);
+          
+          // Add section header with group
+          wsData.push([`${section} - Group ${group}`]);
+          
+          // Add column headers for this section
+          wsData.push(["Course", "Description", "Units", "Day", "Room", "Shared With"]);
+          
+          // Deduplicate entries
+          const uniqueSchedules = sectionSchedules.reduce((unique, sch) => {
+            const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
+            if (!unique.has(key) || sch.col > 0) {
+              unique.set(key, sch);
+            }
+            return unique;
+          }, new Map());
+          
+          // Sort schedules by course name
+          const sortedSchedules = Array.from(uniqueSchedules.values()).sort((a, b) => {
+            const courseA = courses.find(c => c.id === a.courseId)?.subject || "";
+            const courseB = courses.find(c => c.id === b.courseId)?.subject || "";
+            return courseA.localeCompare(courseB);
+          });
+          
+          // Add schedules to worksheet
+          for (const sch of sortedSchedules) {
+            const course = courses.find(c => c.id === sch.courseId);
+            
+            // Get room name
+            let roomName = "Not assigned";
+            if (sch.col > 0) {
+              const colIndex = sch.col - 1;
+              if (colIndex >= 0 && colIndex < allColumns.length) {
+                roomName = allColumns[colIndex];
+              }
+            } else {
+              // Find matching room view entry
+              const roomViewEntry = schedules.find(roomSch => {
+                return roomSch.courseId === sch.courseId &&
+                      roomSch.unitType === sch.unitType &&
+                      roomSch.section === sch.section &&
+                      roomSch.section2 === sch.section2 &&
+                      roomSch.dayType === sch.dayType &&
+                      roomSch.time === sch.time &&
+                      roomSch.col > 0;
+              });
+              
+              if (roomViewEntry && roomViewEntry.col > 0) {
+                const colIndex = roomViewEntry.col - 1;
+                if (colIndex >= 0 && colIndex < allColumns.length) {
+                  roomName = allColumns[colIndex];
+                }
+              }
+            }
+            
+            // Get units
+            const offering = offerings.find(off => 
+              off.courseId === sch.courseId && 
+              off.type === sch.unitType &&
+              (off.section === sch.section || off.section === sch.section2)
+            );
+            
+            // Get shared section
+            const sharedSection = sch.section === section ? sch.section2 : sch.section;
+            
+            // Add row to worksheet
+            wsData.push([
+              course ? `${course.subject} (${sch.unitType})` : "Unknown",
+              course && course.description ? course.description : "No description",
+              offering ? offering.units : "N/A",
+              sch.dayType,
+              roomName,
+              sharedSection || "None"
+            ]);
+          }
+          
+          // Add empty rows after each section
+          wsData.push([]);
+          wsData.push([]);
+        }
+        
+        // Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        
+        // Set column widths
+        const colWidths = [
+          { wch: 25 },  // Course
+          { wch: 40 },  // Description
+          { wch: 10 },  // Units
+          { wch: 15 },  // Day
+          { wch: 20 },  // Room
+          { wch: 15 }   // Shared With
+        ];
+        
+        ws['!cols'] = colWidths;
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(workbook, ws, worksheetName);
+      }
+    }
+    
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, `All_Schedules_${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+  } catch (error) {
+    console.error("Error exporting to Excel:", error);
+    alert("Error exporting to Excel. Please try again.");
   }
 }

@@ -37,7 +37,8 @@ db.serialize(() => {
     units TEXT NOT NULL,
     year_level TEXT NOT NULL,
     degree TEXT NOT NULL,
-    trimester TEXT NOT NULL
+    trimester TEXT NOT NULL,
+    description TEXT
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS schedules (
@@ -64,6 +65,7 @@ db.serialize(() => {
     type TEXT NOT NULL,
     units INTEGER NOT NULL,
     trimester TEXT NOT NULL,
+    degree TEXT,
     FOREIGN KEY(courseId) REFERENCES courses(id)
   )`);
 });
@@ -101,16 +103,16 @@ app.post('/api/:table', (req, res) => {
       params = [data.name];
       break;
     case 'courses':
-      query = 'INSERT INTO courses (subject, unit_category, units, year_level, degree, trimester) VALUES (?, ?, ?, ?, ?, ?)';
-      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester];
+      query = 'INSERT INTO courses (subject, unit_category, units, year_level, degree, trimester, description) VALUES (?, ?, ?, ?, ?, ?, ?)';
+      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description];
       break;
     case 'schedules':
       query = 'INSERT INTO schedules (dayType, time, col, facultyId, roomId, courseId, color, unitType, section, section2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
       params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2];
       break;
     case 'course_offerings':
-      query = 'INSERT INTO course_offerings (courseId, section, type, units, trimester) VALUES (?, ?, ?, ?, ?)';
-      params = [data.courseId, data.section, data.type, data.units, data.trimester];
+      query = 'INSERT INTO course_offerings (courseId, section, type, units, trimester, degree) VALUES (?, ?, ?, ?, ?, ?)';
+      params = [data.courseId, data.section, data.type, data.units, data.trimester, data.degree];
       break;
     default:
       return res.status(400).json({ error: 'Invalid table' });
@@ -146,16 +148,16 @@ app.put('/api/:table/:id', (req, res) => {
       params = [data.name, id];
       break;
     case 'courses':
-      query = 'UPDATE courses SET subject = ?, unit_category = ?, units = ?, year_level = ?, degree = ?, trimester = ? WHERE id = ?';
-      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, id];
+      query = 'UPDATE courses SET subject = ?, unit_category = ?, units = ?, year_level = ?, degree = ?, trimester = ?, description = ? WHERE id = ?';
+      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description, id];
       break;
     case 'schedules':
       query = 'UPDATE schedules SET dayType = ?, time = ?, col = ?, facultyId = ?, roomId = ?, courseId = ?, color = ?, unitType = ?, section = ?, section2 = ? WHERE id = ?';
       params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2, id];
       break;
     case 'course_offerings':
-      query = 'UPDATE course_offerings SET courseId = ?, section = ?, type = ?, units = ?, trimester = ? WHERE id = ?';
-      params = [data.courseId, data.section, data.type, data.units, data.trimester, id];
+      query = 'UPDATE course_offerings SET courseId = ?, section = ?, type = ?, units = ?, trimester = ?, degree = ? WHERE id = ?';
+      params = [data.courseId, data.section, data.type, data.units, data.trimester, data.degree, id];
       break;
     default:
       return res.status(400).json({ error: 'Invalid table' });

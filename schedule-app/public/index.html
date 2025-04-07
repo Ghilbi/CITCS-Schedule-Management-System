@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <!-- SheetJS library for Excel export -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -70,6 +72,7 @@
           <th>Year Level</th>
           <th>Degree</th>
           <th>Trimester</th>
+          <th>Description</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -114,6 +117,7 @@
           <th>Type</th>
           <th>Units</th>
           <th>Trimester</th>
+          <th>Degree</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -158,6 +162,9 @@
       <button class="year-tab-btn active" data-year="1st yr">1st Year</button>
       <button class="year-tab-btn" data-year="2nd yr">2nd Year</button>
       <button class="year-tab-btn" data-year="3rd yr">3rd Year</button>
+    </div>
+    <div class="button-container">
+      <button id="btn-schedule-summary" class="add-btn">Show Schedule Summary</button>
     </div>
     <!-- MWF ROOM VIEW -->
     <h3>MWF Room View</h3>
@@ -225,6 +232,8 @@
         <option value="2nd Trimester">2nd Trimester</option>
         <option value="3rd Trimester">3rd Trimester</option>
       </select>
+      <label for="course-description">Description:</label>
+      <textarea id="course-description" rows="4" placeholder="Enter course description"></textarea>
       <input type="hidden" id="course-id" />
       <button id="btn-save-course" class="save-btn">Save</button>
     </div>
@@ -279,6 +288,7 @@
       <label for="courseOffering-trimester">Trimester:</label>
       <input type="text" id="courseOffering-trimester" readonly />
       <input type="hidden" id="courseOffering-id" />
+      <input type="hidden" id="courseOffering-selected-degree" />
       <button id="btn-save-courseOffering" class="save-btn">Save</button>
     </div>
   </div>
@@ -396,6 +406,24 @@
       </select>
       <button id="btn-save-facultyview" class="save-btn">Save</button>
       <button id="btn-delete-facultyview" class="delete-btn" style="display: none;">Delete</button>
+    </div>
+  </div>
+
+  <!-- Schedule Summary Modal -->
+  <div class="modal hidden" id="modal-schedule-summary">
+    <div class="modal-content" style="width: 85%; max-width: 1200px; max-height: 85vh; display: flex; flex-direction: column;">
+      <span class="close-button" data-close-modal="modal-schedule-summary">×</span>
+      <h3>Schedule Summary</h3>
+      <div class="section-filter">
+        <label for="summary-section-filter">Filter by Section:</label>
+        <select id="summary-section-filter">
+          <option value="">All Sections</option>
+        </select>
+      </div>
+      <div id="schedule-summary-content" style="flex: 1; overflow-y: auto; padding-right: 5px;"></div>
+      <div class="export-container">
+        <button id="btn-export-excel" class="add-btn">Export All Schedules to Excel</button>
+      </div>
     </div>
   </div>
 

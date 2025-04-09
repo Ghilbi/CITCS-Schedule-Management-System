@@ -1559,6 +1559,7 @@ async function renderSectionViewTables() {
         td.setAttribute("data-section", section);
         td.addEventListener("click", () => openSectionViewModal(dayType, time, section));
         
+        // Rest of your code for populating cells remains the same
         const scheduleEntries = schedules.filter(sch => {
           const course = courses.find(c => c.id === sch.courseId);
           return course && 
@@ -3355,14 +3356,15 @@ async function generateScheduleSummary() {
       // Create table body
       const tbody = document.createElement("tbody");
       
-      // Sort schedules by course name first
+      // Sort schedules by time (to match Section View's top-to-bottom ordering)
       const sortedSchedules = uniqueDayTypeSchedules.sort((a, b) => {
-        const courseA = courses.find(c => c.id === a.courseId)?.subject || "";
-        const courseB = courses.find(c => c.id === b.courseId)?.subject || "";
-        return courseA.localeCompare(courseB);
+        const times = getTimesArray(dayType);
+        const timeIndexA = times.indexOf(a.time);
+        const timeIndexB = times.indexOf(b.time);
+        return timeIndexA - timeIndexB;
       });
       
-      // Add rows sorted by course name
+      // Add rows sorted by time
       for (const sch of sortedSchedules) {
         const tr = document.createElement("tr");
         const course = courses.find(c => c.id === sch.courseId);
@@ -3500,6 +3502,14 @@ async function exportAllSchedulesToExcel() {
         
         // Create worksheet data
         const wsData = [];
+        // Track row numbers where we need to apply formatting
+        const formattingInfo = {
+          headerRows: [],
+          sectionGroupRows: []
+        };
+        
+        // Current row counter
+        let currentRow = 0;
         
         // For each section, create separate section block
         for (const section of sections) {
@@ -3560,84 +3570,182 @@ async function exportAllSchedulesToExcel() {
           
           // Add degree, year level, trimester header for this section
           wsData.push([`${degree}, ${yearLevel}, ${trimester}`]);
+          formattingInfo.headerRows.push(currentRow);
+          currentRow++;
           
           // Add section header with group
           wsData.push([`${section} - Group ${group}`]);
+          formattingInfo.sectionGroupRows.push(currentRow);
+          currentRow++;
           
-          // Add column headers for this section
-          wsData.push(["Course", "Description", "Units", "Day", "Room", "Shared With"]);
+          // Separate schedules by day type
+          const mwfSchedules = sectionSchedules.filter(sch => sch.dayType === "MWF");
+          const tthsSchedules = sectionSchedules.filter(sch => sch.dayType === "TTHS");
           
-          // Deduplicate entries
-          const uniqueSchedules = sectionSchedules.reduce((unique, sch) => {
-            const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
-            if (!unique.has(key) || sch.col > 0) {
-              unique.set(key, sch);
-            }
-            return unique;
-          }, new Map());
-          
-          // Sort schedules by course name
-          const sortedSchedules = Array.from(uniqueSchedules.values()).sort((a, b) => {
-            const courseA = courses.find(c => c.id === a.courseId)?.subject || "";
-            const courseB = courses.find(c => c.id === b.courseId)?.subject || "";
-            return courseA.localeCompare(courseB);
-          });
-          
-          // Add schedules to worksheet
-          for (const sch of sortedSchedules) {
-            const course = courses.find(c => c.id === sch.courseId);
+          // Process MWF schedules first
+          if (mwfSchedules.length > 0) {
+            // Add column headers for MWF
+            wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
+            currentRow++;
             
-            // Get room name
-            let roomName = "Not assigned";
-            if (sch.col > 0) {
-              const colIndex = sch.col - 1;
-              if (colIndex >= 0 && colIndex < allColumns.length) {
-                roomName = allColumns[colIndex];
+            // Deduplicate entries
+            const uniqueMWFSchedules = mwfSchedules.reduce((unique, sch) => {
+              const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
+              if (!unique.has(key) || sch.col > 0) {
+                unique.set(key, sch);
               }
-            } else {
-              // Find matching room view entry
-              const roomViewEntry = schedules.find(roomSch => {
-                return roomSch.courseId === sch.courseId &&
-                      roomSch.unitType === sch.unitType &&
-                      roomSch.section === sch.section &&
-                      roomSch.section2 === sch.section2 &&
-                      roomSch.dayType === sch.dayType &&
-                      roomSch.time === sch.time &&
-                      roomSch.col > 0;
-              });
+              return unique;
+            }, new Map());
+            
+            // Sort schedules by time instead of course name
+            const sortedMWFSchedules = Array.from(uniqueMWFSchedules.values()).sort((a, b) => {
+              const times = getTimesArray("MWF");
+              const timeIndexA = times.indexOf(a.time);
+              const timeIndexB = times.indexOf(b.time);
+              return timeIndexA - timeIndexB;
+            });
+            
+            // Add MWF schedules to worksheet
+            for (const sch of sortedMWFSchedules) {
+              const course = courses.find(c => c.id === sch.courseId);
               
-              if (roomViewEntry && roomViewEntry.col > 0) {
-                const colIndex = roomViewEntry.col - 1;
+              // Get room name
+              let roomName = "Not assigned";
+              if (sch.col > 0) {
+                const colIndex = sch.col - 1;
                 if (colIndex >= 0 && colIndex < allColumns.length) {
                   roomName = allColumns[colIndex];
                 }
+              } else {
+                // Find matching room view entry
+                const roomViewEntry = schedules.find(roomSch => {
+                  return roomSch.courseId === sch.courseId &&
+                        roomSch.unitType === sch.unitType &&
+                        roomSch.section === sch.section &&
+                        roomSch.section2 === sch.section2 &&
+                        roomSch.dayType === sch.dayType &&
+                        roomSch.time === sch.time &&
+                        roomSch.col > 0;
+                });
+                
+                if (roomViewEntry && roomViewEntry.col > 0) {
+                  const colIndex = roomViewEntry.col - 1;
+                  if (colIndex >= 0 && colIndex < allColumns.length) {
+                    roomName = allColumns[colIndex];
+                  }
+                }
               }
+              
+              // Get units
+              const offering = offerings.find(off => 
+                off.courseId === sch.courseId && 
+                off.type === sch.unitType &&
+                (off.section === sch.section || off.section === sch.section2)
+              );
+              
+              // Get shared section
+              const sharedSection = sch.section === section ? sch.section2 : sch.section;
+              
+              // Add row to worksheet
+              wsData.push([
+                course ? `${course.subject} (${sch.unitType})` : "Unknown",
+                course && course.description ? course.description : "No description",
+                offering ? offering.units : "N/A",
+                sch.time,
+                sch.dayType,
+                roomName,
+                sharedSection || "None"
+              ]);
+              currentRow++;
             }
             
-            // Get units
-            const offering = offerings.find(off => 
-              off.courseId === sch.courseId && 
-              off.type === sch.unitType &&
-              (off.section === sch.section || off.section === sch.section2)
-            );
+            // Add a single space after MWF schedules
+            wsData.push([]);
+            currentRow++;
+          }
+          
+          // Process TTHS schedules
+          if (tthsSchedules.length > 0) {
+            // Add column headers for TTHS
+            wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
+            currentRow++;
             
-            // Get shared section
-            const sharedSection = sch.section === section ? sch.section2 : sch.section;
+            // Deduplicate entries
+            const uniqueTTHSSchedules = tthsSchedules.reduce((unique, sch) => {
+              const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
+              if (!unique.has(key) || sch.col > 0) {
+                unique.set(key, sch);
+              }
+              return unique;
+            }, new Map());
             
-            // Add row to worksheet
-            wsData.push([
-              course ? `${course.subject} (${sch.unitType})` : "Unknown",
-              course && course.description ? course.description : "No description",
-              offering ? offering.units : "N/A",
-              sch.dayType,
-              roomName,
-              sharedSection || "None"
-            ]);
+            // Sort schedules by time instead of course name
+            const sortedTTHSSchedules = Array.from(uniqueTTHSSchedules.values()).sort((a, b) => {
+              const times = getTimesArray("TTHS");
+              const timeIndexA = times.indexOf(a.time);
+              const timeIndexB = times.indexOf(b.time);
+              return timeIndexA - timeIndexB;
+            });
+            
+            // Add TTHS schedules to worksheet
+            for (const sch of sortedTTHSSchedules) {
+              const course = courses.find(c => c.id === sch.courseId);
+              
+              // Get room name
+              let roomName = "Not assigned";
+              if (sch.col > 0) {
+                const colIndex = sch.col - 1;
+                if (colIndex >= 0 && colIndex < allColumns.length) {
+                  roomName = allColumns[colIndex];
+                }
+              } else {
+                // Find matching room view entry
+                const roomViewEntry = schedules.find(roomSch => {
+                  return roomSch.courseId === sch.courseId &&
+                        roomSch.unitType === sch.unitType &&
+                        roomSch.section === sch.section &&
+                        roomSch.section2 === sch.section2 &&
+                        roomSch.dayType === sch.dayType &&
+                        roomSch.time === sch.time &&
+                        roomSch.col > 0;
+                });
+                
+                if (roomViewEntry && roomViewEntry.col > 0) {
+                  const colIndex = roomViewEntry.col - 1;
+                  if (colIndex >= 0 && colIndex < allColumns.length) {
+                    roomName = allColumns[colIndex];
+                  }
+                }
+              }
+              
+              // Get units
+              const offering = offerings.find(off => 
+                off.courseId === sch.courseId && 
+                off.type === sch.unitType &&
+                (off.section === sch.section || off.section === sch.section2)
+              );
+              
+              // Get shared section
+              const sharedSection = sch.section === section ? sch.section2 : sch.section;
+              
+              // Add row to worksheet
+              wsData.push([
+                course ? `${course.subject} (${sch.unitType})` : "Unknown",
+                course && course.description ? course.description : "No description",
+                offering ? offering.units : "N/A",
+                sch.time,
+                sch.dayType,
+                roomName,
+                sharedSection || "None"
+              ]);
+              currentRow++;
+            }
           }
           
           // Add empty rows after each section
           wsData.push([]);
           wsData.push([]);
+          currentRow += 2;
         }
         
         // Create worksheet
@@ -3648,12 +3756,55 @@ async function exportAllSchedulesToExcel() {
           { wch: 25 },  // Course
           { wch: 40 },  // Description
           { wch: 10 },  // Units
-          { wch: 15 },  // Day
+          { wch: 15 },  // Time
+          { wch: 12 },  // Day
           { wch: 20 },  // Room
           { wch: 15 }   // Shared With
         ];
         
         ws['!cols'] = colWidths;
+        
+        // Apply formatting to header rows (degree, year level, trimester)
+        formattingInfo.headerRows.forEach(row => {
+          const cellRef = XLSX.utils.encode_cell({r: row, c: 0});
+          if (!ws[cellRef]) return;
+          
+          // Make cell bold and centered, merged across all columns
+          ws[cellRef].s = {
+            font: { bold: true },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+          
+          // Merge cells across all 7 columns
+          const mergeRef = {
+            s: {r: row, c: 0},
+            e: {r: row, c: 6}
+          };
+          
+          if (!ws['!merges']) ws['!merges'] = [];
+          ws['!merges'].push(mergeRef);
+        });
+        
+        // Apply formatting to section-group rows
+        formattingInfo.sectionGroupRows.forEach(row => {
+          const cellRef = XLSX.utils.encode_cell({r: row, c: 0});
+          if (!ws[cellRef]) return;
+          
+          // Make cell bold and centered, merged across all columns
+          ws[cellRef].s = {
+            font: { bold: true },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+          
+          // Merge cells across all 7 columns
+          const mergeRef = {
+            s: {r: row, c: 0},
+            e: {r: row, c: 6}
+          };
+          
+          if (!ws['!merges']) ws['!merges'] = [];
+          ws['!merges'].push(mergeRef);
+        });
         
         // Add worksheet to workbook
         XLSX.utils.book_append_sheet(workbook, ws, worksheetName);

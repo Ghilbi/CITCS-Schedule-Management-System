@@ -1,10 +1,38 @@
 /**************************************************************
  * API wrapper functions for backend calls
  **************************************************************/
+// Utility: debounce to limit frequent calls on inputs
+function debounce(func, delay = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(...args), delay);
+  };
+}
+
 async function apiGet(table) {
-  const response = await fetch(`/api/${table}`);
+  const response = await fetch(`/api/${table}`, {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  });
   return response.json();
 }
+
+// Performance: cache GET calls to avoid redundant network requests
+const apiCache = {};
+const originalApiGet = apiGet;
+apiGet = async (table) => {
+  if (!apiCache[table]) {
+    apiCache[table] = await originalApiGet(table);
+  }
+  return apiCache[table];
+};
+const clearApiCache = (table) => {
+  delete apiCache[table];
+};
 
 async function apiPost(table, data) {
   const response = await fetch(`/api/${table}`, {
@@ -15,6 +43,13 @@ async function apiPost(table, data) {
   return response.json();
 }
 
+// Clear cache on POST/PUT/DELETE to keep data consistent
+const originalApiPost = apiPost;
+apiPost = async (table, data) => {
+  clearApiCache(table);
+  return originalApiPost(table, data);
+};
+
 async function apiPut(table, id, data) {
   const response = await fetch(`/api/${table}/${id}`, {
     method: 'PUT',
@@ -24,12 +59,26 @@ async function apiPut(table, id, data) {
   return response.json();
 }
 
+// Clear cache on POST/PUT/DELETE to keep data consistent
+const originalApiPut = apiPut;
+apiPut = async (table, id, data) => {
+  clearApiCache(table);
+  return originalApiPut(table, id, data);
+};
+
 async function apiDelete(table, id) {
   const response = await fetch(`/api/${table}/${id}`, {
     method: 'DELETE'
   });
   return response.json();
 }
+
+// Clear cache on POST/PUT/DELETE to keep data consistent
+const originalApiDelete = apiDelete;
+apiDelete = async (table, id) => {
+  clearApiCache(table);
+  return originalApiDelete(table, id);
+};
 
 /**************************************************************
  * Global variables for Room View columns
@@ -62,12 +111,12 @@ const sectionSectionView = document.getElementById("section-section-view");
 const sectionFacultyView = document.getElementById("section-faculty-view");
 
 function hideAllSections() {
-  document.getElementById("section-faculty").classList.add("hidden");
+  // document.getElementById("section-faculty").classList.add("hidden");
   document.getElementById("section-courses").classList.add("hidden");
   document.getElementById("section-course-offering").classList.add("hidden");
   document.getElementById("section-section-view").classList.add("hidden");
   document.getElementById("section-room-view").classList.add("hidden");
-  document.getElementById("section-faculty-view").classList.add("hidden");
+  // document.getElementById("section-faculty-view").classList.add("hidden");
 }
 
 function showSection(section) {
@@ -84,11 +133,13 @@ function showSection(section) {
   }
 }
 
-document.getElementById("btn-faculty").addEventListener("click", async () => {
-  hideAllSections();
-  sectionFaculty.classList.remove("hidden");
-  await renderFacultyTable();
-});
+// Remove faculty nav handlers
+// document.getElementById("btn-faculty").addEventListener("click", async () => {
+//   hideAllSections();
+//   sectionFaculty.classList.remove("hidden");
+//   await renderFacultyTable();
+// });
+
 document.getElementById("btn-courses").addEventListener("click", async () => {
   hideAllSections();
   sectionCourses.classList.remove("hidden");
@@ -102,19 +153,10 @@ document.getElementById("btn-course-offering").addEventListener("click", async (
 });
 // New Event Listener for Section View
 document.getElementById("btn-section-view").addEventListener("click", async () => {
-  // First hide all sections
   hideAllSections();
-  // Then show section view and initialize it
   sectionSectionView.classList.remove("hidden");
-  
-  // Set default values if needed
-  currentSectionViewTrimester = "1st Trimester";
-  currentSectionViewYearLevel = "1st yr";
-  
-  // Set up tab event listeners (this will also handle the active classes)
+  // Preserve currentSectionViewTrimester and yearLevel
   setupSectionViewTrimesterTabs();
-  
-  // Render the tables with the current settings
   await renderSectionViewTables();
   await validateAllComplementary();
 });
@@ -258,8 +300,8 @@ async function renderCoursesTable() {
       <td>${c.trimester}</td>
       <td>${c.description || ''}</td>
       <td>
-        <button onclick="editCourse(${c.id})">Edit</button>
-        <button onclick="deleteCourse(${c.id})">Delete</button>
+        <button class="table-edit-btn" onclick="editCourse(${c.id})">Edit</button>
+        <button class="table-delete-btn" onclick="deleteCourse(${c.id})">Delete</button>
       </td>
     `;
     tableCoursesBody.appendChild(tr);
@@ -346,9 +388,10 @@ window.deleteCourse = async function(id) {
   await validateAllComplementary();
 };
 
-courseSearch.addEventListener("input", renderCoursesTable);
-courseFilterDegree.addEventListener("change", renderCoursesTable);
-courseSort.addEventListener("change", renderCoursesTable);
+// Debounced controls for Courses
+courseSearch.addEventListener("input", debounce(renderCoursesTable, 200));
+courseFilterDegree.addEventListener("change", debounce(renderCoursesTable, 200));
+courseSort.addEventListener("change", debounce(renderCoursesTable, 200));
 
 /**************************************************************
  * 7) COURSE OFFERING CRUD with Search, Filter, Sort, and Trimester Tabs
@@ -416,6 +459,7 @@ document.getElementById("courseOffering-degree").addEventListener("change", popu
 document.getElementById("btn-add-all-courses").addEventListener("click", async function() {
   const selectedDegree = document.getElementById("courseOffering-degree").value;
   const selectedYearLevel = document.querySelector('input[name="bulkAddYearLevel"]:checked').value;
+  const selectedTrimesterBulk = document.querySelector('input[name="bulkAddTrimester"]:checked').value;
   
   if (!selectedDegree) {
     alert("Please select a degree first.");
@@ -450,13 +494,11 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
   }
   
   try {
-    // Get all courses for the selected degree
+    // Get all courses and filter by selected degree and chosen trimester
     let courses = await apiGet("courses");
-    
-    // Filter by the selected degree and current trimester
-    courses = courses.filter(course => 
-      course.degree === selectedDegree && 
-      (currentTrimesterFilter === "all" || course.trimester === currentTrimesterFilter)
+    courses = courses.filter(course =>
+      course.degree === selectedDegree &&
+      (!selectedTrimesterBulk || course.trimester === selectedTrimesterBulk)
     );
     
     // Apply year level filter if one is selected
@@ -664,8 +706,8 @@ async function renderCourseOfferingTable() {
       <td>${trimester}</td>
       <td>${degree}</td>
       <td>
-        <button onclick="editCourseOffering(${off.id})">Edit</button>
-        <button onclick="deleteCourseOffering(${off.id})">Delete</button>
+        <button class="table-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
+        <button class="table-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
       </td>
     `;
     tableCourseOfferingBody.appendChild(tr);
@@ -752,9 +794,10 @@ window.deleteCourseOffering = async function(id) {
   await validateAllComplementary();
 };
 
-offeringSearch.addEventListener("input", renderCourseOfferingTable);
-offeringFilterType.addEventListener("change", renderCourseOfferingTable);
-offeringSort.addEventListener("change", renderCourseOfferingTable);
+// Debounced controls for Course Offerings
+offeringSearch.addEventListener("input", debounce(renderCourseOfferingTable, 200));
+offeringFilterType.addEventListener("change", debounce(renderCourseOfferingTable, 200));
+offeringSort.addEventListener("change", debounce(renderCourseOfferingTable, 200));
 
 /**************************************************************
  * ROOM VIEW: Trimester Tabs, Headers, and Tables
@@ -948,8 +991,7 @@ async function openRoomViewModal(dayType, time, roomName, col) {
     const matchingOffering = offerings.find(off => 
       off.courseId === existing.courseId && 
       off.type === existing.unitType &&
-      courses.find(c => c.id === off.courseId)?.trimester === currentRoomViewTrimester &&
-      courses.find(c => c.id === off.courseId)?.year_level === currentRoomViewYearLevel
+      courses.find(c => c.id === off.courseId)?.trimester === currentRoomViewTrimester
     );
     if (matchingOffering) {
       document.getElementById("roomview-course").value = matchingOffering.id;
@@ -2614,7 +2656,7 @@ function hideModal(modal) {
   document.getElementById('btn-clear-courseOffering').addEventListener('click', clearAllCourseOfferings);
   
   // Primary navigation menu event listeners
-  document.getElementById("btn-faculty").addEventListener("click", () => showSection("faculty"));
+  // document.getElementById("btn-faculty").addEventListener("click", () => showSection("faculty"));
   document.getElementById("btn-courses").addEventListener("click", () => showSection("courses"));
   document.getElementById("btn-course-offering").addEventListener("click", () => showSection("course-offering"));
   document.getElementById("btn-section-view").addEventListener("click", async () => {
@@ -2627,14 +2669,16 @@ function hideModal(modal) {
     await renderRoomViewTables();
     await validateAllComplementary();
   });
-  document.getElementById("btn-faculty-view").addEventListener("click", async () => {
-    showSection("faculty-view");
-    await renderFacultyViewTables();
-    await validateAllComplementary();
-  });
+  // document.getElementById("btn-faculty-view").addEventListener("click", async () => {
+  //   showSection("faculty-view");
+  //   await renderFacultyViewTables();
+  //   await validateAllComplementary();
+  // });
   
-  // Show Faculty section by default
-  showSection("faculty");
+  // Show Section View by default
+  showSection("section-view");
+  await renderSectionViewTables();
+  await validateAllComplementary();
 })();
 
 /**************************************************************
@@ -2644,12 +2688,12 @@ const modalFacultyView = document.getElementById("modal-facultyview");
 let currentFacultyViewTrimester = "1st Trimester";
 
 // Add Faculty View button to navigation
-document.getElementById("btn-faculty-view").addEventListener("click", async () => {
-  hideAllSections();
-  sectionFacultyView.classList.remove("hidden");
-  setupFacultyViewTrimesterTabs();
-  await renderFacultyViewTables();
-});
+// document.getElementById("btn-faculty-view").addEventListener("click", async () => {
+//   hideAllSections();
+//   sectionFacultyView.classList.remove("hidden");
+//   setupFacultyViewTrimesterTabs();
+//   await renderFacultyViewTables();
+// });
 
 // Add trimester tab functionality for Faculty View
 document.querySelectorAll("#section-faculty-view .tab-btn").forEach(btn => {
@@ -3474,346 +3518,115 @@ function setupModalCloseButtons() {
  */
 async function exportAllSchedulesToExcel() {
   try {
-    // Get all necessary data
+    // Fetch all data
     const schedules = await apiGet("schedules");
     const courses = await apiGet("courses");
     const offerings = await apiGet("course_offerings");
-    const rooms = await apiGet("rooms");
     const allColumns = await getAllRoomColumns();
-    
-    // Year levels and trimesters for export
     const yearLevels = ["1st yr", "2nd yr", "3rd yr"];
     const trimesters = ["1st Trimester", "2nd Trimester", "3rd Trimester"];
-    
-    // Create workbook
+
+    // Create a new Excel workbook
     const workbook = XLSX.utils.book_new();
-    
-    // Process each year level and trimester
-    for (const yearLevel of yearLevels) {
-      for (const trimester of trimesters) {
-        // Create worksheet for this year-trimester combination
-        const worksheetName = `${yearLevel}-${trimester.split(' ')[0]}`;
-        
-        // Get sections for current trimester and year level
+
+    // Create one sheet per trimester, including all year-level schedules
+    for (const trimester of trimesters) {
+      const wsData = [];
+      // Loop through each year level
+      for (const yearLevel of yearLevels) {
+        // Year-level header row
+        wsData.push([yearLevel]);
+        // Get all sections for this trimester & year level
         const sections = await getUniqueSectionsForTrimesterAndYear(trimester, yearLevel);
-        
-        // Skip if no sections found
-        if (sections.length === 0) continue;
-        
-        // Create worksheet data
-        const wsData = [];
-        // Track row numbers where we need to apply formatting
-        const formattingInfo = {
-          headerRows: [],
-          sectionGroupRows: []
-        };
-        
-        // Current row counter
-        let currentRow = 0;
-        
-        // For each section, create separate section block
+        if (sections.length === 0) {
+          wsData.push([]); // spacer if no sections
+          continue;
+        }
+        // Process each section block
         for (const section of sections) {
-          // Get schedules for this section to determine group
+          // Filter section schedules
           const sectionSchedules = schedules.filter(sch => {
             const course = courses.find(c => c.id === sch.courseId);
-            return (sch.section === section || sch.section2 === section) && 
-                   course && 
-                   course.trimester === trimester && 
-                   course.year_level === yearLevel;
+            return (sch.section === section || sch.section2 === section) &&
+                   course && course.trimester === trimester && course.year_level === yearLevel;
           });
-          
-          // Skip if no schedules found for this section
           if (sectionSchedules.length === 0) continue;
-          
-          // Get the degree for this specific section
-          const sectionOffering = offerings.find(off => 
-            off.section === section && 
+
+          // Determine degree for this section
+          let degree = "Unknown";
+          const offeringMatch = offerings.find(off =>
+            off.section === section &&
             courses.find(c => c.id === off.courseId)?.trimester === trimester &&
             courses.find(c => c.id === off.courseId)?.year_level === yearLevel
           );
-          
-          let degree = "Unknown";
-          if (sectionOffering) {
-            degree = sectionOffering.degree || 
-                    courses.find(c => c.id === sectionOffering.courseId)?.degree || 
-                    "Unknown";
-          } else {
-            // Try to find degree from any schedule for this section
-            const scheduleForSection = sectionSchedules.find(sch => true);
-            if (scheduleForSection) {
-              const course = courses.find(c => c.id === scheduleForSection.courseId);
-              degree = course?.degree || "Unknown";
-            }
+          if (offeringMatch) {
+            degree = offeringMatch.degree || courses.find(c => c.id === offeringMatch.courseId)?.degree || "Unknown";
           }
-          
-          // Determine group (A or B) based on room assignments
-          let groupA = 0;
-          let groupB = 0;
-          
-          // Count rooms in group A and B
+
+          // Determine group A/B based on room assignments
+          let countA = 0, countB = 0;
           sectionSchedules.forEach(sch => {
             if (sch.col > 0) {
-              const colIndex = sch.col - 1;
-              if (colIndex >= 0 && colIndex < allColumns.length) {
-                const roomName = allColumns[colIndex];
-                if (roomName.endsWith(" A")) {
-                  groupA++;
-                } else if (roomName.endsWith(" B")) {
-                  groupB++;
-                }
-              }
+              const roomName = allColumns[sch.col - 1] || "";
+              if (roomName.endsWith(" A")) countA++;
+              else if (roomName.endsWith(" B")) countB++;
             }
           });
-          
-          // Determine group based on most common room assignments
-          const group = groupA >= groupB ? "A" : "B";
-          
-          // Add degree, year level, trimester header for this section
+          const group = countA >= countB ? "A" : "B";
+
+          // Section header rows
           wsData.push([`${degree}, ${yearLevel}, ${trimester}`]);
-          formattingInfo.headerRows.push(currentRow);
-          currentRow++;
-          
-          // Add section header with group
           wsData.push([`${section} - Group ${group}`]);
-          formattingInfo.sectionGroupRows.push(currentRow);
-          currentRow++;
-          
-          // Separate schedules by day type
-          const mwfSchedules = sectionSchedules.filter(sch => sch.dayType === "MWF");
-          const tthsSchedules = sectionSchedules.filter(sch => sch.dayType === "TTHS");
-          
-          // Process MWF schedules first
-          if (mwfSchedules.length > 0) {
-            // Add column headers for MWF
+
+          // Handle schedules by day type
+          for (const dayType of ["MWF", "TTHS"]) {
+            const dayList = sectionSchedules.filter(sch => sch.dayType === dayType);
+            if (!dayList.length) continue;
+            // Column titles
             wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
-            currentRow++;
-            
-            // Deduplicate entries
-            const uniqueMWFSchedules = mwfSchedules.reduce((unique, sch) => {
+            // Deduplicate and sort by time
+            const map = new Map();
+            dayList.forEach(sch => {
               const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
-              if (!unique.has(key) || sch.col > 0) {
-                unique.set(key, sch);
-              }
-              return unique;
-            }, new Map());
-            
-            // Sort schedules by time instead of course name
-            const sortedMWFSchedules = Array.from(uniqueMWFSchedules.values()).sort((a, b) => {
-              const times = getTimesArray("MWF");
-              const timeIndexA = times.indexOf(a.time);
-              const timeIndexB = times.indexOf(b.time);
-              return timeIndexA - timeIndexB;
+              if (!map.has(key) || sch.col > 0) map.set(key, sch);
             });
-            
-            // Add MWF schedules to worksheet
-            for (const sch of sortedMWFSchedules) {
+            const sorted = Array.from(map.values()).sort((a, b) => {
+              const times = getTimesArray(dayType);
+              return times.indexOf(a.time) - times.indexOf(b.time);
+            });
+            // Add rows
+            sorted.forEach(sch => {
               const course = courses.find(c => c.id === sch.courseId);
-              
-              // Get room name
               let roomName = "Not assigned";
-              if (sch.col > 0) {
-                const colIndex = sch.col - 1;
-                if (colIndex >= 0 && colIndex < allColumns.length) {
-                  roomName = allColumns[colIndex];
-                }
-              } else {
-                // Find matching room view entry
-                const roomViewEntry = schedules.find(roomSch => {
-                  return roomSch.courseId === sch.courseId &&
-                        roomSch.unitType === sch.unitType &&
-                        roomSch.section === sch.section &&
-                        roomSch.section2 === sch.section2 &&
-                        roomSch.dayType === sch.dayType &&
-                        roomSch.time === sch.time &&
-                        roomSch.col > 0;
-                });
-                
-                if (roomViewEntry && roomViewEntry.col > 0) {
-                  const colIndex = roomViewEntry.col - 1;
-                  if (colIndex >= 0 && colIndex < allColumns.length) {
-                    roomName = allColumns[colIndex];
-                  }
-                }
-              }
-              
-              // Get units
-              const offering = offerings.find(off => 
-                off.courseId === sch.courseId && 
-                off.type === sch.unitType &&
-                (off.section === sch.section || off.section === sch.section2)
+              if (sch.col > 0) roomName = allColumns[sch.col - 1] || roomName;
+              const off = offerings.find(off =>
+                off.courseId === sch.courseId && off.type === sch.unitType &&
+                (off.section === sch.section || off.section2 === sch.section2)
               );
-              
-              // Get shared section
-              const sharedSection = sch.section === section ? sch.section2 : sch.section;
-              
-              // Add row to worksheet
+              const shared = sch.section === section ? sch.section2 : sch.section;
               wsData.push([
                 course ? `${course.subject} (${sch.unitType})` : "Unknown",
-                course && course.description ? course.description : "No description",
-                offering ? offering.units : "N/A",
+                course?.description || "No description",
+                off?.units || "N/A",
                 sch.time,
-                sch.dayType,
+                dayType,
                 roomName,
-                sharedSection || "None"
+                shared || "None"
               ]);
-              currentRow++;
-            }
-            
-            // Add a single space after MWF schedules
-            wsData.push([]);
-            currentRow++;
-          }
-          
-          // Process TTHS schedules
-          if (tthsSchedules.length > 0) {
-            // Add column headers for TTHS
-            wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
-            currentRow++;
-            
-            // Deduplicate entries
-            const uniqueTTHSSchedules = tthsSchedules.reduce((unique, sch) => {
-              const key = `${sch.courseId}-${sch.time}-${sch.unitType}-${sch.section}-${sch.section2}`;
-              if (!unique.has(key) || sch.col > 0) {
-                unique.set(key, sch);
-              }
-              return unique;
-            }, new Map());
-            
-            // Sort schedules by time instead of course name
-            const sortedTTHSSchedules = Array.from(uniqueTTHSSchedules.values()).sort((a, b) => {
-              const times = getTimesArray("TTHS");
-              const timeIndexA = times.indexOf(a.time);
-              const timeIndexB = times.indexOf(b.time);
-              return timeIndexA - timeIndexB;
             });
-            
-            // Add TTHS schedules to worksheet
-            for (const sch of sortedTTHSSchedules) {
-              const course = courses.find(c => c.id === sch.courseId);
-              
-              // Get room name
-              let roomName = "Not assigned";
-              if (sch.col > 0) {
-                const colIndex = sch.col - 1;
-                if (colIndex >= 0 && colIndex < allColumns.length) {
-                  roomName = allColumns[colIndex];
-                }
-              } else {
-                // Find matching room view entry
-                const roomViewEntry = schedules.find(roomSch => {
-                  return roomSch.courseId === sch.courseId &&
-                        roomSch.unitType === sch.unitType &&
-                        roomSch.section === sch.section &&
-                        roomSch.section2 === sch.section2 &&
-                        roomSch.dayType === sch.dayType &&
-                        roomSch.time === sch.time &&
-                        roomSch.col > 0;
-                });
-                
-                if (roomViewEntry && roomViewEntry.col > 0) {
-                  const colIndex = roomViewEntry.col - 1;
-                  if (colIndex >= 0 && colIndex < allColumns.length) {
-                    roomName = allColumns[colIndex];
-                  }
-                }
-              }
-              
-              // Get units
-              const offering = offerings.find(off => 
-                off.courseId === sch.courseId && 
-                off.type === sch.unitType &&
-                (off.section === sch.section || off.section === sch.section2)
-              );
-              
-              // Get shared section
-              const sharedSection = sch.section === section ? sch.section2 : sch.section;
-              
-              // Add row to worksheet
-              wsData.push([
-                course ? `${course.subject} (${sch.unitType})` : "Unknown",
-                course && course.description ? course.description : "No description",
-                offering ? offering.units : "N/A",
-                sch.time,
-                sch.dayType,
-                roomName,
-                sharedSection || "None"
-              ]);
-              currentRow++;
-            }
+            wsData.push([]); // spacer after each day type
           }
-          
-          // Add empty rows after each section
-          wsData.push([]);
-          wsData.push([]);
-          currentRow += 2;
         }
-        
-        // Create worksheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        
-        // Set column widths
-        const colWidths = [
-          { wch: 25 },  // Course
-          { wch: 40 },  // Description
-          { wch: 10 },  // Units
-          { wch: 15 },  // Time
-          { wch: 12 },  // Day
-          { wch: 20 },  // Room
-          { wch: 15 }   // Shared With
-        ];
-        
-        ws['!cols'] = colWidths;
-        
-        // Apply formatting to header rows (degree, year level, trimester)
-        formattingInfo.headerRows.forEach(row => {
-          const cellRef = XLSX.utils.encode_cell({r: row, c: 0});
-          if (!ws[cellRef]) return;
-          
-          // Make cell bold and centered, merged across all columns
-          ws[cellRef].s = {
-            font: { bold: true },
-            alignment: { horizontal: 'center', vertical: 'center' }
-          };
-          
-          // Merge cells across all 7 columns
-          const mergeRef = {
-            s: {r: row, c: 0},
-            e: {r: row, c: 6}
-          };
-          
-          if (!ws['!merges']) ws['!merges'] = [];
-          ws['!merges'].push(mergeRef);
-        });
-        
-        // Apply formatting to section-group rows
-        formattingInfo.sectionGroupRows.forEach(row => {
-          const cellRef = XLSX.utils.encode_cell({r: row, c: 0});
-          if (!ws[cellRef]) return;
-          
-          // Make cell bold and centered, merged across all columns
-          ws[cellRef].s = {
-            font: { bold: true },
-            alignment: { horizontal: 'center', vertical: 'center' }
-          };
-          
-          // Merge cells across all 7 columns
-          const mergeRef = {
-            s: {r: row, c: 0},
-            e: {r: row, c: 6}
-          };
-          
-          if (!ws['!merges']) ws['!merges'] = [];
-          ws['!merges'].push(mergeRef);
-        });
-        
-        // Add worksheet to workbook
-        XLSX.utils.book_append_sheet(workbook, ws, worksheetName);
+        wsData.push([]); // spacer after each year level
       }
+
+      // Create worksheet and append
+      const worksheet = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(workbook, worksheet, trimester);
     }
-    
-    // Generate Excel file and trigger download
+
+    // Trigger file download
     XLSX.writeFile(workbook, `All_Schedules_${new Date().toISOString().split('T')[0]}.xlsx`);
-    
   } catch (error) {
     console.error("Error exporting to Excel:", error);
     alert("Error exporting to Excel. Please try again.");

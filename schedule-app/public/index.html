@@ -13,12 +13,10 @@
 <body>
 
   <nav>
-    <button id="btn-faculty">Manage Faculty</button>
     <button id="btn-courses">Manage Courses</button>
     <button id="btn-course-offering">Manage Course Offering</button>
     <button id="btn-section-view">Section View</button>
     <button id="btn-room-view">Room View</button>
-    <button id="btn-faculty-view">Faculty View</button>
   </nav>
 
   <section id="section-faculty" class="hidden">
@@ -264,6 +262,14 @@
               <label for="year-1st-bulk"><input type="radio" id="year-1st-bulk" name="bulkAddYearLevel" value="1st yr"> 1st Year</label>
               <label for="year-2nd-bulk"><input type="radio" id="year-2nd-bulk" name="bulkAddYearLevel" value="2nd yr"> 2nd Year</label>
               <label for="year-3rd-bulk"><input type="radio" id="year-3rd-bulk" name="bulkAddYearLevel" value="3rd yr"> 3rd Year</label>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Trimester:</label>
+            <div class="radio-group trimester-radio-group">
+              <label for="trim-1"><input type="radio" id="trim-1" name="bulkAddTrimester" value="1st Trimester" checked>1st Trimester</label>
+              <label for="trim-2"><input type="radio" id="trim-2" name="bulkAddTrimester" value="2nd Trimester">2nd Trimester</label>
+              <label for="trim-3"><input type="radio" id="trim-3" name="bulkAddTrimester" value="3rd Trimester">3rd Trimester</label>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
     "name": "schedule-app-backend",
     "version": "1.0.0",
     "description": "Backend for Schedule App",
-    "main": "server.js",
+    "main": "schedule-app/backend/server.js",
     "scripts": {
       "start": "node server.js",
       "migrate": "node migrate.js"

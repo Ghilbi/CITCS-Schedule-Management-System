@@ -16,9 +16,20 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 console.log('→ DATABASE_URL:', process.env.DATABASE_URL);
-pool.connect(err => {
-  if (err) console.error("Error connecting to Postgres database", err);
-  else console.log("Connected to Postgres database.");
+pool.connect(async (err, client, release) => {
+  if (err) {
+    console.error("Error connecting to Postgres database", err);
+    return;
+  }
+  console.log("Connected to Postgres database.");
+  try {
+    await client.query('SET search_path TO public');
+    console.log("Default schema set to public.");
+  } catch (dbErr) {
+    console.error("Error setting search_path", dbErr);
+  } finally {
+    if (client) release();
+  }
 });
 
 // Create tables if they do not exist

@@ -1,4 +1,4 @@
-/* Use Roboto font */
+/* Use Inter font */
 :root {
   /* Color Palette */
   --color-primary: #2e7d32;
@@ -16,7 +16,7 @@
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin: 0;
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -553,7 +553,7 @@ tbody tr:hover td { background: var(--color-hover); }
   border-radius: 8px;
   box-sizing: border-box;
   margin-top: 6px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   resize: vertical;
   min-height: 80px;
@@ -936,4 +936,26 @@ button.delete-btn {
   background-color: #0d4814;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Hover animation for all buttons */
+button {
+  transition: transform 0.2s ease;
+}
+button:hover {
+  transform: scale(1.05);
+}
+
+/* update any remaining Roboto to Inter */
+.some-section {
+  font-family: 'Inter', sans-serif;
 }

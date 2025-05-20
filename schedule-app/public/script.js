@@ -1701,6 +1701,10 @@ async function renderSectionViewTables() {
         td.setAttribute("data-dayType", dayType);
         td.setAttribute("data-time", time);
         td.setAttribute("data-section", section);
+        
+        // Add transition for smooth animation on all cells
+        td.style.transition = "background-color 0.5s ease, border 0.5s ease";
+        
         td.addEventListener("click", () => openSectionViewModal(dayType, time, section));
         
         // Rest of your code for populating cells remains the same
@@ -2117,6 +2121,69 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
       return;
     }
   }
+
+  // Get the current course details
+  const currentCourse = courses.find(c => c.id === courseId);
+  if (!currentCourse) {
+    showConflictNotification("Could not find course details.");
+    return;
+  }
+
+  // Check for duplicate subjects in the same section (allowing different components: Lec/Lab)
+  const duplicateSubject = schedules.find(sch => {
+    // Skip comparing with the current entry being edited
+    if (sch.id.toString() === existingId) return false;
+    
+    // Only check Section View entries
+    if (sch.col !== 0) return false;
+    
+    // Check if this is for the same section
+    if (sch.section !== section && sch.section2 !== section) return false;
+    
+    // Get subject details for this schedule entry
+    const schCourse = courses.find(c => c.id === sch.courseId);
+    if (!schCourse) return false;
+    
+    // Check if this is the same subject name
+    if (schCourse.subject !== currentCourse.subject) return false;
+    
+    // Check if this is the same unit type (we allow different types like Lec vs Lab)
+    return sch.unitType === unitType;
+  });
+  
+  if (duplicateSubject) {
+    showConflictNotification(`Duplicate subject: "${currentCourse.subject}" (${unitType}) is already scheduled for section "${section}".`);
+    return;
+  }
+  
+  // Same check for section2 if it exists
+  if (section2) {
+    const duplicateSubjectSection2 = schedules.find(sch => {
+      // Skip comparing with the current entry being edited
+      if (sch.id.toString() === existingId) return false;
+      
+      // Only check Section View entries
+      if (sch.col !== 0) return false;
+      
+      // Check if this is for the same section
+      if (sch.section !== section2 && sch.section2 !== section2) return false;
+      
+      // Get subject details for this schedule entry
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      if (!schCourse) return false;
+      
+      // Check if this is the same subject name
+      if (schCourse.subject !== currentCourse.subject) return false;
+      
+      // Check if this is the same unit type (we allow different types like Lec vs Lab)
+      return sch.unitType === unitType;
+    });
+    
+    if (duplicateSubjectSection2) {
+      showConflictNotification(`Duplicate subject: "${currentCourse.subject}" (${unitType}) is already scheduled for section "${section2}".`);
+      return;
+    }
+  }
   
   // First, save to Section View
   const sectionViewData = {
@@ -2300,6 +2367,32 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
   // Get and update the specific cell that was changed
   await updateSectionViewCell(sectionDayType, sectionTime, sectionName);
   
+  // If this is a Lec/Lab component, also update its complementary component cell if it exists
+  if (unitType === "Lec" || unitType === "Lab") {
+    // Get all section view schedules after the update
+    const updatedSchedules = await apiGet("schedules");
+    
+    // Find complementary component to update its cell as well
+    const complementaryType = unitType === "Lec" ? "Lab" : "Lec";
+    const complementaryEntry = updatedSchedules.find(s => {
+      const course = courses.find(c => c.id === s.courseId);
+      return s.col === 0 && // Section view entry
+             s.dayType === sectionDayType &&
+             s.courseId === courseId &&
+             (s.section === sectionName || s.section2 === sectionName) &&
+             s.unitType === complementaryType &&
+             course && 
+             course.trimester === currentSectionViewTrimester &&
+             course.year_level === currentSectionViewYearLevel;
+    });
+    
+    if (complementaryEntry) {
+      // Update the complementary cell to remove warning styling
+      await updateSectionViewCell(complementaryEntry.dayType, complementaryEntry.time, 
+        complementaryEntry.section === sectionName ? complementaryEntry.section2 || complementaryEntry.section : complementaryEntry.section);
+    }
+  }
+  
   // Update Room View as well since they're connected
   await renderRoomViewTables();
   await validateAllComplementary();
@@ -2307,13 +2400,20 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
 
 // Function to update a specific cell in the Section View table
 async function updateSectionViewCell(dayType, time, section) {
+  // Clear the API cache for schedules to get fresh data
+  clearApiCache("schedules");
+  
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const offerings = await apiGet("course_offerings");
   const allColumns = await getAllRoomColumns();
   
   // Find the target cell in the table
   const targetCell = document.querySelector(`.clickable-cell[data-daytype="${dayType}"][data-time="${time}"][data-section="${section}"]`);
   if (!targetCell) return;
+  
+  // Add transition for smooth animation
+  targetCell.style.transition = "background-color 0.5s ease, border 0.5s ease";
   
   // Find the schedule for this cell
   const scheduleEntries = schedules.filter(sch => {
@@ -2347,7 +2447,21 @@ async function updateSectionViewCell(dayType, time, section) {
              roomSch.col > 0; // Room View entry
     });
     
-    let cellContent = course ? `${course.subject} - ${sch.unitType}` : "Unknown";
+    // Get course offering to get degree information
+    const courseOffering = offerings.find(off => 
+      off.courseId === sch.courseId && 
+      off.type === sch.unitType && 
+      (off.section === sch.section || off.section === sch.section2)
+    );
+    
+    // Get degree information from offering or course
+    const degree = courseOffering && courseOffering.degree ? 
+                  courseOffering.degree : 
+                  (course ? course.degree : "");
+    
+    let cellContent = course ? 
+      `${course.subject} (${degree})<br>${sch.unitType}` : 
+      "Unknown";
     
     // Add section2 info if it exists
     if (sch.section2) {

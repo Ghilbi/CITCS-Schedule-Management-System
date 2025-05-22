@@ -110,7 +110,15 @@ const sectionRoomView = document.getElementById("section-room-view");
 const sectionSectionView = document.getElementById("section-section-view");
 const sectionFacultyView = document.getElementById("section-faculty-view");
 
+// Add fade animation helper
+function applyFadeAnimation(element) {
+  element.classList.add("fade-in");
+  element.addEventListener("animationend", () => element.classList.remove("fade-in"), { once: true });
+}
+
 function hideAllSections() {
+  // remove fade-in from all sections
+  document.querySelectorAll("[id^='section-']").forEach(sec => sec.classList.remove("fade-in"));
   // document.getElementById("section-faculty").classList.add("hidden");
   document.getElementById("section-courses").classList.add("hidden");
   document.getElementById("section-course-offering").classList.add("hidden");
@@ -121,7 +129,9 @@ function hideAllSections() {
 
 function showSection(section) {
   hideAllSections();
-  document.getElementById(`section-${section}`).classList.remove("hidden");
+  const secEl = document.getElementById(`section-${section}`);
+  secEl.classList.remove("hidden");
+  applyFadeAnimation(secEl);
   
   // Additional actions for specific sections
   if (section === "faculty") {
@@ -143,11 +153,13 @@ function showSection(section) {
 document.getElementById("btn-courses").addEventListener("click", async () => {
   hideAllSections();
   sectionCourses.classList.remove("hidden");
+  applyFadeAnimation(sectionCourses);
   await renderCoursesTable();
 });
 document.getElementById("btn-course-offering").addEventListener("click", async () => {
   hideAllSections();
   sectionCourseOffering.classList.remove("hidden");
+  applyFadeAnimation(sectionCourseOffering);
   await renderCourseOfferingTable();
   setupTrimesterTabs();
 });
@@ -155,6 +167,7 @@ document.getElementById("btn-course-offering").addEventListener("click", async (
 document.getElementById("btn-section-view").addEventListener("click", async () => {
   hideAllSections();
   sectionSectionView.classList.remove("hidden");
+  applyFadeAnimation(sectionSectionView);
   // Preserve currentSectionViewTrimester and yearLevel
   setupSectionViewTrimesterTabs();
   await renderSectionViewTables();
@@ -163,6 +176,7 @@ document.getElementById("btn-section-view").addEventListener("click", async () =
 document.getElementById("btn-room-view").addEventListener("click", async () => {
   hideAllSections();
   sectionRoomView.classList.remove("hidden");
+  applyFadeAnimation(sectionRoomView);
   setupRoomViewTrimesterTabs();
   await renderRoomViewTables();
   await validateAllComplementary();
@@ -522,12 +536,27 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
     // Add each course as a course offering for each section
     for (const course of courses) {
       for (const section of sections) {
+        // Determine units based on course subject
+        let purelecUnits = "3";
+        let lecUnits = "2";
+        let labUnits = "1";
+        
+        if (course.subject && course.subject.includes("PATHFIT")) {
+          purelecUnits = "2";
+          lecUnits = "2";
+          labUnits = "2";
+        } else if (course.subject && course.subject.includes("Calculus")) {
+          purelecUnits = "5";
+          lecUnits = "5";
+          labUnits = "5";
+        }
+        
         if (course.unit_category === "PureLec") {
           await apiPost("course_offerings", {
             courseId: course.id,
             section: section,
             type: "PureLec",
-            units: 3,
+            units: purelecUnits,
             trimester: course.trimester,
             degree: course.degree
           });
@@ -538,7 +567,7 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
             courseId: course.id,
             section: section,
             type: "Lec",
-            units: 2,
+            units: lecUnits,
             trimester: course.trimester,
             degree: course.degree
           });
@@ -548,7 +577,7 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
             courseId: course.id,
             section: section,
             type: "Lab",
-            units: 1,
+            units: labUnits,
             trimester: course.trimester,
             degree: course.degree
           });
@@ -588,6 +617,24 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
     const selectedCourse = courses.find(c => c.id == courseOfferingCourseSelect.value);
     if (selectedCourse) {
       document.getElementById("courseOffering-selected-degree").value = selectedCourse.degree;
+      
+      // Auto-set units for PATHFIT and Calculus subjects
+      if (selectedCourse.subject && selectedCourse.subject.includes("PATHFIT")) {
+        courseOfferingUnitsInput.value = "2";
+      } else if (selectedCourse.subject && selectedCourse.subject.includes("Calculus")) {
+        courseOfferingUnitsInput.value = "5";
+      } else {
+        // Apply the original unit logic for other subjects
+        if (unitCategory === "PureLec") {
+          courseOfferingUnitsInput.value = "3";
+        } else if (unitCategory === "Lec/Lab") {
+          if (document.querySelector('input[name="courseOfferingType"]:checked').value === "Lec") {
+            courseOfferingUnitsInput.value = "2";
+          } else if (document.querySelector('input[name="courseOfferingType"]:checked').value === "Lab") {
+            courseOfferingUnitsInput.value = "1";
+          }
+        }
+      }
     }
   }
   
@@ -597,12 +644,16 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
   if (unitCategory === "PureLec") {
     labelPurelec.style.display = "inline-block";
     courseOfferingPurelecRadio.checked = true;
-    courseOfferingUnitsInput.value = "3";
+    if (!courseOfferingUnitsInput.value.includes("PATHFIT") && !courseOfferingUnitsInput.value.includes("Calculus")) {
+      courseOfferingUnitsInput.value = "3";
+    }
   } else if (unitCategory === "Lec/Lab") {
     labelLec.style.display = "inline-block";
     labelLab.style.display = "inline-block";
     courseOfferingLecRadio.checked = true;
-    courseOfferingUnitsInput.value = "2";
+    if (!courseOfferingUnitsInput.value.includes("PATHFIT") && !courseOfferingUnitsInput.value.includes("Calculus")) {
+      courseOfferingUnitsInput.value = "2";
+    }
   }
   courseOfferingTrimesterInput.value = trimester || "";
 });
@@ -610,12 +661,43 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
 document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
   radio.addEventListener("change", function() {
     const type = document.querySelector('input[name="courseOfferingType"]:checked').value;
-    if (type === "Lec") {
-      courseOfferingUnitsInput.value = "2";
-    } else if (type === "Lab") {
-      courseOfferingUnitsInput.value = "1";
-    } else if (type === "PureLec") {
-      courseOfferingUnitsInput.value = "3";
+    
+    // Get current selected course
+    const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+      const courseId = selectedOption.getAttribute("data-course-id");
+      
+      // Check if this is a PATHFIT or Calculus course
+      apiGet("courses").then(courses => {
+        const selectedCourse = courses.find(c => c.id == courseId);
+        if (selectedCourse) {
+          if (selectedCourse.subject && selectedCourse.subject.includes("PATHFIT")) {
+            courseOfferingUnitsInput.value = "2";
+            return;
+          } else if (selectedCourse.subject && selectedCourse.subject.includes("Calculus")) {
+            courseOfferingUnitsInput.value = "5";
+            return;
+          }
+        }
+        
+        // Default behavior for other courses
+        if (type === "Lec") {
+          courseOfferingUnitsInput.value = "2";
+        } else if (type === "Lab") {
+          courseOfferingUnitsInput.value = "1";
+        } else if (type === "PureLec") {
+          courseOfferingUnitsInput.value = "3";
+        }
+      });
+    } else {
+      // Default behavior if no course is selected
+      if (type === "Lec") {
+        courseOfferingUnitsInput.value = "2";
+      } else if (type === "Lab") {
+        courseOfferingUnitsInput.value = "1";
+      } else if (type === "PureLec") {
+        courseOfferingUnitsInput.value = "3";
+      }
     }
   });
 });
@@ -725,15 +807,35 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   const type = document.querySelector('input[name="courseOfferingType"]:checked') 
                ? document.querySelector('input[name="courseOfferingType"]:checked').value 
                : "";
-  const units = courseOfferingUnitsInput.value;
+  let units = courseOfferingUnitsInput.value;
+  
   if (!courseId || !section || !type) {
     alert("Please fill out all fields.");
     return;
   }
   
+  // Get course to confirm PATHFIT or Calculus
+  const courses = await apiGet("courses");
+  const selectedCourse = courses.find(c => c.id == courseId);
+  
+  // Ensure correct units for PATHFIT and Calculus courses
+  if (selectedCourse) {
+    if (selectedCourse.subject && selectedCourse.subject.includes("PATHFIT")) {
+      units = "2";
+    } else if (selectedCourse.subject && selectedCourse.subject.includes("Calculus")) {
+      units = "5";
+    }
+  }
+  
   if (!id && unitCategory === "Lec/Lab") {
-    await apiPost("course_offerings", { courseId, section, type: "Lec", units: 2, trimester, degree });
-    await apiPost("course_offerings", { courseId, section, type: "Lab", units: 1, trimester, degree });
+    // For new Lec/Lab courses, create both Lec and Lab entries
+    const lecUnits = selectedCourse && selectedCourse.subject.includes("PATHFIT") ? "2" : 
+                     selectedCourse && selectedCourse.subject.includes("Calculus") ? "5" : "2";
+    const labUnits = selectedCourse && selectedCourse.subject.includes("PATHFIT") ? "2" : 
+                     selectedCourse && selectedCourse.subject.includes("Calculus") ? "5" : "1";
+                     
+    await apiPost("course_offerings", { courseId, section, type: "Lec", units: lecUnits, trimester, degree });
+    await apiPost("course_offerings", { courseId, section, type: "Lab", units: labUnits, trimester, degree });
   } else {
     if (id) {
       await apiPut("course_offerings", id, { courseId, section, type, units, trimester, degree });
@@ -1488,14 +1590,32 @@ function setupSectionViewTrimesterTabs() {
     tab.parentNode.replaceChild(newTab, tab);
   });
   
+  // Add transition to the section view container for smooth tab switching
+  const sectionViewContainer = document.getElementById("section-view-container");
+  sectionViewContainer.style.opacity = "1";
+  sectionViewContainer.style.transition = "opacity 0.4s ease, height 0.5s ease";
+  
   // Add trimester tab functionality for Section View (to the new elements)
   document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      
+      // Fade out container before changing content
+      sectionViewContainer.style.opacity = "0.6";
+      
       currentSectionViewTrimester = btn.dataset.trimester;
-      await renderSectionViewTables();
-      await validateAllComplementary();
+      
+      // Short delay to allow fade out animation
+      setTimeout(async () => {
+        await renderSectionViewTables();
+        await validateAllComplementary();
+        
+        // Fade in container after content is updated
+        setTimeout(() => {
+          sectionViewContainer.style.opacity = "1";
+        }, 50);
+      }, 200);
     });
   });
   
@@ -1504,9 +1624,22 @@ function setupSectionViewTrimesterTabs() {
     btn.addEventListener("click", async () => {
       document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      
+      // Fade out container before changing content
+      sectionViewContainer.style.opacity = "0.6";
+      
       currentSectionViewYearLevel = btn.dataset.year;
-      await renderSectionViewTables();
-      await validateAllComplementary();
+      
+      // Short delay to allow fade out animation
+      setTimeout(async () => {
+        await renderSectionViewTables();
+        await validateAllComplementary();
+        
+        // Fade in container after content is updated
+        setTimeout(() => {
+          sectionViewContainer.style.opacity = "1";
+        }, 50);
+      }, 200);
     });
   });
   
@@ -1535,6 +1668,10 @@ async function getUniqueSectionsForTrimesterAndYear(trimester, yearLevel) {
 async function renderSectionViewTables() {
   // Clear the container first to prevent duplication
   const container = document.getElementById("section-view-container");
+  
+  // Add transition for smooth resizing animations to the container
+  container.style.transition = "height 0.5s ease";
+  
   container.innerHTML = ""; // Completely empty the container before adding new content
 
   const sections = await getUniqueSectionsForTrimesterAndYear(currentSectionViewTrimester, currentSectionViewYearLevel);
@@ -1563,6 +1700,9 @@ async function renderSectionViewTables() {
     const tableContainer = document.createElement("div");
     tableContainer.className = "table-container";
     
+    // Add transition for smooth container resizing
+    tableContainer.style.transition = "height 0.5s ease, width 0.5s ease";
+    
     const heading = document.createElement("h3");
     heading.textContent = `${dayType} Section View`;
     tableContainer.appendChild(heading);
@@ -1570,16 +1710,27 @@ async function renderSectionViewTables() {
     const table = document.createElement("table");
     table.className = "schedule-table";
     table.id = `section-view-${dayType.toLowerCase()}-table`;
+    
+    // Add transition for smooth table resizing
+    table.style.transition = "height 0.5s ease, width 0.5s ease";
 
     // Create header
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
+    // Add transition for smooth row animation
+    headerRow.style.transition = "height 0.4s ease";
+    
     const timeTh = document.createElement("th");
     timeTh.textContent = "Time";
+    // Add transition for smooth cell animation
+    timeTh.style.transition = "width 0.4s ease, height 0.4s ease";
     headerRow.appendChild(timeTh);
+    
     sections.forEach(section => {
       const th = document.createElement("th");
       th.textContent = section;
+      // Add transition for smooth cell animation
+      th.style.transition = "width 0.4s ease, height 0.4s ease";
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -1589,8 +1740,13 @@ async function renderSectionViewTables() {
     const tbody = document.createElement("tbody");
     for (let time of times) {
       const tr = document.createElement("tr");
+      // Add transition for smooth row animation
+      tr.style.transition = "height 0.4s ease";
+      
       const timeTd = document.createElement("td");
       timeTd.textContent = time;
+      // Add transition for smooth cell animation
+      timeTd.style.transition = "width 0.4s ease, height 0.4s ease";
       tr.appendChild(timeTd);
       
       for (const section of sections) {
@@ -1599,6 +1755,10 @@ async function renderSectionViewTables() {
         td.setAttribute("data-dayType", dayType);
         td.setAttribute("data-time", time);
         td.setAttribute("data-section", section);
+        
+        // Add transition for smooth animation on all cells
+        td.style.transition = "background-color 0.5s ease, border 0.5s ease";
+        
         td.addEventListener("click", () => openSectionViewModal(dayType, time, section));
         
         // Rest of your code for populating cells remains the same
@@ -2015,6 +2175,69 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
       return;
     }
   }
+
+  // Get the current course details
+  const currentCourse = courses.find(c => c.id === courseId);
+  if (!currentCourse) {
+    showConflictNotification("Could not find course details.");
+    return;
+  }
+
+  // Check for duplicate subjects in the same section (allowing different components: Lec/Lab)
+  const duplicateSubject = schedules.find(sch => {
+    // Skip comparing with the current entry being edited
+    if (sch.id.toString() === existingId) return false;
+    
+    // Only check Section View entries
+    if (sch.col !== 0) return false;
+    
+    // Check if this is for the same section
+    if (sch.section !== section && sch.section2 !== section) return false;
+    
+    // Get subject details for this schedule entry
+    const schCourse = courses.find(c => c.id === sch.courseId);
+    if (!schCourse) return false;
+    
+    // Check if this is the same subject name
+    if (schCourse.subject !== currentCourse.subject) return false;
+    
+    // Check if this is the same unit type (we allow different types like Lec vs Lab)
+    return sch.unitType === unitType;
+  });
+  
+  if (duplicateSubject) {
+    showConflictNotification(`Duplicate subject: "${currentCourse.subject}" (${unitType}) is already scheduled for section "${section}".`);
+    return;
+  }
+  
+  // Same check for section2 if it exists
+  if (section2) {
+    const duplicateSubjectSection2 = schedules.find(sch => {
+      // Skip comparing with the current entry being edited
+      if (sch.id.toString() === existingId) return false;
+      
+      // Only check Section View entries
+      if (sch.col !== 0) return false;
+      
+      // Check if this is for the same section
+      if (sch.section !== section2 && sch.section2 !== section2) return false;
+      
+      // Get subject details for this schedule entry
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      if (!schCourse) return false;
+      
+      // Check if this is the same subject name
+      if (schCourse.subject !== currentCourse.subject) return false;
+      
+      // Check if this is the same unit type (we allow different types like Lec vs Lab)
+      return sch.unitType === unitType;
+    });
+    
+    if (duplicateSubjectSection2) {
+      showConflictNotification(`Duplicate subject: "${currentCourse.subject}" (${unitType}) is already scheduled for section "${section2}".`);
+      return;
+    }
+  }
   
   // First, save to Section View
   const sectionViewData = {
@@ -2198,6 +2421,32 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
   // Get and update the specific cell that was changed
   await updateSectionViewCell(sectionDayType, sectionTime, sectionName);
   
+  // If this is a Lec/Lab component, also update its complementary component cell if it exists
+  if (unitType === "Lec" || unitType === "Lab") {
+    // Get all section view schedules after the update
+    const updatedSchedules = await apiGet("schedules");
+    
+    // Find complementary component to update its cell as well
+    const complementaryType = unitType === "Lec" ? "Lab" : "Lec";
+    const complementaryEntry = updatedSchedules.find(s => {
+      const course = courses.find(c => c.id === s.courseId);
+      return s.col === 0 && // Section view entry
+             s.dayType === sectionDayType &&
+             s.courseId === courseId &&
+             (s.section === sectionName || s.section2 === sectionName) &&
+             s.unitType === complementaryType &&
+             course && 
+             course.trimester === currentSectionViewTrimester &&
+             course.year_level === currentSectionViewYearLevel;
+    });
+    
+    if (complementaryEntry) {
+      // Update the complementary cell to remove warning styling
+      await updateSectionViewCell(complementaryEntry.dayType, complementaryEntry.time, 
+        complementaryEntry.section === sectionName ? complementaryEntry.section2 || complementaryEntry.section : complementaryEntry.section);
+    }
+  }
+  
   // Update Room View as well since they're connected
   await renderRoomViewTables();
   await validateAllComplementary();
@@ -2205,13 +2454,20 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
 
 // Function to update a specific cell in the Section View table
 async function updateSectionViewCell(dayType, time, section) {
+  // Clear the API cache for schedules to get fresh data
+  clearApiCache("schedules");
+  
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const offerings = await apiGet("course_offerings");
   const allColumns = await getAllRoomColumns();
   
   // Find the target cell in the table
   const targetCell = document.querySelector(`.clickable-cell[data-daytype="${dayType}"][data-time="${time}"][data-section="${section}"]`);
   if (!targetCell) return;
+  
+  // Add transition for smooth animation
+  targetCell.style.transition = "background-color 0.5s ease, border 0.5s ease";
   
   // Find the schedule for this cell
   const scheduleEntries = schedules.filter(sch => {
@@ -2245,7 +2501,21 @@ async function updateSectionViewCell(dayType, time, section) {
              roomSch.col > 0; // Room View entry
     });
     
-    let cellContent = course ? `${course.subject} - ${sch.unitType}` : "Unknown";
+    // Get course offering to get degree information
+    const courseOffering = offerings.find(off => 
+      off.courseId === sch.courseId && 
+      off.type === sch.unitType && 
+      (off.section === sch.section || off.section === sch.section2)
+    );
+    
+    // Get degree information from offering or course
+    const degree = courseOffering && courseOffering.degree ? 
+                  courseOffering.degree : 
+                  (course ? course.degree : "");
+    
+    let cellContent = course ? 
+      `${course.subject} (${degree})<br>${sch.unitType}` : 
+      "Unknown";
     
     // Add section2 info if it exists
     if (sch.section2) {
@@ -3583,7 +3853,9 @@ async function exportAllSchedulesToExcel() {
             const dayList = sectionSchedules.filter(sch => sch.dayType === dayType);
             if (!dayList.length) continue;
             // Column titles
-            wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
+            if (dayType === "MWF") {
+              wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
+            }
             // Deduplicate and sort by time
             const map = new Map();
             dayList.forEach(sch => {
@@ -3622,6 +3894,38 @@ async function exportAllSchedulesToExcel() {
 
       // Create worksheet and append
       const worksheet = XLSX.utils.aoa_to_sheet(wsData);
+      // Set custom column widths for better readability
+      worksheet['!cols'] = [
+        {wch:25}, // Course
+        {wch:50}, // Description
+        {wch:7},  // Units
+        {wch:12}, // Time
+        {wch:7},  // Day
+        {wch:15}, // Room
+        {wch:12}  // Shared With
+      ];
+      // Freeze the first row so headers stay visible
+      worksheet['!freeze'] = { xSplit: 0, ySplit: 1 };
+      // Enable autofilter on the full data range
+      worksheet['!autofilter'] = { ref: worksheet['!ref'] };
+      // Style each header row that starts with "Course"
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        const first = XLSX.utils.encode_cell({ c: 0, r: R });
+        const cell = worksheet[first];
+        if (cell && cell.v === 'Course') {
+          for (let C = 0; C < 7; ++C) {
+            const addr = XLSX.utils.encode_cell({ c: C, r: R });
+            if (worksheet[addr]) {
+              worksheet[addr].s = {
+                fill: { fgColor: { rgb: 'FF2E7D32' } },
+                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+                alignment: { horizontal: 'center' }
+              };
+            }
+          }
+        }
+      }
       XLSX.utils.book_append_sheet(workbook, worksheet, trimester);
     }
 

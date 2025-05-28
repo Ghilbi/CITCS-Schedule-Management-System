@@ -339,8 +339,10 @@ btnSaveCourse.addEventListener("click", async () => {
   const id = courseIdInput.value;
   const subject = courseSubjectInput.value.trim();
   const units = courseUnitsInput.value.trim();
-  const unitCategory = document.querySelector('input[name="unitCategory"]:checked').value;
-  const yearLevel = document.querySelector('input[name="yearLevel"]:checked').value;
+  const unitCategoryElement = document.querySelector('input[name="unitCategory"]:checked');
+  const yearLevelElement = document.querySelector('input[name="yearLevel"]:checked');
+  const unitCategory = unitCategoryElement ? unitCategoryElement.value : "PureLec"; // Default to PureLec if none selected
+  const yearLevel = yearLevelElement ? yearLevelElement.value : "1st yr"; // Default to 1st yr if none selected
   const degree = courseDegreeSelect.value;
   const trimester = courseTrimesterSelect.value;
   const description = courseDescriptionTextarea.value.trim();
@@ -423,6 +425,14 @@ const offeringSearch = document.getElementById("offering-search");
 const offeringFilterType = document.getElementById("offering-filter-type");
 const offeringSort = document.getElementById("offering-sort");
 
+// New section input elements
+const courseOfferingYearSelect = document.getElementById("courseOffering-year");
+const courseOfferingSectionLetter = document.getElementById("courseOffering-section-letter");
+const sectionCodePreview = document.getElementById("section-code-preview");
+const courseOfferingSectionLetters = document.getElementById("courseOffering-section-letters");
+const bulkSectionCodePreview = document.getElementById("bulk-section-code-preview");
+const courseOfferingMultipleSections = document.getElementById("courseOffering-multiple-sections");
+
 const courseOfferingLecRadio = document.getElementById("courseOffering-lec");
 const courseOfferingLabRadio = document.getElementById("courseOffering-lab");
 const courseOfferingPurelecRadio = document.getElementById("courseOffering-purelec");
@@ -431,6 +441,145 @@ const labelLab = document.getElementById("label-lab");
 const labelPurelec = document.getElementById("label-purelec");
 
 let currentTrimesterFilter = "all";
+
+// Function to update the section code preview for manual entry
+async function updateSectionCodePreview() {
+  const year = courseOfferingYearSelect.value;
+  const sectionLetter = courseOfferingSectionLetter.value.toUpperCase();
+  const sectionCode = year + sectionLetter;
+  
+  sectionCodePreview.textContent = sectionCode;
+  courseOfferingSectionInput.value = sectionCode;
+  
+  // Check for duplicates if we're in the modal
+  if (document.getElementById("modal-course-offering").classList.contains("hidden") === false) {
+    // Get the current trimester from the selected course
+    const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
+    if (selectedOption) {
+      const trimester = selectedOption.getAttribute("data-trimester");
+      const courseId = courseOfferingCourseSelect.value;
+      
+      // Only run the check if we have enough information
+      if (trimester && sectionCode.length > 1) {
+        const id = courseOfferingIdInput.value || null;
+        const duplicateCheck = await checkDuplicateSection(sectionCode, trimester, courseId, id);
+        
+        // Remove any existing warning first
+        const existingWarning = document.querySelector('.duplicate-warning');
+        if (existingWarning) {
+          existingWarning.remove();
+        }
+        
+        if (duplicateCheck.isDuplicate) {
+          // Show a warning that doesn't prevent editing
+          const warningEl = document.createElement('div');
+          warningEl.className = 'duplicate-warning';
+          warningEl.textContent = 'Warning: ' + duplicateCheck.message;
+          warningEl.style.color = '#ff6600';
+          warningEl.style.fontSize = '0.9rem';
+          warningEl.style.marginTop = '8px';
+          
+          // Add the warning below the section preview
+          const previewEl = document.getElementById('section-code-preview');
+          if (previewEl && previewEl.parentNode) {
+            previewEl.parentNode.appendChild(warningEl);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Function to update the bulk section codes preview
+async function updateBulkSectionCodePreview() {
+  const selectedYearRadio = document.querySelector('input[name="bulkAddYearLevel"]:checked');
+  const selectedYearLevel = selectedYearRadio ? selectedYearRadio.value : "1st yr"; // Default to 1st yr if none selected
+  let yearPrefix = "1"; // Default to 1 if no year level is selected
+  
+  // Map the year level to the appropriate number prefix
+  if (selectedYearLevel === "2nd yr") {
+    yearPrefix = "2";
+  } else if (selectedYearLevel === "3rd yr") {
+    yearPrefix = "3";
+  }
+  
+  const sectionLetters = courseOfferingSectionLetters.value.split(',').map(letter => letter.trim().toUpperCase());
+  const sectionCodes = sectionLetters.map(letter => yearPrefix + letter);
+  
+  bulkSectionCodePreview.textContent = sectionCodes.join(', ');
+  courseOfferingMultipleSections.value = sectionCodes.join(',');
+  
+  // Check for duplicates if we're in the modal
+  if (document.getElementById("modal-course-offering").classList.contains("hidden") === false) {
+    // Get the current trimester from the radio buttons
+    const trimesterRadio = document.querySelector('input[name="bulkAddTrimester"]:checked');
+    const selectedTrimester = trimesterRadio ? trimesterRadio.value : "1st Trimester";
+    
+    // Only run checks if we have section codes
+    if (sectionCodes.length > 0 && selectedTrimester) {
+      // Remove any existing bulk warnings
+      const existingWarnings = document.querySelectorAll('.bulk-duplicate-warning');
+      existingWarnings.forEach(warning => warning.remove());
+      
+      // Create a container for duplicate warnings
+      const warningsContainer = document.createElement('div');
+      warningsContainer.className = 'bulk-duplicate-warning';
+      warningsContainer.style.marginTop = '12px';
+      
+      let hasDuplicates = false;
+      
+      // Check each section code
+      for (const sectionCode of sectionCodes) {
+        const duplicateCheck = await checkDuplicateSection(sectionCode, selectedTrimester);
+        if (duplicateCheck.isDuplicate) {
+          hasDuplicates = true;
+          const warningEl = document.createElement('div');
+          warningEl.textContent = 'Warning: ' + duplicateCheck.message;
+          warningEl.style.margin = '3px 0';
+          warningsContainer.appendChild(warningEl);
+        }
+      }
+      
+      if (hasDuplicates) {
+        // Style the container
+        warningsContainer.className = 'duplicate-warning bulk-duplicate-warning';
+        
+        // Add the warnings below the bulk preview
+        const previewEl = document.getElementById('bulk-section-code-preview');
+        if (previewEl && previewEl.parentNode) {
+          previewEl.parentNode.appendChild(warningsContainer);
+        }
+      }
+    }
+  }
+}
+
+// Add event listeners to update the section code preview when year or letter changes
+courseOfferingYearSelect.addEventListener('change', function() {
+  updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
+});
+courseOfferingSectionLetter.addEventListener('input', function() {
+  updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
+});
+
+// Add event listener for the section letters in bulk mode
+courseOfferingSectionLetters.addEventListener('input', function() {
+  updateBulkSectionCodePreview().catch(error => console.error("Error checking for bulk duplicates:", error));
+});
+
+// Add event listeners for year level radio buttons in bulk mode
+document.querySelectorAll('input[name="bulkAddYearLevel"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    updateBulkSectionCodePreview().catch(error => console.error("Error checking for bulk duplicates:", error));
+  });
+});
+
+// Add event listeners for trimester radio buttons to check for duplicates when trimester changes
+document.querySelectorAll('input[name="bulkAddTrimester"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    updateBulkSectionCodePreview().catch(error => console.error("Error checking for bulk duplicates:", error));
+  });
+});
 
 function setupTrimesterTabs() {
   const tabs = document.querySelectorAll("#section-course-offering .trimester-tabs .tab-btn");
@@ -448,7 +597,7 @@ async function populateCourseOfferingCourses() {
   let coursesList = await apiGet("courses");
   courseOfferingCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
   
-  // Get the selected degree filter value
+  // Get the selected degree filter value - use the manual tab's degree filter
   const degreeFilter = document.getElementById("courseOffering-degree").value;
   
   // Filter by trimester if needed
@@ -466,14 +615,141 @@ async function populateCourseOfferingCourses() {
   });
 }
 
-// Add event listener for the degree dropdown
-document.getElementById("courseOffering-degree").addEventListener("change", populateCourseOfferingCourses);
+// Add event listeners for both degree dropdowns
+document.getElementById("courseOffering-degree").addEventListener("change", async function() {
+  // Update course list based on degree filter
+  await populateCourseOfferingCourses();
+  
+  // Apply year restrictions based on selected degree
+  const selectedDegree = this.value;
+  
+  // Reset all years to enabled state first
+  courseOfferingYearSelect.querySelectorAll('option').forEach(option => {
+    option.disabled = false;
+  });
+  
+  // Apply restrictions based on degree
+  if (selectedDegree === "BSIT") {
+    // For BSIT, only 1st year (value="1") is available
+    document.querySelectorAll('#courseOffering-year option[value="2"], #courseOffering-year option[value="3"]').forEach(option => {
+      option.disabled = true;
+    });
+    courseOfferingYearSelect.value = "1";
+  } 
+  else if (selectedDegree === "BSIT(Webtech)" || selectedDegree === "BSIT(NetSec)" || selectedDegree === "BSIT(ERP)") {
+    // For specialization tracks, 1st year is not available
+    document.querySelector('#courseOffering-year option[value="1"]').disabled = true;
+    
+    // If current selection is 1st year, change to 2nd year
+    if (courseOfferingYearSelect.value === "1") {
+      courseOfferingYearSelect.value = "2";
+    }
+  }
+  
+  // Update the section code preview
+  await updateSectionCodePreview();
+});
+// We don't need to add functionality to the bulk degree dropdown as it's only used on the button click
 
-// Add event listener for the "Add All Courses" button
+// Add event listener to control year level options based on selected degree in bulk add
+document.getElementById("courseOffering-degree-bulk").addEventListener("change", function() {
+  const selectedDegree = this.value;
+  
+  // Get all year level radio buttons
+  const yearAll = document.getElementById("year-all");
+  const year1st = document.getElementById("year-1st-bulk");
+  const year2nd = document.getElementById("year-2nd-bulk");
+  const year3rd = document.getElementById("year-3rd-bulk");
+  
+  // Reset all to enabled state
+  year1st.disabled = false;
+  year2nd.disabled = false;
+  year3rd.disabled = false;
+  year1st.parentElement.style.opacity = 1;
+  year2nd.parentElement.style.opacity = 1;
+  year3rd.parentElement.style.opacity = 1;
+  
+  // Apply restrictions based on degree
+  if (selectedDegree === "BSIT") {
+    // For BSIT, only 1st year is selectable
+    year1st.disabled = false;
+    year2nd.disabled = true;
+    year3rd.disabled = true;
+    year2nd.parentElement.style.opacity = 0.5;
+    year3rd.parentElement.style.opacity = 0.5;
+    
+    // Select 1st year by default
+    year1st.checked = true;
+    yearAll.checked = false;
+  } 
+  else if (selectedDegree === "BSIT(Webtech)" || selectedDegree === "BSIT(NetSec)" || selectedDegree === "BSIT(ERP)") {
+    // For specialization tracks, 1st year is not selectable
+    year1st.disabled = true;
+    year2nd.disabled = false;
+    year3rd.disabled = false;
+    year1st.parentElement.style.opacity = 0.5;
+    
+    // If 1st year was selected, change to "All Years"
+    if (year1st.checked) {
+      yearAll.checked = true;
+    }
+  }
+});
+
+// Function to initialize course offering modal tabs
+function initCourseOfferingTabs() {
+  const tabButtons = document.querySelectorAll('.modal-tab-btn');
+  const tabContents = document.querySelectorAll('.modal-tab-content');
+  
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all buttons
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      // Add active class to clicked button
+      button.classList.add('active');
+      
+      // Hide all tab contents
+      tabContents.forEach(content => content.style.display = 'none');
+      
+      // Show the selected tab content
+      const tabName = button.getAttribute('data-tab');
+      document.getElementById(`${tabName}-add-section`).style.display = 'block';
+      
+      // Show/hide save button appropriately
+      if (tabName === 'manual') {
+        document.getElementById('btn-save-courseOffering').style.display = 'block';
+      } else {
+        document.getElementById('btn-save-courseOffering').style.display = 'none';
+      }
+    });
+  });
+}
+
+// Set up handlers for year level radio buttons to update the section code prefix
+document.querySelectorAll('input[name="bulkAddYearLevel"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    // Update the bulk section preview when year level changes
+    updateBulkSectionCodePreview();
+  });
+});
+
+// Add event listener for the "Add All Courses" button with the new bulk degree select
 document.getElementById("btn-add-all-courses").addEventListener("click", async function() {
-  const selectedDegree = document.getElementById("courseOffering-degree").value;
-  const selectedYearLevel = document.querySelector('input[name="bulkAddYearLevel"]:checked').value;
-  const selectedTrimesterBulk = document.querySelector('input[name="bulkAddTrimester"]:checked').value;
+  const selectedDegree = document.getElementById("courseOffering-degree-bulk").value;
+  const yearLevelRadio = document.querySelector('input[name="bulkAddYearLevel"]:checked');
+  const trimesterRadio = document.querySelector('input[name="bulkAddTrimester"]:checked');
+  const selectedYearLevel = yearLevelRadio ? yearLevelRadio.value : "1st yr"; // Default to 1st yr if none selected
+  const selectedTrimesterBulk = trimesterRadio ? trimesterRadio.value : "1st Trimester"; // Default to 1st Trimester if none selected
+  
+  // Validate year level selections based on degree
+  if (selectedDegree === "BSIT" && selectedYearLevel && selectedYearLevel !== "1st yr") {
+    alert("For BSIT, only 1st year courses can be selected.");
+    return;
+  } else if ((selectedDegree === "BSIT(Webtech)" || selectedDegree === "BSIT(NetSec)" || selectedDegree === "BSIT(ERP)") 
+            && selectedYearLevel === "1st yr") {
+    alert("For " + selectedDegree + ", 1st year courses cannot be selected.");
+    return;
+  }
   
   if (!selectedDegree) {
     alert("Please select a degree first.");
@@ -492,6 +768,20 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
   
   if (sections.length === 0) {
     alert("Please enter at least one valid section.");
+    return;
+  }
+  
+  // Check for duplicate sections across all degrees
+  const duplicateSections = [];
+  for (const section of sections) {
+    const duplicateCheck = await checkDuplicateSection(section, selectedTrimesterBulk);
+    if (duplicateCheck.isDuplicate) {
+      duplicateSections.push(`${section}: ${duplicateCheck.message}`);
+    }
+  }
+  
+  if (duplicateSections.length > 0) {
+    showConflictNotification("Duplicate sections detected:\n" + duplicateSections.join("\n"));
     return;
   }
   
@@ -605,6 +895,101 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
   }
 });
 
+// Add a helper function to check for duplicate sections before the btnSaveCourseOffering handler
+// Function to check if a section already exists in course offerings
+async function checkDuplicateSection(section, trimester, courseId = null, id = null) {
+  const offerings = await apiGet("course_offerings");
+  const courses = await apiGet("courses");
+  
+  // Filter offerings for the given section and trimester
+  const duplicates = offerings.filter(off => {
+    // Skip comparing with the current offering if we're editing
+    if (id && off.id == id) return false;
+    
+    // Skip comparing the same course if courseId is provided
+    if (courseId && off.courseId == courseId) return false;
+    
+    // Check if this offering has the same section and trimester
+    return off.section === section && off.trimester === trimester;
+  });
+  
+  if (duplicates.length > 0) {
+    // Find details about the duplicate for better error messages
+    const duplicate = duplicates[0];
+    const course = courses.find(c => c.id === duplicate.courseId);
+    const degree = duplicate.degree || (course ? course.degree : "Unknown");
+    return {
+      isDuplicate: true,
+      message: `Duplicate section: "${section}" is already used for ${course ? course.subject : 'Unknown'} (${degree}) in ${trimester}`
+    };
+  }
+  
+  return { isDuplicate: false };
+}
+
+// Updated btnAddCourseOffering click handler
+btnAddCourseOffering.addEventListener("click", async () => {
+  courseOfferingIdInput.value = "";
+  courseOfferingCourseSelect.value = "";
+  courseOfferingSectionInput.value = "";
+  
+  // Reset section input fields
+  courseOfferingYearSelect.value = "1"; // Default to First Year
+  courseOfferingSectionLetter.value = "A"; // Default to A
+  await updateSectionCodePreview(); // Update the preview
+  
+  document.getElementById("courseOffering-degree").value = ""; // Reset degree filter
+  document.getElementById("courseOffering-degree-bulk").value = ""; // Reset bulk degree filter
+  document.querySelector('input[id="year-all"]').checked = true; // Reset year level to "All Years"
+  
+  // Reset all year options to enabled state
+  courseOfferingYearSelect.querySelectorAll('option').forEach(option => {
+    option.disabled = false;
+  });
+  
+  // Reset bulk section inputs
+  courseOfferingSectionLetters.value = "A"; // Default to A
+  updateBulkSectionCodePreview(); // Update the bulk preview
+  
+  labelLec.style.display = "none";
+  labelLab.style.display = "none";
+  labelPurelec.style.display = "none";
+  courseOfferingUnitsInput.value = "";
+  courseOfferingTrimesterInput.value = "";
+  document.getElementById("modal-course-offering-title").textContent = "Add Course Offering";
+  
+  // Reset year level radio buttons to enabled state
+  const year1st = document.getElementById("year-1st-bulk");
+  const year2nd = document.getElementById("year-2nd-bulk");
+  const year3rd = document.getElementById("year-3rd-bulk");
+  year1st.disabled = false;
+  year2nd.disabled = false;
+  year3rd.disabled = false;
+  year1st.parentElement.style.opacity = 1;
+  year2nd.parentElement.style.opacity = 1;
+  year3rd.parentElement.style.opacity = 1;
+  
+  // Reset tabs to show manual tab by default
+  const tabButtons = document.querySelectorAll('.modal-tab-btn');
+  const tabContents = document.querySelectorAll('.modal-tab-content');
+  
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  document.querySelector('.modal-tab-btn[data-tab="manual"]').classList.add('active');
+  
+  tabContents.forEach(content => content.style.display = 'none');
+  document.getElementById('manual-add-section').style.display = 'block';
+  document.getElementById('btn-save-courseOffering').style.display = 'block';
+  
+  // Remove any existing warning
+  const existingWarning = document.querySelector('.duplicate-warning');
+  if (existingWarning) {
+    existingWarning.remove();
+  }
+  
+  await populateCourseOfferingCourses();
+  showModal(modalCourseOffering);
+});
+
 // Add event listener for the course select dropdown to capture degree
 courseOfferingCourseSelect.addEventListener("change", async function() {
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
@@ -628,9 +1013,10 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
         if (unitCategory === "PureLec") {
           courseOfferingUnitsInput.value = "3";
         } else if (unitCategory === "Lec/Lab") {
-          if (document.querySelector('input[name="courseOfferingType"]:checked').value === "Lec") {
+          const checkedRadio = document.querySelector('input[name="courseOfferingType"]:checked');
+          if (checkedRadio && checkedRadio.value === "Lec") {
             courseOfferingUnitsInput.value = "2";
-          } else if (document.querySelector('input[name="courseOfferingType"]:checked').value === "Lab") {
+          } else if (checkedRadio && checkedRadio.value === "Lab") {
             courseOfferingUnitsInput.value = "1";
           }
         }
@@ -660,7 +1046,9 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
 
 document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
   radio.addEventListener("change", function() {
-    const type = document.querySelector('input[name="courseOfferingType"]:checked').value;
+    const checkedRadio = document.querySelector('input[name="courseOfferingType"]:checked');
+    if (!checkedRadio) return; // Exit if no radio is checked
+    const type = checkedRadio.value;
     
     // Get current selected course
     const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
@@ -715,6 +1103,18 @@ btnAddCourseOffering.addEventListener("click", async () => {
   courseOfferingUnitsInput.value = "";
   courseOfferingTrimesterInput.value = "";
   document.getElementById("modal-course-offering-title").textContent = "Add Course Offering";
+  
+  // Reset year level radio buttons to enabled state
+  const year1st = document.getElementById("year-1st-bulk");
+  const year2nd = document.getElementById("year-2nd-bulk");
+  const year3rd = document.getElementById("year-3rd-bulk");
+  year1st.disabled = false;
+  year2nd.disabled = false;
+  year3rd.disabled = false;
+  year1st.parentElement.style.opacity = 1;
+  year2nd.parentElement.style.opacity = 1;
+  year3rd.parentElement.style.opacity = 1;
+  
   await populateCourseOfferingCourses();
   showModal(modalCourseOffering);
 });
@@ -804,14 +1204,37 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   const unitCategory = selectedOption ? selectedOption.getAttribute("data-unit-category") : "";
   const trimester = selectedOption ? selectedOption.getAttribute("data-trimester") : "";
   const degree = document.getElementById("courseOffering-selected-degree").value;
-  const type = document.querySelector('input[name="courseOfferingType"]:checked') 
-               ? document.querySelector('input[name="courseOfferingType"]:checked').value 
-               : "";
+  const checkedRadio = document.querySelector('input[name="courseOfferingType"]:checked');
+  const type = checkedRadio ? checkedRadio.value : "";
   let units = courseOfferingUnitsInput.value;
   
   if (!courseId || !section || !type) {
     alert("Please fill out all fields.");
     return;
+  }
+  
+  // Check for duplicate section
+  const duplicateCheck = await checkDuplicateSection(section, trimester, courseId, id);
+  if (duplicateCheck.isDuplicate) {
+    showConflictNotification(duplicateCheck.message);
+    return;
+  }
+  
+  // Validate section based on degree
+  if (section && section.length >= 2) {
+    const yearDigit = section.charAt(0);
+    
+    // For BSIT, only first year sections (starting with 1) are allowed
+    if (degree === "BSIT" && yearDigit !== "1") {
+      alert("For BSIT, only sections starting with '1' (first year) are allowed.");
+      return;
+    }
+    
+    // For specializations, first year sections (starting with 1) are not allowed
+    if ((degree === "BSIT(Webtech)" || degree === "BSIT(NetSec)" || degree === "BSIT(ERP)") && yearDigit === "1") {
+      alert("For " + degree + ", sections starting with '1' (first year) are not allowed.");
+      return;
+    }
   }
   
   // Get course to confirm PATHFIT or Calculus
@@ -864,18 +1287,78 @@ window.editCourseOffering = async function(id) {
   courseOfferingCourseSelect.value = offering.courseId;
   
   // Set the degree from the offering or get it from the associated course
+  let currentDegree = "";
   if (offering.degree) {
+    currentDegree = offering.degree;
     document.getElementById("courseOffering-selected-degree").value = offering.degree;
   } else {
     const associatedCourse = courses.find(c => c.id == offering.courseId);
     if (associatedCourse) {
+      currentDegree = associatedCourse.degree;
       document.getElementById("courseOffering-selected-degree").value = associatedCourse.degree;
     }
   }
   
+  // Reset all years to enabled state first
+  courseOfferingYearSelect.querySelectorAll('option').forEach(option => {
+    option.disabled = false;
+  });
+  
+  // Apply restrictions based on degree
+  if (currentDegree === "BSIT") {
+    // For BSIT, only 1st year (value="1") is available
+    document.querySelectorAll('#courseOffering-year option[value="2"], #courseOffering-year option[value="3"]').forEach(option => {
+      option.disabled = true;
+    });
+  } 
+  else if (currentDegree === "BSIT(Webtech)" || currentDegree === "BSIT(NetSec)" || currentDegree === "BSIT(ERP)") {
+    // For specialization tracks, 1st year is not available
+    document.querySelector('#courseOffering-year option[value="1"]').disabled = true;
+  }
+  
   const event = new Event('change');
   courseOfferingCourseSelect.dispatchEvent(event);
+  
+  // Set the section value in hidden field
   courseOfferingSectionInput.value = offering.section;
+  
+  // Parse the section code to extract year and letter
+  if (offering.section) {
+    const yearDigit = offering.section.charAt(0);
+    const sectionLetter = offering.section.substring(1);
+    
+    // Set the year select and section letter input
+    courseOfferingYearSelect.value = yearDigit;
+    courseOfferingSectionLetter.value = sectionLetter;
+    
+    // Update the preview
+    updateSectionCodePreview();
+    
+    // Check if this section is used in other offerings for the same trimester
+    const duplicateCheck = await checkDuplicateSection(offering.section, offering.trimester, offering.courseId, offering.id);
+    if (duplicateCheck.isDuplicate) {
+      // Show a non-blocking warning that doesn't prevent editing
+      const warningEl = document.createElement('div');
+      warningEl.className = 'duplicate-warning';
+      warningEl.textContent = 'Note: ' + duplicateCheck.message;
+      warningEl.style.color = '#ff6600';
+      warningEl.style.fontSize = '0.9rem';
+      warningEl.style.marginTop = '8px';
+      
+      // Remove any existing warning first
+      const existingWarning = document.querySelector('.duplicate-warning');
+      if (existingWarning) {
+        existingWarning.remove();
+      }
+      
+      // Add the warning below the section preview
+      const previewEl = document.getElementById('section-code-preview');
+      if (previewEl && previewEl.parentNode) {
+        previewEl.parentNode.appendChild(warningEl);
+      }
+    }
+  }
+  
   if (offering.type === "Lec") {
     courseOfferingLecRadio.checked = true;
   } else if (offering.type === "Lab") {
@@ -886,8 +1369,20 @@ window.editCourseOffering = async function(id) {
   courseOfferingUnitsInput.value = offering.units;
   courseOfferingTrimesterInput.value = offering.trimester;
   document.getElementById("modal-course-offering-title").textContent = "Edit Course Offering";
+  
+  // Make sure we're showing the manual tab since we're editing a single offering
+  const tabButtons = document.querySelectorAll('.modal-tab-btn');
+  const tabContents = document.querySelectorAll('.modal-tab-content');
+  
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  document.querySelector('.modal-tab-btn[data-tab="manual"]').classList.add('active');
+  
+  tabContents.forEach(content => content.style.display = 'none');
+  document.getElementById('manual-add-section').style.display = 'block';
+  document.getElementById('btn-save-courseOffering').style.display = 'block';
+  
   showModal(modalCourseOffering);
-};
+}
 
 window.deleteCourseOffering = async function(id) {
   if (!confirm("Are you sure?")) return;
@@ -1590,12 +2085,18 @@ function setupSectionViewTrimesterTabs() {
     tab.parentNode.replaceChild(newTab, tab);
   });
   
+  // Remove animation transitions from section view container
+  const sectionViewContainer = document.getElementById("section-view-container");
+  
   // Add trimester tab functionality for Section View (to the new elements)
   document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       document.querySelectorAll("#section-section-view .trimester-tabs .tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      
       currentSectionViewTrimester = btn.dataset.trimester;
+      
+      // Update content immediately without animations
       await renderSectionViewTables();
       await validateAllComplementary();
     });
@@ -1606,7 +2107,10 @@ function setupSectionViewTrimesterTabs() {
     btn.addEventListener("click", async () => {
       document.querySelectorAll("#section-section-view .year-level-tabs .year-tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      
       currentSectionViewYearLevel = btn.dataset.year;
+      
+      // Update content immediately without animations
       await renderSectionViewTables();
       await validateAllComplementary();
     });
@@ -1637,6 +2141,10 @@ async function getUniqueSectionsForTrimesterAndYear(trimester, yearLevel) {
 async function renderSectionViewTables() {
   // Clear the container first to prevent duplication
   const container = document.getElementById("section-view-container");
+  
+  // Remove transition styles
+  container.style.transition = "";
+  
   container.innerHTML = ""; // Completely empty the container before adding new content
 
   const sections = await getUniqueSectionsForTrimesterAndYear(currentSectionViewTrimester, currentSectionViewYearLevel);
@@ -1665,6 +2173,9 @@ async function renderSectionViewTables() {
     const tableContainer = document.createElement("div");
     tableContainer.className = "table-container";
     
+    // Remove transition styles
+    tableContainer.style.transition = "";
+    
     const heading = document.createElement("h3");
     heading.textContent = `${dayType} Section View`;
     tableContainer.appendChild(heading);
@@ -1672,16 +2183,27 @@ async function renderSectionViewTables() {
     const table = document.createElement("table");
     table.className = "schedule-table";
     table.id = `section-view-${dayType.toLowerCase()}-table`;
+    
+    // Remove transition styles
+    table.style.transition = "";
 
     // Create header
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
+    // Remove transition styles
+    headerRow.style.transition = "";
+    
     const timeTh = document.createElement("th");
     timeTh.textContent = "Time";
+    // Remove transition styles
+    timeTh.style.transition = "";
     headerRow.appendChild(timeTh);
+    
     sections.forEach(section => {
       const th = document.createElement("th");
       th.textContent = section;
+      // Remove transition styles
+      th.style.transition = "";
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -1691,8 +2213,13 @@ async function renderSectionViewTables() {
     const tbody = document.createElement("tbody");
     for (let time of times) {
       const tr = document.createElement("tr");
+      // Remove transition styles
+      tr.style.transition = "";
+      
       const timeTd = document.createElement("td");
       timeTd.textContent = time;
+      // Remove transition styles
+      timeTd.style.transition = "";
       tr.appendChild(timeTd);
       
       for (const section of sections) {
@@ -1702,8 +2229,8 @@ async function renderSectionViewTables() {
         td.setAttribute("data-time", time);
         td.setAttribute("data-section", section);
         
-        // Add transition for smooth animation on all cells
-        td.style.transition = "background-color 0.5s ease, border 0.5s ease";
+        // Remove transition styles
+        td.style.transition = "";
         
         td.addEventListener("click", () => openSectionViewModal(dayType, time, section));
         
@@ -1901,7 +2428,8 @@ async function populateSectionViewRoomDropdown() {
   const existingId = document.getElementById("sectionview-id").value;
   
   // Get the selected room group
-  const selectedRoomGroup = document.querySelector('input[name="roomGroup"]:checked').value;
+  const roomGroupRadio = document.querySelector('input[name="roomGroup"]:checked');
+  const selectedRoomGroup = roomGroupRadio ? roomGroupRadio.value : "all"; // Default to "all" if none selected
   
   const allColumns = await getAllRoomColumns();
   const schedules = await apiGet("schedules");
@@ -2412,8 +2940,8 @@ async function updateSectionViewCell(dayType, time, section) {
   const targetCell = document.querySelector(`.clickable-cell[data-daytype="${dayType}"][data-time="${time}"][data-section="${section}"]`);
   if (!targetCell) return;
   
-  // Add transition for smooth animation
-  targetCell.style.transition = "background-color 0.5s ease, border 0.5s ease";
+  // Remove transition for smooth animation
+  targetCell.style.transition = "";
   
   // Find the schedule for this cell
   const scheduleEntries = schedules.filter(sch => {
@@ -2846,6 +3374,12 @@ function showModal(modal) {
 }
 function hideModal(modal) {
   modal.classList.add("hidden");
+  
+  // Clear duplicate warnings if this is the course offering modal
+  if (modal.id === "modal-course-offering") {
+    const existingWarnings = document.querySelectorAll('.duplicate-warning, .bulk-duplicate-warning');
+    existingWarnings.forEach(warning => warning.remove());
+  }
 }
 
 /**************************************************************
@@ -2863,6 +3397,13 @@ function hideModal(modal) {
   setupRoomViewTrimesterTabs();
   setupSectionViewTrimesterTabs();
   setupFacultyViewTrimesterTabs();
+  
+  // Initialize section code inputs/previews
+  updateSectionCodePreview();
+  updateBulkSectionCodePreview();
+  
+  // Initialize course offering modal tabs
+  initCourseOfferingTabs();
   
   // Setup modal close buttons
   setupModalCloseButtons();
@@ -3418,7 +3959,7 @@ function setupFacultyViewTrimesterTabs() {
 
 // Function to clear all courses from the database
 async function clearAllCourses() {
-  if (confirm("WARNING: This will delete ALL courses from the database. This action cannot be undone. Continue?")) {
+  if (confirm("Are you sure you want to delete ALL courses?\nClick 'OK' for Yes or 'Cancel' for No.\n\nWARNING: This cannot be undone.")) {
     try {
       // Get all courses first
       const courses = await apiGet("courses");
@@ -3439,7 +3980,7 @@ async function clearAllCourses() {
 
 // Function to clear all course offerings from the database
 async function clearAllCourseOfferings() {
-  if (confirm("WARNING: This will delete ALL course offerings from the database. This action cannot be undone. Continue?")) {
+  if (confirm("Are you sure you want to delete ALL course offerings?\nClick 'OK' for Yes or 'Cancel' for No.\n\nWARNING: This cannot be undone.")) {
     try {
       // Get all course offerings first
       const offerings = await apiGet("course_offerings");

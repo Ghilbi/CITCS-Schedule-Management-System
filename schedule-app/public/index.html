@@ -241,19 +241,75 @@
     <div class="modal-content">
       <span class="close-button" data-close-modal="modal-course-offering">×</span>
       <h3 id="modal-course-offering-title">Add/Edit Course Offering</h3>
-      <label for="courseOffering-degree">Filter by Degree:</label>
-      <select id="courseOffering-degree">
-        <option value="">All Degrees</option>
-        <option value="BSIT">BSIT</option>
-        <option value="BSIT(Webtech)">BSIT(Webtech)</option>
-        <option value="BSIT(NetSec)">BSIT(NetSec)</option>
-        <option value="BSIT(ERP)">BSIT(ERP)</option>
-        <option value="BSCS">BSCS</option>
-        <option value="BSDA">BSDA</option>
-        <option value="BMMA">BMMA</option>
-      </select>
-      <div class="bulk-add-section">
-        <button id="btn-add-all-courses" class="action-btn">Add All Courses of Degree</button>
+      
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="manual">Manual Add</button>
+        <button class="modal-tab-btn" data-tab="bulk">Bulk Add</button>
+      </div>
+      
+      <div id="manual-add-section" class="modal-tab-content">
+        <label for="courseOffering-degree">Filter by Degree:</label>
+        <select id="courseOffering-degree">
+          <option value="">All Degrees</option>
+          <option value="BSIT">BSIT</option>
+          <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+          <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+          <option value="BSIT(ERP)">BSIT(ERP)</option>
+          <option value="BSCS">BSCS</option>
+          <option value="BSDA">BSDA</option>
+          <option value="BMMA">BMMA</option>
+        </select>
+        <label for="courseOffering-course">Course:</label>
+        <select id="courseOffering-course">
+          <option value="">-- Select Course --</option>
+        </select>
+        <div class="section-input-group">
+          <label>Section:</label>
+          <div class="section-inputs">
+            <div class="section-year-select">
+              <label for="courseOffering-year">Year:</label>
+              <select id="courseOffering-year">
+                <option value="1">First Year (1)</option>
+                <option value="2">Second Year (2)</option>
+                <option value="3">Third Year (3)</option>
+              </select>
+            </div>
+            <div class="section-letter-input">
+              <label for="courseOffering-section-letter">Letter:</label>
+              <input type="text" id="courseOffering-section-letter" placeholder="e.g., A" maxlength="1" />
+            </div>
+          </div>
+          <div class="section-preview">
+            <span>Section code: </span><strong id="section-code-preview">1A</strong>
+          </div>
+          <input type="hidden" id="courseOffering-section" />
+        </div>
+        <label>Type:</label>
+        <div class="radio-group" id="courseOffering-type-group">
+          <label id="label-lec" style="display:none;"><input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" /> Lec</label>
+          <label id="label-lab" style="display:none;"><input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" /> Lab</label>
+          <label id="label-purelec" style="display:none;"><input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" /> PureLec</label>
+        </div>
+        <label for="courseOffering-units">Units:</label>
+        <input type="text" id="courseOffering-units" readonly />
+        <label for="courseOffering-trimester">Trimester:</label>
+        <input type="text" id="courseOffering-trimester" readonly />
+        <input type="hidden" id="courseOffering-id" />
+        <input type="hidden" id="courseOffering-selected-degree" />
+      </div>
+      
+      <div id="bulk-add-section" class="modal-tab-content" style="display: none;">
+        <label for="courseOffering-degree-bulk">Select Degree:</label>
+        <select id="courseOffering-degree-bulk" class="bulk-degree-select">
+          <option value="">Select a Degree</option>
+          <option value="BSIT">BSIT</option>
+          <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+          <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+          <option value="BSIT(ERP)">BSIT(ERP)</option>
+          <option value="BSCS">BSCS</option>
+          <option value="BSDA">BSDA</option>
+          <option value="BMMA">BMMA</option>
+        </select>
         <div class="filter-controls">
           <div class="filter-group">
             <label>Year Level:</label>
@@ -273,28 +329,22 @@
             </div>
           </div>
         </div>
-        <label for="courseOffering-multiple-sections">Sections (separate with comma):</label>
-        <input type="text" id="courseOffering-multiple-sections" placeholder="e.g., 1A,1B,1C" value="1A">
-        <p class="info-text">Enter section names separated by commas to create multiple sections</p>
+        <div class="bulk-section-input-group">
+          <label>Sections:</label>
+          <div class="section-letter-input bulk-letters">
+            <label for="courseOffering-section-letters">Section Letters (separate with comma):</label>
+            <input type="text" id="courseOffering-section-letters" placeholder="e.g., A,B,C" value="A">
+            <p class="info-text">Enter section letters separated by commas to create multiple sections</p>
+          </div>
+          <div class="section-preview bulk-preview">
+            <span>Generated section codes: </span><strong id="bulk-section-code-preview">1A</strong>
+            <p class="info-text">The year prefix will be automatically added based on your Year Level selection above</p>
+          </div>
+          <input type="hidden" id="courseOffering-multiple-sections" value="1A">
+        </div>
+        <button id="btn-add-all-courses" class="action-btn">Add All Courses of Degree</button>
       </div>
-      <label for="courseOffering-course">Course:</label>
-      <select id="courseOffering-course">
-        <option value="">-- Select Course --</option>
-      </select>
-      <label for="courseOffering-section">Section:</label>
-      <input type="text" id="courseOffering-section" placeholder="e.g., 1A" />
-      <label>Type:</label>
-      <div class="radio-group" id="courseOffering-type-group">
-        <label id="label-lec" style="display:none;"><input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" /> Lec</label>
-        <label id="label-lab" style="display:none;"><input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" /> Lab</label>
-        <label id="label-purelec" style="display:none;"><input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" /> PureLec</label>
-      </div>
-      <label for="courseOffering-units">Units:</label>
-      <input type="text" id="courseOffering-units" readonly />
-      <label for="courseOffering-trimester">Trimester:</label>
-      <input type="text" id="courseOffering-trimester" readonly />
-      <input type="hidden" id="courseOffering-id" />
-      <input type="hidden" id="courseOffering-selected-degree" />
+      
       <button id="btn-save-courseOffering" class="save-btn">Save</button>
     </div>
   </div>

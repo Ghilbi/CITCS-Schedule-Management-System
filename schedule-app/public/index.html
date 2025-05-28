@@ -436,8 +436,9 @@
     <div class="modal-content">
       <span class="close-button" data-close-modal="modal-add-room">×</span>
       <h3 id="modal-room-title">Add New Room</h3>
-      <label for="room-name">Room Name:</label>
-      <input type="text" id="room-name" placeholder="e.g., M308" />
+      <label for="room-name">Room Name (letters and numbers only):</label>
+      <input type="text" id="room-name" placeholder="e.g., M308" pattern="[A-Za-z0-9]+" title="Only letters and numbers allowed" />
+      <p class="info-text">Room names should only contain letters and numbers, no spaces or special characters.</p>
       <input type="hidden" id="room-id" />
       <button id="btn-save-room" class="save-btn">Save</button>
     </div>

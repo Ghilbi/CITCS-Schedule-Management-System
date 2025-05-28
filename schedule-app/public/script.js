@@ -35,12 +35,24 @@ const clearApiCache = (table) => {
 };
 
 async function apiPost(table, data) {
-  const response = await fetch(`/api/${table}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  return response.json();
+  try {
+    const response = await fetch(`/api/${table}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API error (${response.status}) for POST to ${table}:`, errorText);
+      throw new Error(`API request failed: ${response.status} ${errorText}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error(`Failed to POST to ${table}:`, error, data);
+    throw error;
+  }
 }
 
 // Clear cache on POST/PUT/DELETE to keep data consistent
@@ -2009,27 +2021,40 @@ btnAddRoom.addEventListener("click", () => {
 });
 
 btnSaveRoom.addEventListener("click", async () => {
-  const id = roomIdInput.value;
-  const name = roomNameInput.value.trim();
-  if (!name) {
-    alert("Please enter a room name.");
-    return;
+  try {
+    const id = roomIdInput.value;
+    const name = roomNameInput.value.trim();
+    if (!name) {
+      alert("Please enter a room name.");
+      return;
+    }
+    const rooms = await apiGet("rooms");
+    // Make case insensitive comparison for room names
+    const existingRoom = rooms.find(r => r.name.toLowerCase() === name.toLowerCase() && r.id != id);
+    if (existingRoom) {
+      alert("This room name already exists.");
+      return;
+    }
+    
+    // Check if room name contains any special characters
+    if (/[^a-zA-Z0-9]/.test(name)) {
+      alert("Room name should only contain letters and numbers.");
+      return;
+    }
+    
+    if (id) {
+      await apiPut("rooms", id, { name });
+    } else {
+      await apiPost("rooms", { name });
+    }
+    hideModal(modalAddRoom);
+    await renderRoomsTable();
+    await renderRoomViewTables();
+    await validateAllComplementary();
+  } catch (error) {
+    console.error("Error saving room:", error);
+    alert("Failed to save the room. Please try again.");
   }
-  const rooms = await apiGet("rooms");
-  const existingRoom = rooms.find(r => r.name.toLowerCase() === name.toLowerCase() && r.id != id);
-  if (existingRoom) {
-    alert("This room name already exists.");
-    return;
-  }
-  if (id) {
-    await apiPut("rooms", id, { name });
-  } else {
-    await apiPost("rooms", { name });
-  }
-  hideModal(modalAddRoom);
-  await renderRoomsTable();
-  await renderRoomViewTables();
-  await validateAllComplementary();
 });
 
 window.editRoom = async function(id) {

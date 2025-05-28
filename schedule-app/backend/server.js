@@ -180,6 +180,15 @@ app.post('/api/:table', async (req, res) => {
       params = [data.name];
       break;
     case 'rooms':
+      // Check for existing room with same name first
+      try {
+        const checkResult = await pool.query('SELECT id FROM rooms WHERE LOWER(name) = LOWER($1)', [data.name]);
+        if (checkResult.rows.length > 0) {
+          return res.status(400).json({ error: 'Room name already exists' });
+        }
+      } catch (checkErr) {
+        console.error("Error checking for duplicate room:", checkErr);
+      }
       query = 'INSERT INTO rooms (name) VALUES ($1)';
       params = [data.name];
       break;

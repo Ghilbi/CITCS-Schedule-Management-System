@@ -72,6 +72,13 @@ section {
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
+/* Add hardware acceleration for smoother transitions */
+section:not(.hidden) {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
 /* Tables inside cards */
 table {
   width: 100%;
@@ -218,6 +225,8 @@ tbody tr:hover td { background: var(--color-hover); }
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  will-change: background-color, border-color, transform;
+  backface-visibility: hidden;
 }
 
 .tab-btn:hover,
@@ -910,6 +919,8 @@ button.delete-btn {
   padding: 20px;
   color: #666;
   font-style: italic;
+  background: #f9f9f9;
+  border-radius: 5px;
 }
 
 /* Export button container */
@@ -940,16 +951,19 @@ button.delete-btn {
 
 /* Fade-in animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in {
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* Hover animation for all buttons */
 button {
-  transition: transform 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 button:hover {
   transform: scale(1.05);
@@ -958,4 +972,198 @@ button:hover {
 /* update any remaining Roboto to Inter */
 .some-section {
   font-family: 'Inter', sans-serif;
+}
+
+/* Modal tabs for course offering */
+.modal-tabs {
+  display: flex;
+  margin: 0 -15px 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-tab-btn {
+  flex: 1;
+  padding: 10px 15px;
+  background-color: #f5f5f5;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: #616161;
+}
+
+.modal-tab-btn.active {
+  background-color: #fff;
+  border-bottom-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.modal-tab-btn:hover:not(.active) {
+  background-color: #eeeeee;
+  color: #424242;
+}
+
+.modal-tab-content {
+  padding: 5px 0;
+}
+
+/* Style for the bulk degree select */
+.bulk-degree-select {
+  margin-bottom: 15px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Improve bulk add section styling */
+#bulk-add-section {
+  padding: 15px 0;
+  border-radius: 8px;
+}
+
+#bulk-add-section .action-btn {
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* Section input styling */
+.section-input-group, .bulk-section-input-group {
+  margin-bottom: 15px;
+}
+
+.section-inputs {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.section-year-select, .section-letter-input {
+  flex: 1;
+}
+
+.section-preview {
+  margin-top: 10px;
+  padding: 5px;
+  background-color: #f6f8fa;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.section-preview strong {
+  font-size: 16px;
+  color: #0366d6;
+}
+
+.bulk-section-input-group .section-letter-input {
+  width: 100%;
+}
+
+.bulk-preview {
+  margin-bottom: 10px;
+}
+
+/* Make the labels inside the section inputs smaller */
+.section-year-select label, .section-letter-input label {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 3px;
+  display: block;
+}
+
+/* Make the select and input fields inside section inputs take up full width */
+.section-year-select select, .section-letter-input input {
+  width: 100%;
+}
+
+/* Style for the bulk section letters input */
+#courseOffering-section-letters {
+  width: 100%;
+}
+
+/* Styling for disabled options in select dropdowns */
+select option:disabled {
+  color: #bbb;
+  font-style: italic;
+  background-color: #f5f5f5;
+}
+
+/* Extra styling for the year dropdown */
+#courseOffering-year option:disabled::after {
+  content: " (not available)";
+}
+
+/* Animation for adding and removing subjects in Section View */
+@keyframes addSubject {
+  from { 
+    opacity: 0;
+    transform: scale(0.8);
+    background-color: rgba(46, 125, 50, 0.2);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+    background-color: transparent;
+  }
+}
+
+@keyframes removeSubject {
+  from { 
+    opacity: 1;
+    transform: scale(1); 
+  }
+  to { 
+    opacity: 0;
+    transform: scale(0.8);
+    background-color: rgba(234, 67, 53, 0.2);
+  }
+}
+
+.subject-add {
+  animation: addSubject 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+  will-change: transform, opacity, background-color;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.subject-remove {
+  animation: removeSubject 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+  will-change: transform, opacity, background-color;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Apply animations to specific section view elements */
+#section-view-container .schedule-table td.clickable-cell.subject-add {
+  animation-duration: 0.6s;
+}
+
+#section-view-container .schedule-table td.clickable-cell.subject-remove {
+  animation-duration: 0.5s;
+}
+
+/* Enhanced hover effects for Section View cells with subjects */
+#section-view-container .schedule-table td.clickable-cell:not(:empty) {
+  transition: all 0.3s ease;
+}
+
+#section-view-container .schedule-table td.clickable-cell:not(:empty):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  z-index: 3;
+}
+
+.duplicate-warning {
+  color: #ff6600;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  padding: 5px 8px;
+  background-color: #fff3cd;
+  border-left: 3px solid #ff6600;
+  border-radius: 3px;
+  animation: fadeIn 0.3s ease;
 }

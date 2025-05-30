@@ -2536,6 +2536,7 @@ async function populateSectionViewCourseOfferingDropdown(section) {
   const sectionviewCourseOfferingSelect = document.getElementById("sectionview-courseOffering");
   sectionviewCourseOfferingSelect.innerHTML = `<option value="">-- Select Course Offering --</option>`;
   
+  // Filter offerings that match the current trimester and year level
   const filteredOfferings = offerings.filter(off => {
     const course = courses.find(c => c.id === off.courseId);
     return off.section === section && 
@@ -2543,12 +2544,22 @@ async function populateSectionViewCourseOfferingDropdown(section) {
            course && course.year_level === currentSectionViewYearLevel;
   });
   
-  filteredOfferings.forEach(off => {
+  // If no offerings found with exact section match, show all offerings for the current trimester and year level
+  let offeringsToShow = filteredOfferings;
+  if (offeringsToShow.length === 0) {
+    offeringsToShow = offerings.filter(off => {
+      const course = courses.find(c => c.id === off.courseId);
+      return off.trimester === currentSectionViewTrimester && 
+             course && course.year_level === currentSectionViewYearLevel;
+    });
+  }
+  
+  offeringsToShow.forEach(off => {
     const course = courses.find(c => c.id === off.courseId);
     if (course) {
       // Get degree from offering or course
       const degree = off.degree || course.degree;
-      const displayText = `${course.subject} (${degree}) - ${off.type}`;
+      const displayText = `${course.subject} (${degree}) - ${off.type} - ${off.section}`;
       sectionviewCourseOfferingSelect.innerHTML += `<option value="${off.id}" data-course-id="${off.courseId}" data-unit-type="${off.type}">${displayText}</option>`;
     }
   });
@@ -2589,7 +2600,15 @@ async function populateSectionViewSection2Dropdown(courseId, type) {
   });
   
   // Sort sections alphabetically
-  allSections.sort();
+  allSections.sort((a, b) => {
+    // Extract year number and letter for better sorting
+    const yearA = parseInt(a.match(/\d+/)?.[0] || 0);
+    const yearB = parseInt(b.match(/\d+/)?.[0] || 0);
+    if (yearA !== yearB) {
+      return yearA - yearB;
+    }
+    return a.localeCompare(b);
+  });
   
   // Add all unique sections to the dropdown
   allSections.forEach(section => {
@@ -2630,6 +2649,7 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
   
   const courseId = selectedOffering.courseId;
   const unitType = selectedOffering.type;
+  // Use the section from the selected offering
   const section = document.getElementById("sectionview-section").value;
   
   const dayType = document.getElementById("sectionview-dayType").value;
@@ -3061,6 +3081,13 @@ async function updateSectionViewCell(dayType, time, section) {
     if (!targetCell.style.backgroundColor) {
       targetCell.style.backgroundColor = sch.color || "#e9f1fb";
     }
+    
+    // Add animation to highlight the change
+    targetCell.style.transition = "background-color 0.3s ease, transform 0.3s ease";
+    targetCell.style.transform = "scale(1.02)";
+    setTimeout(() => {
+      targetCell.style.transform = "scale(1)";
+    }, 300);
   } else {
     targetCell.textContent = "";
   }

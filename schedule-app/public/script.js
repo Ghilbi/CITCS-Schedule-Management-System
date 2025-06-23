@@ -213,8 +213,8 @@ async function renderFacultyTable() {
       <td>${f.id}</td>
       <td>${f.name}</td>
       <td>
-        <button onclick="editFaculty(${f.id})">Edit</button>
-        <button onclick="deleteFaculty(${f.id})">Delete</button>
+        <button class="table-edit-btn" onclick="editFaculty(${f.id})">Edit</button>
+        <button class="table-delete-btn" onclick="deleteFaculty(${f.id})">Delete</button>
       </td>
     `;
     tableFacultyBody.appendChild(tr);
@@ -2005,8 +2005,8 @@ async function renderRoomsTable() {
       <td>${room.id}</td>
       <td>${room.name}</td>
       <td>
-        <button onclick="editRoom(${room.id})">Edit</button>
-        <button onclick="deleteRoom(${room.id})">Delete</button>
+        <button class="table-edit-btn" onclick="editRoom(${room.id})">Edit</button>
+        <button class="table-delete-btn" onclick="deleteRoom(${room.id})">Delete</button>
       </td>
     `;
     tableRoomsBody.appendChild(tr);
@@ -4475,3 +4475,28 @@ async function exportAllSchedulesToExcel() {
     alert("Error exporting to Excel. Please try again.");
   }
 }
+
+/**************************************************************
+ * Sidebar (hamburger) toggle                                 *
+ **************************************************************/
+(function setupSidebarToggle() {
+  const toggleBtn = document.getElementById('nav-toggle');
+  const navEl = document.querySelector('nav');
+  if (!toggleBtn || !navEl) return;
+
+  // Collapse by default on narrow screens
+  function setInitialState() {
+    const collapseNeeded = window.innerWidth < 700;
+    navEl.classList.toggle('collapsed', collapseNeeded);
+    document.body.classList.toggle('nav-collapsed', collapseNeeded);
+    toggleBtn.classList.toggle('active', collapseNeeded);
+  }
+  setInitialState();
+  window.addEventListener('resize', setInitialState);
+
+  toggleBtn.addEventListener('click', () => {
+    navEl.classList.toggle('collapsed');
+    document.body.classList.toggle('nav-collapsed');
+    toggleBtn.classList.toggle('active');
+  });
+})();

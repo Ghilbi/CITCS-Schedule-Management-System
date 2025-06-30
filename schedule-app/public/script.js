@@ -145,6 +145,10 @@ function showSection(section) {
   secEl.classList.remove("hidden");
   applyFadeAnimation(secEl);
   
+  // Update active button in navigation
+  document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+  document.getElementById(`btn-${section}`).classList.add("active");
+  
   // Additional actions for specific sections
   if (section === "faculty") {
     renderFacultyTable();
@@ -3486,6 +3490,8 @@ function hideModal(modal) {
   
   // Show Section View by default
   showSection("section-view");
+  // Highlight the section-view button since it's the default view
+  document.getElementById("btn-section-view").classList.add("active");
   await renderSectionViewTables();
   await validateAllComplementary();
 })();
@@ -4498,5 +4504,25 @@ async function exportAllSchedulesToExcel() {
     navEl.classList.toggle('collapsed');
     document.body.classList.toggle('nav-collapsed');
     toggleBtn.classList.toggle('active');
+  });
+  
+  // Add ripple effect to sidebar buttons
+  const sidebarButtons = document.querySelectorAll("nav button");
+  sidebarButtons.forEach(button => {
+    button.addEventListener("click", function(e) {
+      // Remove any existing ripple effect
+      this.classList.remove("ripple-effect");
+      
+      // Force a reflow to ensure the animation plays again
+      void this.offsetWidth;
+      
+      // Add the ripple effect class
+      this.classList.add("ripple-effect");
+    });
+    
+    // Remove the animation class when it ends to allow it to be triggered again
+    button.addEventListener("animationend", function() {
+      this.classList.remove("ripple-effect");
+    });
   });
 })();

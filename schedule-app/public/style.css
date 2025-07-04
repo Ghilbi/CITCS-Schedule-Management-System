@@ -1595,3 +1595,153 @@ section h2 {
   box-shadow: none;
   transform: translateY(-1px);
 }
+
+/* ===================================================================== */
+/* Course Offering Categorizer Styles */
+/* ===================================================================== */
+
+.offering-categorizer {
+  margin: 15px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.category-group {
+  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background-color: var(--color-card-bg);
+}
+
+.category-header {
+  background-color: var(--color-primary-light);
+  padding: 10px 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.category-header:hover {
+  background-color: var(--color-primary-xlight);
+}
+
+.category-header.active {
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.category-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.category-content.open {
+  max-height: 2000px;
+  transition: max-height 0.5s ease;
+}
+
+.category-table-wrapper {
+  padding: 10px;
+}
+
+.category-count {
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.offering-categorizer table {
+  width: 100%;
+}
+
+.offering-categorizer th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--color-primary-light);
+}
+
+/* Animation for category toggling */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.category-content.open .category-table-wrapper {
+  animation: fadeInDown 0.3s ease forwards;
+}
+
+/* Nested Section Categorizer Styles */
+.section-category-group {
+  margin: 5px 0 5px 20px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background-color: var(--color-card-bg);
+  border-left: 3px solid var(--color-primary-light);
+}
+
+.section-category-header {
+  background-color: rgba(232, 245, 233, 0.7);
+  padding: 8px 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.2s ease;
+}
+
+.section-category-header:hover {
+  background-color: var(--color-primary-xlight);
+}
+
+.section-category-header.active {
+  background-color: var(--color-primary-light);
+  border-radius: 6px 6px 0 0;
+}
+
+.section-category-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.section-category-content.open {
+  max-height: 1000px;
+  transition: max-height 0.5s ease;
+}
+
+.section-category-table-wrapper {
+  padding: 8px;
+}
+
+.section-category-count {
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Animation for section category toggling */
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.section-category-content.open .section-category-table-wrapper {
+  animation: fadeInRight 0.3s ease forwards;
+}

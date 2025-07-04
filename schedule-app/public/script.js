@@ -611,7 +611,6 @@ function setupTrimesterTabs() {
 
 async function populateCourseOfferingCourses() {
   let coursesList = await apiGet("courses");
-  courseOfferingCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
   
   // Get the selected degree filter value - use the manual tab's degree filter
   const degreeFilter = document.getElementById("courseOffering-degree").value;
@@ -626,9 +625,15 @@ async function populateCourseOfferingCourses() {
     coursesList = coursesList.filter(c => c.degree === degreeFilter);
   }
   
+  // Build the HTML string once before setting innerHTML
+  let optionsHTML = `<option value="">-- Select Course --</option>`;
+  
   coursesList.forEach(c => {
-    courseOfferingCourseSelect.innerHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}" data-trimester="${c.trimester}">${c.subject} (${c.unit_category}) - ${c.trimester}</option>`;
+    optionsHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}" data-trimester="${c.trimester}">${c.subject} (${c.unit_category}) - ${c.trimester}</option>`;
   });
+  
+  // Set innerHTML once
+  courseOfferingCourseSelect.innerHTML = optionsHTML;
 }
 
 // Add event listeners for both degree dropdowns
@@ -1106,34 +1111,7 @@ document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
   });
 });
 
-btnAddCourseOffering.addEventListener("click", async () => {
-  courseOfferingIdInput.value = "";
-  courseOfferingCourseSelect.value = "";
-  courseOfferingSectionInput.value = "";
-  document.getElementById("courseOffering-degree").value = ""; // Reset degree filter
-  document.querySelector('input[id="year-all"]').checked = true; // Reset year level to "All Years"
-  document.getElementById("courseOffering-multiple-sections").value = "1A"; // Reset to default value
-  labelLec.style.display = "none";
-  labelLab.style.display = "none";
-  labelPurelec.style.display = "none";
-  courseOfferingUnitsInput.value = "";
-  courseOfferingTrimesterInput.value = "";
-  document.getElementById("modal-course-offering-title").textContent = "Add Course Offering";
-  
-  // Reset year level radio buttons to enabled state
-  const year1st = document.getElementById("year-1st-bulk");
-  const year2nd = document.getElementById("year-2nd-bulk");
-  const year3rd = document.getElementById("year-3rd-bulk");
-  year1st.disabled = false;
-  year2nd.disabled = false;
-  year3rd.disabled = false;
-  year1st.parentElement.style.opacity = 1;
-  year2nd.parentElement.style.opacity = 1;
-  year3rd.parentElement.style.opacity = 1;
-  
-  await populateCourseOfferingCourses();
-  showModal(modalCourseOffering);
-});
+// Note: Removed duplicate btnAddCourseOffering event listener that was causing performance issues
 
 async function renderCourseOfferingTable() {
   const offerings = await apiGet("course_offerings");
@@ -1188,28 +1166,208 @@ async function renderCourseOfferingTable() {
     });
   }
 
-  tableCourseOfferingBody.innerHTML = "";
+  // Group offerings by year and degree
+  const categorizedOfferings = {};
+
   filteredOfferings.forEach(off => {
     const course = coursesList.find(c => c.id == off.courseId);
-    const courseDisplay = course ? course.subject : off.courseId;
-    const trimester = course ? course.trimester : off.trimester;
-    const degree = off.degree || (course ? course.degree : "");
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${off.id}</td>
-      <td>${courseDisplay}</td>
-      <td>${off.section}</td>
-      <td>${off.type}</td>
-      <td>${off.units}</td>
-      <td>${trimester}</td>
-      <td>${degree}</td>
-      <td>
-        <button class="table-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
-        <button class="table-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
-      </td>
-    `;
-    tableCourseOfferingBody.appendChild(tr);
+    const degree = off.degree || (course ? course.degree : "Unknown");
+    const yearPrefix = off.section ? off.section.charAt(0) : "?";
+    const yearLabel = 
+      yearPrefix === "1" ? "1st Year" :
+      yearPrefix === "2" ? "2nd Year" :
+      yearPrefix === "3" ? "3rd Year" : "Other";
+    
+    const categoryKey = `${yearLabel} - ${degree}`;
+    
+    if (!categorizedOfferings[categoryKey]) {
+      categorizedOfferings[categoryKey] = [];
+    }
+    
+    categorizedOfferings[categoryKey].push(off);
   });
+
+  // Clear the existing table
+  const tableContainer = document.getElementById('section-course-offering');
+  const originalTable = document.getElementById('table-courseOffering');
+  
+  // Find the container for the categorizer
+  let categorizerContainer = document.querySelector('.offering-categorizer');
+  
+  // If no categorizer exists yet, create one
+  if (!categorizerContainer) {
+    categorizerContainer = document.createElement('div');
+    categorizerContainer.className = 'offering-categorizer';
+    
+    // Insert the categorizer container before the original table
+    tableContainer.insertBefore(categorizerContainer, originalTable);
+    
+    // Hide the original table
+    originalTable.style.display = 'none';
+  } else {
+    // Clear existing categories
+    categorizerContainer.innerHTML = '';
+  }
+
+  // Sort category keys for consistent display
+  const sortedCategoryKeys = Object.keys(categorizedOfferings).sort();
+
+  // Generate category groups
+  sortedCategoryKeys.forEach(categoryKey => {
+    const offerings = categorizedOfferings[categoryKey];
+    
+    // Create category group
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'category-group';
+    
+    // Create header
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'category-header';
+    categoryHeader.innerHTML = `
+      <span>${categoryKey}</span>
+      <span class="category-count">${offerings.length}</span>
+    `;
+    
+    // Create content container
+    const categoryContent = document.createElement('div');
+    categoryContent.className = 'category-content';
+    
+    // Further group by section
+    const sectionGroups = {};
+    offerings.forEach(off => {
+      const section = off.section || 'Unassigned';
+      
+      if (!sectionGroups[section]) {
+        sectionGroups[section] = [];
+      }
+      
+      sectionGroups[section].push(off);
+    });
+    
+    // Sort sections alphabetically
+    const sortedSections = Object.keys(sectionGroups).sort();
+    
+    // Create section category for each section
+    sortedSections.forEach(section => {
+      const sectionOfferings = sectionGroups[section];
+      
+      // Create section category group
+      const sectionCategoryGroup = document.createElement('div');
+      sectionCategoryGroup.className = 'section-category-group';
+      
+      // Create section header
+      const sectionCategoryHeader = document.createElement('div');
+      sectionCategoryHeader.className = 'section-category-header';
+      sectionCategoryHeader.innerHTML = `
+        <span>Section: ${section}</span>
+        <span class="section-category-count">${sectionOfferings.length}</span>
+      `;
+      
+      // Create section content container
+      const sectionCategoryContent = document.createElement('div');
+      sectionCategoryContent.className = 'section-category-content';
+      
+      // Create section table wrapper
+      const sectionTableWrapper = document.createElement('div');
+      sectionTableWrapper.className = 'section-category-table-wrapper';
+      
+      // Create table for this section
+      const sectionTable = document.createElement('table');
+      sectionTable.className = 'course-offering-table';
+      sectionTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Course</th>
+            <th>Section</th>
+            <th>Type</th>
+            <th>Units</th>
+            <th>Trimester</th>
+            <th>Degree</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      
+      const sectionTbody = sectionTable.querySelector('tbody');
+      
+      // Add offerings to this section
+      sectionOfferings.forEach(off => {
+        const course = coursesList.find(c => c.id == off.courseId);
+        const courseDisplay = course ? course.subject : off.courseId;
+        const trimester = course ? course.trimester : off.trimester;
+        const degree = off.degree || (course ? course.degree : "");
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${off.id}</td>
+          <td>${courseDisplay}</td>
+          <td>${off.section}</td>
+          <td>${off.type}</td>
+          <td>${off.units}</td>
+          <td>${trimester}</td>
+          <td>${degree}</td>
+          <td>
+            <button class="table-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
+            <button class="table-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
+          </td>
+        `;
+        sectionTbody.appendChild(tr);
+      });
+      
+      sectionTableWrapper.appendChild(sectionTable);
+      sectionCategoryContent.appendChild(sectionTableWrapper);
+      
+      // Add event listener to toggle section
+      sectionCategoryHeader.addEventListener('click', (e) => {
+        // Prevent triggering parent category toggle
+        e.stopPropagation();
+        
+        // Toggle active state for this header
+        sectionCategoryHeader.classList.toggle('active');
+        
+        // Toggle open state for this content
+        sectionCategoryContent.classList.toggle('open');
+      });
+      
+      // Add to section category group
+      sectionCategoryGroup.appendChild(sectionCategoryHeader);
+      sectionCategoryGroup.appendChild(sectionCategoryContent);
+      
+      // Add to parent category content
+      categoryContent.appendChild(sectionCategoryGroup);
+    });
+    
+    // Add event listener to toggle category
+    categoryHeader.addEventListener('click', () => {
+      // Toggle active state for this header
+      categoryHeader.classList.toggle('active');
+      
+      // Toggle open state for this content
+      categoryContent.classList.toggle('open');
+    });
+    
+    // Add to category group
+    categoryGroup.appendChild(categoryHeader);
+    categoryGroup.appendChild(categoryContent);
+    
+    // Add to container
+    categorizerContainer.appendChild(categoryGroup);
+  });
+  
+  // If no categories, show a message
+  if (sortedCategoryKeys.length === 0) {
+    const emptyMessage = document.createElement('div');
+    emptyMessage.textContent = 'No course offerings match your current filters.';
+    emptyMessage.style.textAlign = 'center';
+    emptyMessage.style.padding = '20px';
+    emptyMessage.style.color = '#666';
+    categorizerContainer.appendChild(emptyMessage);
+  }
+  
+  // All categories will start closed by default
+  // User will need to click on them to open
 }
 
 btnSaveCourseOffering.addEventListener("click", async () => {

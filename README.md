@@ -1,6 +1,6 @@
-# Academic Schedule Management System
+# DCS: An EdTech Cloud-Native Digitalized Course Scheduling System
 
-A comprehensive web application for managing academic course schedules, room allocations, and timetables for educational institutions.
+A comprehensive edtech cloud-native web application for managing academic course schedules, room allocations, and timetables for educational institutions.
 
 ## Table of Contents
 - [Overview](#overview)

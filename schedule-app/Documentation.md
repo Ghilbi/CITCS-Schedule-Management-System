@@ -1,4 +1,4 @@
-# Academic Schedule Management System Documentation
+# DCS: An EdTech Cloud-Native Digitalized Course Scheduling System Documentation
 
 ## Table of Contents
 - [Overview](#overview)

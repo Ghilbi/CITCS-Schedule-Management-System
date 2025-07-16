@@ -19,7 +19,7 @@
 
 ## Overview
 
-The Academic Schedule Management System is a web application designed for educational institutions to manage academic course schedules, room allocations, and timetables. It provides a comprehensive tool for planning and visualizing academic schedules across different trimesters and year levels.
+The DCS System is a web application designed for educational institutions to manage academic course schedules, room allocations, and timetables. It provides a comprehensive tool for planning and visualizing academic schedules across different trimesters and year levels.
 
 ## System Architecture
 

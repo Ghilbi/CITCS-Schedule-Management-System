@@ -1,7 +1,11 @@
 const express = require('express');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { Pool } = require('pg');
+
+// Add JSON Web Token and bcrypt for authentication
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,10 +38,6 @@ pool.connect(async (err, client, release) => {
 
 // Create tables if they do not exist
 async function createTables() {
-  await pool.query(`CREATE TABLE IF NOT EXISTS faculty (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL
-  )`);
   await pool.query(`CREATE TABLE IF NOT EXISTS rooms (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL
@@ -57,14 +57,12 @@ async function createTables() {
     dayType TEXT NOT NULL,
     time TEXT NOT NULL,
     col INTEGER NOT NULL,
-    facultyId INTEGER,
     roomId INTEGER,
     courseId INTEGER,
     color TEXT,
     unitType TEXT,
     section TEXT,
     section2 TEXT,
-    FOREIGN KEY(facultyId) REFERENCES faculty(id),
     FOREIGN KEY(roomId) REFERENCES rooms(id),
     FOREIGN KEY(courseId) REFERENCES courses(id)
   )`);
@@ -82,7 +80,7 @@ async function createTables() {
 createTables().catch(err => console.error("Error creating tables", err));
 
 // Only allow valid table names
-const validTables = ['faculty', 'rooms', 'courses', 'schedules', 'course_offerings'];
+const validTables = ['rooms', 'courses', 'schedules', 'course_offerings'];
 function isValidTable(table) {
   return validTables.includes(table);
 }
@@ -104,14 +102,12 @@ function mapRow(table, row) {
   } else if (table === 'schedules') {
     // fallback for courseId in schedules
     const sid = row.courseid ?? row.course_id ?? row.courseId;
-    const fid = row.facultyid ?? row.faculty_id ?? row.facultyId;
     const rid = row.roomid ?? row.room_id ?? row.roomId;
     return {
       id: row.id,
       dayType: row.daytype,
       time: row.time,
       col: row.col,
-      facultyId: fid,
       roomId: rid,
       courseId: sid,
       color: row.color,
@@ -123,6 +119,52 @@ function mapRow(table, row) {
   // other tables have matching keys
   return row;
 }
+
+// ===== Authentication Helpers =====
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.status(401).json({ error: 'Missing token' });
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+}
+
+// Protect write operations (POST/PUT/DELETE) on the courses table only
+function protectCoursesWrite(req, res, next) {
+  if (req.params.table === 'courses' && req.method !== 'GET') {
+    return authenticateToken(req, res, next);
+  }
+  next();
+}
+
+// Login route that issues a JWT if credentials are valid
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+  if (username !== process.env.ADMIN_USERNAME) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  console.log(
+    '[LOGIN] env ADMIN_USERNAME =', process.env.ADMIN_USERNAME,
+    '| env ADMIN_PASSWORD_HASH length =', process.env.ADMIN_PASSWORD_HASH?.length
+  );
+  try {
+    const match = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: 'Authentication error' });
+  }
+});
+
+// Apply the protection middleware before the generic CRUD handlers
+app.use('/api/:table', protectCoursesWrite);
 
 // GET all items from a table
 app.get('/api/:table', async (req, res) => {
@@ -149,7 +191,6 @@ app.get('/api/:table', async (req, res) => {
                 daytype AS "dayType",
                 time,
                 col,
-                facultyid AS "facultyId",
                 roomid AS "roomId",
                 courseid AS "courseId",
                 color,
@@ -175,10 +216,6 @@ app.post('/api/:table', async (req, res) => {
   let query = '', params = [];
 
   switch (table) {
-    case 'faculty':
-      query = 'INSERT INTO faculty (name) VALUES ($1)';
-      params = [data.name];
-      break;
     case 'rooms':
       // Check for existing room with same name first
       try {
@@ -197,8 +234,8 @@ app.post('/api/:table', async (req, res) => {
       params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description];
       break;
     case 'schedules':
-      query = 'INSERT INTO schedules (dayType, time, col, facultyId, roomId, courseId, color, unitType, section, section2) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
-      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2];
+      query = 'INSERT INTO schedules (dayType, time, col, roomId, courseId, color, unitType, section, section2) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
+      params = [data.dayType, data.time, data.col, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2];
       break;
     case 'course_offerings':
       query = 'INSERT INTO course_offerings (courseId, section, type, units, trimester, degree) VALUES ($1, $2, $3, $4, $5, $6)';
@@ -226,10 +263,6 @@ app.put('/api/:table/:id', async (req, res) => {
   let query = '', params = [];
   
   switch (table) {
-    case 'faculty':
-      query = 'UPDATE faculty SET name = $1 WHERE id = $2';
-      params = [data.name, id];
-      break;
     case 'rooms':
       query = 'UPDATE rooms SET name = $1 WHERE id = $2';
       params = [data.name, id];
@@ -239,8 +272,8 @@ app.put('/api/:table/:id', async (req, res) => {
       params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description, id];
       break;
     case 'schedules':
-      query = 'UPDATE schedules SET dayType = $1, time = $2, col = $3, facultyId = $4, roomId = $5, courseId = $6, color = $7, unitType = $8, section = $9, section2 = $10 WHERE id = $11';
-      params = [data.dayType, data.time, data.col, data.facultyId, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2, id];
+      query = 'UPDATE schedules SET dayType = $1, time = $2, col = $3, roomId = $4, courseId = $5, color = $6, unitType = $7, section = $8, section2 = $9 WHERE id = $10';
+      params = [data.dayType, data.time, data.col, data.roomId, data.courseId, data.color, data.unitType, data.section, data.section2, id];
       break;
     case 'course_offerings':
       query = 'UPDATE course_offerings SET courseId = $1, section = $2, type = $3, units = $4, trimester = $5, degree = $6 WHERE id = $7';

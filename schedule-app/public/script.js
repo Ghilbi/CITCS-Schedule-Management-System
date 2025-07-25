@@ -38,7 +38,7 @@ async function apiPost(table, data) {
   try {
     const response = await fetch(`/api/${table}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addAuthHeader({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data)
     });
     
@@ -65,7 +65,7 @@ apiPost = async (table, data) => {
 async function apiPut(table, id, data) {
   const response = await fetch(`/api/${table}/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: addAuthHeader({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data)
   });
   return response.json();
@@ -80,7 +80,8 @@ apiPut = async (table, id, data) => {
 
 async function apiDelete(table, id) {
   const response = await fetch(`/api/${table}/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
+    headers: addAuthHeader()
   });
   return response.json();
 }
@@ -115,12 +116,10 @@ async function getAllRoomColumns() {
 /**************************************************************
  * Navigation
  **************************************************************/
-const sectionFaculty = document.getElementById("section-faculty");
 const sectionCourses = document.getElementById("section-courses");
 const sectionCourseOffering = document.getElementById("section-course-offering");
 const sectionRoomView = document.getElementById("section-room-view");
 const sectionSectionView = document.getElementById("section-section-view");
-const sectionFacultyView = document.getElementById("section-faculty-view");
 
 // Add fade animation helper
 function applyFadeAnimation(element) {
@@ -131,12 +130,10 @@ function applyFadeAnimation(element) {
 function hideAllSections() {
   // remove fade-in from all sections
   document.querySelectorAll("[id^='section-']").forEach(sec => sec.classList.remove("fade-in"));
-  // document.getElementById("section-faculty").classList.add("hidden");
   document.getElementById("section-courses").classList.add("hidden");
   document.getElementById("section-course-offering").classList.add("hidden");
   document.getElementById("section-section-view").classList.add("hidden");
   document.getElementById("section-room-view").classList.add("hidden");
-  // document.getElementById("section-faculty-view").classList.add("hidden");
 }
 
 function showSection(section) {
@@ -145,29 +142,72 @@ function showSection(section) {
   secEl.classList.remove("hidden");
   applyFadeAnimation(secEl);
   
+  // Update active button in navigation
+  document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+  document.getElementById(`btn-${section}`).classList.add("active");
+  
   // Additional actions for specific sections
-  if (section === "faculty") {
-    renderFacultyTable();
-  } else if (section === "courses") {
+  if (section === "courses") {
     renderCoursesTable();
   } else if (section === "course-offering") {
     renderCourseOfferingTable();
   }
 }
 
-// Remove faculty nav handlers
-// document.getElementById("btn-faculty").addEventListener("click", async () => {
-//   hideAllSections();
-//   sectionFaculty.classList.remove("hidden");
-//   await renderFacultyTable();
-// });
+// After the apiCache helper, add auth helpers
+let authToken = localStorage.getItem('authToken') || null;
 
-document.getElementById("btn-courses").addEventListener("click", async () => {
+function isLoggedIn() {
+  return !!authToken;
+}
+
+function setAuthToken(token) {
+  authToken = token;
+  if (token) {
+    localStorage.setItem('authToken', token);
+  } else {
+    localStorage.removeItem('authToken');
+  }
+}
+
+async function loginRequest(username, password) {
+  const resp = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  if (!resp.ok) {
+    throw new Error('Invalid credentials');
+  }
+  const data = await resp.json();
+  setAuthToken(data.token);
+}
+
+function addAuthHeader(headers = {}) {
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+  return headers;
+}
+
+// Navigation: replace inline listener for btn-courses with auth-check helper
+function openCoursesSection() {
+  if (!isLoggedIn()) {
+    showModal(document.getElementById('modal-login'));
+    return;
+  }
   hideAllSections();
-  sectionCourses.classList.remove("hidden");
+  sectionCourses.classList.remove('hidden');
   applyFadeAnimation(sectionCourses);
-  await renderCoursesTable();
-});
+  // Set active navigation button
+  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('btn-courses').classList.add('active');
+  renderCoursesTable();
+}
+
+// Update navigation event bindings
+document.getElementById('btn-courses').addEventListener('click', openCoursesSection);
+
 document.getElementById("btn-course-offering").addEventListener("click", async () => {
   hideAllSections();
   sectionCourseOffering.classList.remove("hidden");
@@ -195,72 +235,8 @@ document.getElementById("btn-room-view").addEventListener("click", async () => {
 });
 
 /**************************************************************
- * 4) FACULTY CRUD
+ * (FACULTY SECTION REMOVED)
  **************************************************************/
-const tableFacultyBody = document.querySelector("#table-faculty tbody");
-const btnAddFaculty = document.getElementById("btn-add-faculty");
-const modalFaculty = document.getElementById("modal-faculty");
-const facultyIdInput = document.getElementById("faculty-id");
-const facultyNameInput = document.getElementById("faculty-name");
-const btnSaveFaculty = document.getElementById("btn-save-faculty");
-
-async function renderFacultyTable() {
-  const facultyList = await apiGet("faculty");
-  tableFacultyBody.innerHTML = "";
-  facultyList.forEach(f => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${f.id}</td>
-      <td>${f.name}</td>
-      <td>
-        <button onclick="editFaculty(${f.id})">Edit</button>
-        <button onclick="deleteFaculty(${f.id})">Delete</button>
-      </td>
-    `;
-    tableFacultyBody.appendChild(tr);
-  });
-}
-
-btnAddFaculty.addEventListener("click", () => {
-  facultyIdInput.value = "";
-  facultyNameInput.value = "";
-  document.getElementById("modal-faculty-title").textContent = "Add Faculty";
-  showModal(modalFaculty);
-});
-
-btnSaveFaculty.addEventListener("click", async () => {
-  const id = facultyIdInput.value;
-  const name = facultyNameInput.value.trim();
- 
-
-if (!name) {
-    alert("Enter a faculty name.");
-    return;
-  }
-  if (id) {
-    await apiPut("faculty", id, { name });
-  } else {
-    await apiPost("faculty", { name });
-  }
-  hideModal(modalFaculty);
-  await renderFacultyTable();
-});
-
-window.editFaculty = async function(id) {
-  const facultyList = await apiGet("faculty");
-  const found = facultyList.find(f => f.id == id);
-  if (!found) return;
-  facultyIdInput.value = found.id;
-  facultyNameInput.value = found.name;
-  document.getElementById("modal-faculty-title").textContent = "Edit Faculty";
-  showModal(modalFaculty);
-};
-
-window.deleteFaculty = async function(id) {
-  if (!confirm("Are you sure?")) return;
-  await apiDelete("faculty", id);
-  await renderFacultyTable();
-};
 
 /**************************************************************
  * 6) COURSES CRUD with Search, Filter, and Sort
@@ -607,7 +583,6 @@ function setupTrimesterTabs() {
 
 async function populateCourseOfferingCourses() {
   let coursesList = await apiGet("courses");
-  courseOfferingCourseSelect.innerHTML = `<option value="">-- Select Course --</option>`;
   
   // Get the selected degree filter value - use the manual tab's degree filter
   const degreeFilter = document.getElementById("courseOffering-degree").value;
@@ -622,9 +597,15 @@ async function populateCourseOfferingCourses() {
     coursesList = coursesList.filter(c => c.degree === degreeFilter);
   }
   
+  // Build the HTML string once before setting innerHTML
+  let optionsHTML = `<option value="">-- Select Course --</option>`;
+  
   coursesList.forEach(c => {
-    courseOfferingCourseSelect.innerHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}" data-trimester="${c.trimester}">${c.subject} (${c.unit_category}) - ${c.trimester}</option>`;
+    optionsHTML += `<option value="${c.id}" data-unit-category="${c.unit_category}" data-trimester="${c.trimester}">${c.subject} (${c.unit_category}) - ${c.trimester}</option>`;
   });
+  
+  // Set innerHTML once
+  courseOfferingCourseSelect.innerHTML = optionsHTML;
 }
 
 // Add event listeners for both degree dropdowns
@@ -745,7 +726,24 @@ document.querySelectorAll('input[name="bulkAddYearLevel"]').forEach(radio => {
   });
 });
 
-// Add event listener for the "Add All Courses" button with the new bulk degree select
+/**************************************************************
+ * Loading Overlay Functions
+ **************************************************************/
+function showLoadingOverlay(message = 'Processing...') {
+  const overlay = document.querySelector('.loading-overlay');
+  const messageElement = overlay.querySelector('.loading-message');
+  messageElement.textContent = message;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden'; // Prevent scrolling while loading
+}
+
+function hideLoadingOverlay() {
+  const overlay = document.querySelector('.loading-overlay');
+  overlay.classList.remove('active');
+  document.body.style.overflow = ''; // Restore scrolling
+}
+
+// Modified btn-add-all-courses event listener to use loading overlay
 document.getElementById("btn-add-all-courses").addEventListener("click", async function() {
   const selectedDegree = document.getElementById("courseOffering-degree-bulk").value;
   const yearLevelRadio = document.querySelector('input[name="bulkAddYearLevel"]:checked');
@@ -810,6 +808,9 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
   }
   
   try {
+    // Show loading overlay
+    showLoadingOverlay(`Adding ${selectedDegree} courses for ${sections.join(', ')}...`);
+    
     // Get all courses and filter by selected degree and chosen trimester
     let courses = await apiGet("courses");
     courses = courses.filter(course =>
@@ -823,6 +824,7 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
     }
     
     if (courses.length === 0) {
+      hideLoadingOverlay();
       let message = `No courses found for ${selectedDegree}`;
       if (selectedYearLevel) {
         message += ` in ${selectedYearLevel}`;
@@ -892,17 +894,11 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
     hideModal(modalCourseOffering);
     await renderCourseOfferingTable();
     
-    // Build success message
-    let successMessage = `Successfully added ${addedCount} course offerings for ${selectedDegree}`;
-    if (selectedYearLevel) {
-      successMessage += ` in ${selectedYearLevel}`;
-    }
-    successMessage += ` with ${sections.length} section(s).`;
-    
-    // Show success message
-    alert(successMessage);
+    // Hide loading overlay
+    hideLoadingOverlay();
   } catch (error) {
     console.error("Error adding all courses:", error);
+    hideLoadingOverlay();
     alert("An error occurred while adding all courses. Please try again.");
   }
 });
@@ -1102,34 +1098,7 @@ document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
   });
 });
 
-btnAddCourseOffering.addEventListener("click", async () => {
-  courseOfferingIdInput.value = "";
-  courseOfferingCourseSelect.value = "";
-  courseOfferingSectionInput.value = "";
-  document.getElementById("courseOffering-degree").value = ""; // Reset degree filter
-  document.querySelector('input[id="year-all"]').checked = true; // Reset year level to "All Years"
-  document.getElementById("courseOffering-multiple-sections").value = "1A"; // Reset to default value
-  labelLec.style.display = "none";
-  labelLab.style.display = "none";
-  labelPurelec.style.display = "none";
-  courseOfferingUnitsInput.value = "";
-  courseOfferingTrimesterInput.value = "";
-  document.getElementById("modal-course-offering-title").textContent = "Add Course Offering";
-  
-  // Reset year level radio buttons to enabled state
-  const year1st = document.getElementById("year-1st-bulk");
-  const year2nd = document.getElementById("year-2nd-bulk");
-  const year3rd = document.getElementById("year-3rd-bulk");
-  year1st.disabled = false;
-  year2nd.disabled = false;
-  year3rd.disabled = false;
-  year1st.parentElement.style.opacity = 1;
-  year2nd.parentElement.style.opacity = 1;
-  year3rd.parentElement.style.opacity = 1;
-  
-  await populateCourseOfferingCourses();
-  showModal(modalCourseOffering);
-});
+// Note: Removed duplicate btnAddCourseOffering event listener that was causing performance issues
 
 async function renderCourseOfferingTable() {
   const offerings = await apiGet("course_offerings");
@@ -1184,28 +1153,208 @@ async function renderCourseOfferingTable() {
     });
   }
 
-  tableCourseOfferingBody.innerHTML = "";
+  // Group offerings by year and degree
+  const categorizedOfferings = {};
+
   filteredOfferings.forEach(off => {
     const course = coursesList.find(c => c.id == off.courseId);
-    const courseDisplay = course ? course.subject : off.courseId;
-    const trimester = course ? course.trimester : off.trimester;
-    const degree = off.degree || (course ? course.degree : "");
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${off.id}</td>
-      <td>${courseDisplay}</td>
-      <td>${off.section}</td>
-      <td>${off.type}</td>
-      <td>${off.units}</td>
-      <td>${trimester}</td>
-      <td>${degree}</td>
-      <td>
-        <button class="table-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
-        <button class="table-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
-      </td>
-    `;
-    tableCourseOfferingBody.appendChild(tr);
+    const degree = off.degree || (course ? course.degree : "Unknown");
+    const yearPrefix = off.section ? off.section.charAt(0) : "?";
+    const yearLabel = 
+      yearPrefix === "1" ? "1st Year" :
+      yearPrefix === "2" ? "2nd Year" :
+      yearPrefix === "3" ? "3rd Year" : "Other";
+    
+    const categoryKey = `${yearLabel} - ${degree}`;
+    
+    if (!categorizedOfferings[categoryKey]) {
+      categorizedOfferings[categoryKey] = [];
+    }
+    
+    categorizedOfferings[categoryKey].push(off);
   });
+
+  // Clear the existing table
+  const tableContainer = document.getElementById('section-course-offering');
+  const originalTable = document.getElementById('table-courseOffering');
+  
+  // Find the container for the categorizer
+  let categorizerContainer = document.querySelector('.offering-categorizer');
+  
+  // If no categorizer exists yet, create one
+  if (!categorizerContainer) {
+    categorizerContainer = document.createElement('div');
+    categorizerContainer.className = 'offering-categorizer';
+    
+    // Insert the categorizer container before the original table
+    tableContainer.insertBefore(categorizerContainer, originalTable);
+    
+    // Hide the original table
+    originalTable.style.display = 'none';
+  } else {
+    // Clear existing categories
+    categorizerContainer.innerHTML = '';
+  }
+
+  // Sort category keys for consistent display
+  const sortedCategoryKeys = Object.keys(categorizedOfferings).sort();
+
+  // Generate category groups
+  sortedCategoryKeys.forEach(categoryKey => {
+    const offerings = categorizedOfferings[categoryKey];
+    
+    // Create category group
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'category-group';
+    
+    // Create header
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'category-header';
+    categoryHeader.innerHTML = `
+      <span>${categoryKey}</span>
+      <span class="category-count">${offerings.length}</span>
+    `;
+    
+    // Create content container
+    const categoryContent = document.createElement('div');
+    categoryContent.className = 'category-content';
+    
+    // Further group by section
+    const sectionGroups = {};
+    offerings.forEach(off => {
+      const section = off.section || 'Unassigned';
+      
+      if (!sectionGroups[section]) {
+        sectionGroups[section] = [];
+      }
+      
+      sectionGroups[section].push(off);
+    });
+    
+    // Sort sections alphabetically
+    const sortedSections = Object.keys(sectionGroups).sort();
+    
+    // Create section category for each section
+    sortedSections.forEach(section => {
+      const sectionOfferings = sectionGroups[section];
+      
+      // Create section category group
+      const sectionCategoryGroup = document.createElement('div');
+      sectionCategoryGroup.className = 'section-category-group';
+      
+      // Create section header
+      const sectionCategoryHeader = document.createElement('div');
+      sectionCategoryHeader.className = 'section-category-header';
+      sectionCategoryHeader.innerHTML = `
+        <span>Section: ${section}</span>
+        <span class="section-category-count">${sectionOfferings.length}</span>
+      `;
+      
+      // Create section content container
+      const sectionCategoryContent = document.createElement('div');
+      sectionCategoryContent.className = 'section-category-content';
+      
+      // Create section table wrapper
+      const sectionTableWrapper = document.createElement('div');
+      sectionTableWrapper.className = 'section-category-table-wrapper';
+      
+      // Create table for this section
+      const sectionTable = document.createElement('table');
+      sectionTable.className = 'course-offering-table';
+      sectionTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Course</th>
+            <th>Section</th>
+            <th>Type</th>
+            <th>Units</th>
+            <th>Trimester</th>
+            <th>Degree</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      
+      const sectionTbody = sectionTable.querySelector('tbody');
+      
+      // Add offerings to this section
+      sectionOfferings.forEach(off => {
+        const course = coursesList.find(c => c.id == off.courseId);
+        const courseDisplay = course ? course.subject : off.courseId;
+        const trimester = course ? course.trimester : off.trimester;
+        const degree = off.degree || (course ? course.degree : "");
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${off.id}</td>
+          <td>${courseDisplay}</td>
+          <td>${off.section}</td>
+          <td>${off.type}</td>
+          <td>${off.units}</td>
+          <td>${trimester}</td>
+          <td>${degree}</td>
+          <td>
+            <button class="table-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
+            <button class="table-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
+          </td>
+        `;
+        sectionTbody.appendChild(tr);
+      });
+      
+      sectionTableWrapper.appendChild(sectionTable);
+      sectionCategoryContent.appendChild(sectionTableWrapper);
+      
+      // Add event listener to toggle section
+      sectionCategoryHeader.addEventListener('click', (e) => {
+        // Prevent triggering parent category toggle
+        e.stopPropagation();
+        
+        // Toggle active state for this header
+        sectionCategoryHeader.classList.toggle('active');
+        
+        // Toggle open state for this content
+        sectionCategoryContent.classList.toggle('open');
+      });
+      
+      // Add to section category group
+      sectionCategoryGroup.appendChild(sectionCategoryHeader);
+      sectionCategoryGroup.appendChild(sectionCategoryContent);
+      
+      // Add to parent category content
+      categoryContent.appendChild(sectionCategoryGroup);
+    });
+    
+    // Add event listener to toggle category
+    categoryHeader.addEventListener('click', () => {
+      // Toggle active state for this header
+      categoryHeader.classList.toggle('active');
+      
+      // Toggle open state for this content
+      categoryContent.classList.toggle('open');
+    });
+    
+    // Add to category group
+    categoryGroup.appendChild(categoryHeader);
+    categoryGroup.appendChild(categoryContent);
+    
+    // Add to container
+    categorizerContainer.appendChild(categoryGroup);
+  });
+  
+  // If no categories, show a message
+  if (sortedCategoryKeys.length === 0) {
+    const emptyMessage = document.createElement('div');
+    emptyMessage.textContent = 'No course offerings match your current filters.';
+    emptyMessage.style.textAlign = 'center';
+    emptyMessage.style.padding = '20px';
+    emptyMessage.style.color = '#666';
+    categorizerContainer.appendChild(emptyMessage);
+  }
+  
+  // All categories will start closed by default
+  // User will need to click on them to open
 }
 
 btnSaveCourseOffering.addEventListener("click", async () => {
@@ -1950,7 +2099,6 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     dayType,
     time,
     col: parseInt(col, 10),
-    facultyId: null,
     roomId: parseInt(roomId, 10),
     courseId,
     color: "#e9f1fb",
@@ -2005,8 +2153,8 @@ async function renderRoomsTable() {
       <td>${room.id}</td>
       <td>${room.name}</td>
       <td>
-        <button onclick="editRoom(${room.id})">Edit</button>
-        <button onclick="deleteRoom(${room.id})">Delete</button>
+        <button class="table-edit-btn" onclick="editRoom(${room.id})">Edit</button>
+        <button class="table-delete-btn" onclick="deleteRoom(${room.id})">Delete</button>
       </td>
     `;
     tableRoomsBody.appendChild(tr);
@@ -2536,6 +2684,7 @@ async function populateSectionViewCourseOfferingDropdown(section) {
   const sectionviewCourseOfferingSelect = document.getElementById("sectionview-courseOffering");
   sectionviewCourseOfferingSelect.innerHTML = `<option value="">-- Select Course Offering --</option>`;
   
+  // Filter offerings that match the current trimester and year level
   const filteredOfferings = offerings.filter(off => {
     const course = courses.find(c => c.id === off.courseId);
     return off.section === section && 
@@ -2543,12 +2692,22 @@ async function populateSectionViewCourseOfferingDropdown(section) {
            course && course.year_level === currentSectionViewYearLevel;
   });
   
-  filteredOfferings.forEach(off => {
+  // If no offerings found with exact section match, show all offerings for the current trimester and year level
+  let offeringsToShow = filteredOfferings;
+  if (offeringsToShow.length === 0) {
+    offeringsToShow = offerings.filter(off => {
+      const course = courses.find(c => c.id === off.courseId);
+      return off.trimester === currentSectionViewTrimester && 
+             course && course.year_level === currentSectionViewYearLevel;
+    });
+  }
+  
+  offeringsToShow.forEach(off => {
     const course = courses.find(c => c.id === off.courseId);
     if (course) {
       // Get degree from offering or course
       const degree = off.degree || course.degree;
-      const displayText = `${course.subject} (${degree}) - ${off.type}`;
+      const displayText = `${course.subject} (${degree}) - ${off.type} - ${off.section}`;
       sectionviewCourseOfferingSelect.innerHTML += `<option value="${off.id}" data-course-id="${off.courseId}" data-unit-type="${off.type}">${displayText}</option>`;
     }
   });
@@ -2589,7 +2748,15 @@ async function populateSectionViewSection2Dropdown(courseId, type) {
   });
   
   // Sort sections alphabetically
-  allSections.sort();
+  allSections.sort((a, b) => {
+    // Extract year number and letter for better sorting
+    const yearA = parseInt(a.match(/\d+/)?.[0] || 0);
+    const yearB = parseInt(b.match(/\d+/)?.[0] || 0);
+    if (yearA !== yearB) {
+      return yearA - yearB;
+    }
+    return a.localeCompare(b);
+  });
   
   // Add all unique sections to the dropdown
   allSections.forEach(section => {
@@ -2630,6 +2797,7 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
   
   const courseId = selectedOffering.courseId;
   const unitType = selectedOffering.type;
+  // Use the section from the selected offering
   const section = document.getElementById("sectionview-section").value;
   
   const dayType = document.getElementById("sectionview-dayType").value;
@@ -2743,7 +2911,6 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
     dayType,
     time,
     col: 0, // Use 0 to indicate Section View entries
-    facultyId: null,
     roomId: null, // No room association in Section View
     courseId,
     color: "#e9f1fb",
@@ -2876,7 +3043,6 @@ document.getElementById("btn-save-sectionview").addEventListener("click", async 
       dayType,
       time,
       col: parseInt(selectedRoomCol),
-      facultyId: null,
       roomId: roomId,
       courseId,
       color: "#e9f1fb",
@@ -3061,6 +3227,13 @@ async function updateSectionViewCell(dayType, time, section) {
     if (!targetCell.style.backgroundColor) {
       targetCell.style.backgroundColor = sch.color || "#e9f1fb";
     }
+    
+    // Add animation to highlight the change
+    targetCell.style.transition = "background-color 0.3s ease, transform 0.3s ease";
+    targetCell.style.transform = "scale(1.02)";
+    setTimeout(() => {
+      targetCell.style.transform = "scale(1)";
+    }, 300);
   } else {
     targetCell.textContent = "";
   }
@@ -3232,14 +3405,11 @@ async function validateAllComplementary() {
   function getCurrentViewTrimester() {
     const sectionViewVisible = !document.getElementById("section-section-view").classList.contains("hidden");
     const roomViewVisible = !document.getElementById("section-room-view").classList.contains("hidden");
-    const facultyViewVisible = !document.getElementById("section-faculty-view").classList.contains("hidden");
     
     if (sectionViewVisible) {
       return currentSectionViewTrimester;
     } else if (roomViewVisible) {
       return currentRoomViewTrimester;
-    } else if (facultyViewVisible) {
-      return currentFacultyViewTrimester;
     }
     
     // Default to section view trimester
@@ -3346,8 +3516,6 @@ async function validateAllComplementary() {
   } else if (activeSection === "section-section-view") {
     const sectionViewConflicts = validateSectionView();
     allConflicts = [...sectionViewConflicts];
-  } else if (activeSection === "section-faculty-view") {
-    // Faculty view validation if needed
   }
 
   if (allConflicts.length > 0) {
@@ -3412,7 +3580,6 @@ function hideModal(modal) {
  **************************************************************/
 (async function initialLoad() {
   // Initial loading for all tables
-  await renderFacultyTable();
   await renderCoursesTable();
   await renderCourseOfferingTable();
   await renderRoomsTable();
@@ -3421,7 +3588,6 @@ function hideModal(modal) {
   setupTrimesterTabs();
   setupRoomViewTrimesterTabs();
   setupSectionViewTrimesterTabs();
-  setupFacultyViewTrimesterTabs();
   
   // Initialize section code inputs/previews
   updateSectionCodePreview();
@@ -3438,8 +3604,7 @@ function hideModal(modal) {
   document.getElementById('btn-clear-courseOffering').addEventListener('click', clearAllCourseOfferings);
   
   // Primary navigation menu event listeners
-  // document.getElementById("btn-faculty").addEventListener("click", () => showSection("faculty"));
-  document.getElementById("btn-courses").addEventListener("click", () => showSection("courses"));
+  document.getElementById("btn-courses").addEventListener("click", openCoursesSection);
   document.getElementById("btn-course-offering").addEventListener("click", () => showSection("course-offering"));
   document.getElementById("btn-section-view").addEventListener("click", async () => {
     showSection("section-view");
@@ -3451,576 +3616,92 @@ function hideModal(modal) {
     await renderRoomViewTables();
     await validateAllComplementary();
   });
-  // document.getElementById("btn-faculty-view").addEventListener("click", async () => {
-  //   showSection("faculty-view");
-  //   await renderFacultyViewTables();
-  //   await validateAllComplementary();
-  // });
   
-  // Show Section View by default
-  showSection("section-view");
-  await renderSectionViewTables();
-  await validateAllComplementary();
+  // Show Courses View by default if logged in, else show login modal
+  if (isLoggedIn()) {
+    openCoursesSection();
+  } else {
+    showModal(document.getElementById('modal-login'));
+  }
 })();
 
 /**************************************************************
- * FACULTY VIEW FUNCTIONALITY
+ * HELPER FUNCTIONS
  **************************************************************/
-const modalFacultyView = document.getElementById("modal-facultyview");
-let currentFacultyViewTrimester = "1st Trimester";
-
-// Add Faculty View button to navigation
-// document.getElementById("btn-faculty-view").addEventListener("click", async () => {
-//   hideAllSections();
-//   sectionFacultyView.classList.remove("hidden");
-//   setupFacultyViewTrimesterTabs();
-//   await renderFacultyViewTables();
-// });
-
-// Add trimester tab functionality for Faculty View
-document.querySelectorAll("#section-faculty-view .tab-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    document.querySelectorAll("#section-faculty-view .tab-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentFacultyViewTrimester = btn.dataset.trimester;
-    await renderFacultyViewTables();
-  });
-});
-
-async function renderFacultyViewTables() {
-  const container = document.getElementById("faculty-view-container");
-  container.innerHTML = "";
-
-  const trimester = document.querySelector("#section-faculty-view .tab-btn.active").dataset.trimester;
-  const faculty = await apiGet("faculty");
-  const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses");
-
-  // Create MWF and TTHS tables
-  const dayTypes = ["MWF", "TTHS"];
-  dayTypes.forEach(dayType => {
-    const tableContainer = document.createElement("div");
-    tableContainer.className = "table-container";
-    
-    const heading = document.createElement("h3");
-    heading.textContent = `${dayType} Faculty View`;
-    tableContainer.appendChild(heading);
-
-    const table = document.createElement("table");
-    table.className = "schedule-table";
-    table.id = `faculty-view-${dayType.toLowerCase()}-table`;
-
-    // Create header
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-  headerRow.innerHTML = "<th>Time</th>";
-    faculty.forEach(f => {
-      headerRow.innerHTML += `<th>${f.name}</th>`;
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Create body
-    const tbody = document.createElement("tbody");
-    const times = getTimesArray(dayType);
-    times.forEach(time => {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${time}</td>`;
-    
-      faculty.forEach(f => {
-      const cell = document.createElement("td");
-        cell.dataset.facultyId = f.id;
-        cell.dataset.dayType = dayType;
-        cell.dataset.time = time;
-        
-        const schedule = schedules.find(s => {
-          const course = courses.find(c => c.id === s.courseId);
-          return s.facultyId === f.id && 
-                 s.dayType === dayType && 
-        s.time === time && 
-                 course && course.trimester === trimester;
-        });
-      
-      if (schedule) {
-        const course = courses.find(c => c.id === schedule.courseId);
-          // Include the unit type (Lec, Lab, or PureLec) in the display
-          cell.textContent = course ? `${course.subject} ${schedule.section} (${schedule.unitType})` : "";
-          cell.dataset.courseId = schedule.courseId;
-        }
-        
-        cell.addEventListener("click", () => openFacultyViewModal(dayType, time, f.id));
-      row.appendChild(cell);
-    });
-    
-      tbody.appendChild(row);
-    });
-
-    // Add total units row
-    const totalRow = document.createElement("tr");
-    totalRow.innerHTML = "<td><strong>Total Units</strong></td>";
-    faculty.forEach(f => {
-      const totalCell = document.createElement("td");
-      totalCell.className = "total-units";
-      totalCell.dataset.facultyId = f.id;
-      totalRow.appendChild(totalCell);
-    });
-    tbody.appendChild(totalRow);
-
-    table.appendChild(tbody);
-    tableContainer.appendChild(table);
-    container.appendChild(tableContainer);
-  });
-
-  await calculateFacultyTotalUnits();
-}
-
-// Replace updateTotalUnits with this new implementation
-async function calculateFacultyTotalUnits() {
-  // Get all required data
-  const faculty = await apiGet("faculty");
-  const schedules = await apiGet("schedules");
-  const offerings = await apiGet("course_offerings");
-  const courses = await apiGet("courses");
-  
-  // Calculate total units for each faculty member
-  const facultyUnits = {};
-  faculty.forEach(f => {
-    facultyUnits[f.id] = 0;
-  });
-  
-  // Process each schedule entry
-  schedules.forEach(schedule => {
-    // Skip if no faculty assigned or doesn't match current trimester
-    if (!schedule.facultyId) return;
-    
-        const course = courses.find(c => c.id === schedule.courseId);
-    if (!course || course.trimester !== currentFacultyViewTrimester) return;
-    
-    // Find matching offering to get units
-    const offering = offerings.find(off => 
-      off.courseId === schedule.courseId && 
-      off.type === schedule.unitType &&
-      off.section === schedule.section
-    );
-    
-    if (offering) {
-      const units = parseFloat(offering.units);
-      facultyUnits[schedule.facultyId] = (facultyUnits[schedule.facultyId] || 0) + units;
-    }
-  });
-  
-  // Update the total cells in all tables
-  const totalCells = document.querySelectorAll(".total-units");
-  totalCells.forEach(cell => {
-    const facultyId = parseInt(cell.dataset.facultyId);
-    const total = facultyUnits[facultyId] || 0;
-    cell.textContent = total.toFixed(1);
-  });
-}
-
-async function openFacultyViewModal(dayType, time, facultyId) {
-  document.getElementById("facultyview-dayType").value = dayType;
-  document.getElementById("facultyview-time").value = time;
-  document.getElementById("facultyview-facultyId").value = facultyId;
-  
-  const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses");
-  const existing = schedules.find(sch => 
-    sch.facultyId === facultyId && 
-    sch.dayType === dayType &&
-    sch.time === time &&
-    courses.find(c => c.id === sch.courseId)?.trimester === currentFacultyViewTrimester
-  );
-  
-  if (existing) {
-    document.getElementById("facultyview-id").value = existing.id;
-    document.getElementById("btn-delete-facultyview").style.display = "block";
-  } else {
-    document.getElementById("facultyview-id").value = "";
-    document.getElementById("btn-delete-facultyview").style.display = "none";
-  }
-  
-  await populateFacultyViewCourseDropdown();
-  
-  if (existing) {
-    const value = `${existing.courseId}-${existing.unitType}`;
-    document.getElementById("facultyview-course").value = value;
-    await populateFacultyViewSectionDropdown(existing.courseId, existing.unitType);
-    document.getElementById("facultyview-section").value = existing.section;
-  } else {
-    document.getElementById("facultyview-course").value = "";
-    document.getElementById("facultyview-section").innerHTML = `<option value="">-- Select Section --</option>`;
-  }
-  
-  showModal(modalFacultyView);
-}
-
-async function populateFacultyViewCourseDropdown() {
-  const select = document.getElementById("facultyview-course");
-  select.innerHTML = `<option value="">-- Select Course Offering --</option>`;
-  
-  const offerings = await apiGet("course_offerings");
-  const courses = await apiGet("courses");
-  
-  // Filter offerings for current trimester
-  const filteredOfferings = offerings.filter(off => off.trimester === currentFacultyViewTrimester);
-  
-  // Group by courseId and type
-  const groupedOfferings = {};
-  filteredOfferings.forEach(off => {
-    const key = `${off.courseId}-${off.type}`;
-    if (!groupedOfferings[key]) {
-      const course = courses.find(c => c.id === off.courseId);
-      if (course) {  // Only add if course exists
-        groupedOfferings[key] = {
-          courseId: off.courseId,
-          type: off.type,
-          subject: course.subject,
-          units: off.units
-        };
-      }
-    }
-  });
-  
-  // Create options
-  Object.values(groupedOfferings)
-    .sort((a, b) => a.subject.localeCompare(b.subject))
-    .forEach(group => {
-      const value = `${group.courseId}-${group.type}`;
-      const displayText = `${group.subject} - ${group.type} (${group.units} units)`;
-      select.innerHTML += `<option value="${value}" data-course-id="${group.courseId}" data-unit-type="${group.type}" data-units="${group.units}">${displayText}</option>`;
-    });
-}
-
-async function populateFacultyViewSectionDropdown(courseId, type) {
-  const select = document.getElementById("facultyview-section");
-  select.innerHTML = `<option value="">-- Select Section --</option>`;
-  
-  const offerings = await apiGet("course_offerings");
-  
-  const courseIdInt = parseInt(courseId, 10);
-  
-  // Filter offerings for the selected course and type in current trimester
-  const filteredOfferings = offerings.filter(off => 
-    off.courseId === courseIdInt && 
-    off.type === type &&
-    off.trimester === currentFacultyViewTrimester
-  );
-  
-  // Get unique sections and sort them
-  const uniqueSections = [...new Set(filteredOfferings.map(off => off.section))];
-  uniqueSections.sort((a, b) => {
-    const numA = parseInt(a.match(/\d+/)?.[0] || 0);
-    const numB = parseInt(b.match(/\d+/)?.[0] || 0);
-    return numA - numB;
-  });
-  
-  // Add sections to dropdown
-  uniqueSections.forEach(section => {
-    select.innerHTML += `<option value="${section}">${section}</option>`;
-  });
-}
-
-// Update the course dropdown change event listener
-document.getElementById("facultyview-course").addEventListener("change", async function() {
-  const value = this.value;
-  if (value) {
-    const [courseId, unitType] = value.split('-');
-    await populateFacultyViewSectionDropdown(courseId, unitType);
-    document.getElementById("facultyview-section").value = "";
-  } else {
-    document.getElementById("facultyview-section").innerHTML = `<option value="">-- Select Section --</option>`;
-  }
-});
-
-// Replace the existing btn-save-facultyview click handler with this updated version
-document.getElementById("btn-save-facultyview").addEventListener("click", async () => {
-  const facultyviewCourseSelect = document.getElementById("facultyview-course");
-  const facultyviewSectionSelect = document.getElementById("facultyview-section");
-  const existingId = document.getElementById("facultyview-id").value;
-  const dayType = document.getElementById("facultyview-dayType").value;
-  const time = document.getElementById("facultyview-time").value;
-  const facultyId = document.getElementById("facultyview-facultyId").value;
-  
-  const selectedValue = facultyviewCourseSelect.value;
-  const section = facultyviewSectionSelect.value;
-  
-  if (!selectedValue || !section) {
-    showConflictNotification("Please select both course and section.");
-    return;
-  }
-  
-  const [courseIdStr, unitType] = selectedValue.split('-');
-  const courseId = parseInt(courseIdStr, 10);
-  
-  const offerings = await apiGet("course_offerings");
-  const selectedOffering = offerings.find(off => off.courseId === courseId && off.type === unitType && off.section === section);
-  if (!selectedOffering) return;
-  
-  // Get relevant data for constraint checking
-  const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses");
-  
-  // Get all schedules for this faculty
-  const facultySchedules = schedules.filter(sch => 
-    sch.facultyId === parseInt(facultyId) &&
-    courses.find(c => c.id === sch.courseId)?.trimester === currentFacultyViewTrimester
-  );
-  
-  // Time index for checking consecutive slots
-  const timesArray = ["7:30 - 8:50", "8:50 - 10:10", "10:10 - 11:30", "11:30 - 12:50",
-    "12:50 - 2:10", "2:10 - 3:30", "3:30 - 4:50", "4:50 - 6:10", "6:10 - 7:30"];
-  const timeIndex = timesArray.indexOf(time);
-  
-  // CONSTRAINT 1: Duplicate sections constraint removed
-  
-  // CONSTRAINT 2: No continuous subjects of the same type (Lec, Lab, PureLec)
-  if (timeIndex > 0) {
-    const prevTimeslot = timesArray[timeIndex - 1];
-    const prevSchedule = facultySchedules.find(sch => 
-      sch.dayType === dayType && 
-      sch.time === prevTimeslot
-    );
-    
-    if (prevSchedule && prevSchedule.unitType === unitType) {
-      showConflictNotification(`Faculty Constraint Violation: Cannot have continuous ${unitType} subjects. Please choose a different time or subject type.`);
-      return;
-    }
-  }
-  
-  if (timeIndex < timesArray.length - 1) {
-    const nextTimeslot = timesArray[timeIndex + 1];
-    const nextSchedule = facultySchedules.find(sch => 
-      sch.dayType === dayType && 
-      sch.time === nextTimeslot
-    );
-    
-    if (nextSchedule && nextSchedule.unitType === unitType) {
-      showConflictNotification(`Faculty Constraint Violation: Cannot have continuous ${unitType} subjects. Please choose a different time or subject type.`);
-      return;
-    }
-  }
-  
-  // CONSTRAINT 3: Maximum of 2 subjects in a row
-  let consecutiveCount = 1; // Current subject
-  
-  // Check backward
-  let currentIndex = timeIndex;
-  while (currentIndex > 0) {
-    const prevTime = timesArray[currentIndex - 1];
-    const prevSchedule = facultySchedules.find(sch => 
-      sch.dayType === dayType && 
-      sch.time === prevTime
-    );
-    
-    if (prevSchedule) {
-      consecutiveCount++;
-    } else {
-      break;
-    }
-    currentIndex--;
-  }
-  
-  // Check forward
-  currentIndex = timeIndex;
-  while (currentIndex < timesArray.length - 1) {
-    const nextTime = timesArray[currentIndex + 1];
-    const nextSchedule = facultySchedules.find(sch => 
-      sch.dayType === dayType && 
-      sch.time === nextTime
-    );
-    
-    if (nextSchedule) {
-      consecutiveCount++;
-    } else {
-      break;
-    }
-    currentIndex++;
-  }
-  
-  if (consecutiveCount > 2) {
-    showConflictNotification("Faculty Constraint Violation: Cannot have more than 2 consecutive subjects in a row.");
-    return;
-  }
-  
-  // CONSTRAINT 4: Max 8.5 units only
-  let totalUnits = 0;
-  
-  // Calculate total units for this faculty member
-  facultySchedules.forEach(schedule => {
-    if (schedule.id.toString() === existingId) return; // Skip current schedule if editing
-    
-    const offering = offerings.find(o => 
-      o.courseId === schedule.courseId && 
-      o.type === schedule.unitType &&
-      o.section === schedule.section
-    );
-    
-    if (offering) {
-      totalUnits += parseFloat(offering.units);
-    }
-  });
-  
-  // Add new schedule units
-  totalUnits += parseFloat(selectedOffering.units);
-  
-  if (totalUnits > 8.5) {
-    showConflictNotification(`Faculty Constraint Violation: Total units (${totalUnits.toFixed(1)}) would exceed the maximum of 8.5 units.`);
-    return;
-  }
-  
-  // All constraints passed, proceed with saving
-  const data = {
-    dayType,
-    time,
-    col: 1, // Default column for faculty view
-    facultyId: parseInt(facultyId),
-    roomId: null,
-    courseId: courseId,
-    color: "#e9f1fb",
-    unitType: unitType,
-    section: section,
-    section2: null
-  };
-  
-  // Clear any existing notifications
-  clearConflictNotification();
-  
-  if (existingId) {
-    await apiPut("schedules", existingId, data);
-  } else {
-    await apiPost("schedules", data);
-  }
-  
-  hideModal(modalFacultyView);
-  await renderFacultyViewTables();
-  await calculateFacultyTotalUnits();
-});
-
-// Also need to clear notifications when opening the faculty view modal
-async function openFacultyViewModal(dayType, time, facultyId) {
-  // Clear any existing notifications
-  clearConflictNotification();
-  
-  // Rest of the existing function...
-  document.getElementById("facultyview-dayType").value = dayType;
-  document.getElementById("facultyview-time").value = time;
-  document.getElementById("facultyview-facultyId").value = facultyId;
-  
-  const schedules = await apiGet("schedules");
-  const courses = await apiGet("courses");
-  const existing = schedules.find(sch => 
-    sch.facultyId === facultyId && 
-    sch.dayType === dayType && 
-    sch.time === time &&
-    courses.find(c => c.id === sch.courseId)?.trimester === currentFacultyViewTrimester
-  );
-  
-  if (existing) {
-    document.getElementById("facultyview-id").value = existing.id;
-    document.getElementById("btn-delete-facultyview").style.display = "block";
-  } else {
-    document.getElementById("facultyview-id").value = "";
-    document.getElementById("btn-delete-facultyview").style.display = "none";
-  }
-  
-  await populateFacultyViewCourseDropdown();
-  
-  if (existing) {
-    const value = `${existing.courseId}-${existing.unitType}`;
-    document.getElementById("facultyview-course").value = value;
-    await populateFacultyViewSectionDropdown(existing.courseId, existing.unitType);
-    document.getElementById("facultyview-section").value = existing.section;
-  } else {
-    document.getElementById("facultyview-course").value = "";
-    document.getElementById("facultyview-section").innerHTML = `<option value="">-- Select Section --</option>`;
-  }
-  
-  showModal(modalFacultyView);
-}
-
-// Similarly update the delete handler
-document.getElementById("btn-delete-facultyview").addEventListener("click", async () => {
-  const existingId = document.getElementById("facultyview-id").value;
-  if (!existingId) return;
-  
-  if (!confirm("Are you sure you want to delete this schedule?")) return;
-  
-  await apiDelete("schedules", existingId);
-  hideModal(modalFacultyView);
-  await renderFacultyViewTables();
-  // Make sure we calculate totals after deleting a subject
-  await calculateFacultyTotalUnits();
-});
-
-// Faculty View Functions
-function setupFacultyViewTrimesterTabs() {
-  const tabs = document.querySelectorAll("#section-faculty-view .tab-btn");
-  tabs.forEach(tab => {
-    // Remove any existing event listeners
-    tab.replaceWith(tab.cloneNode(true));
-    // Get the fresh reference after replacement
-    const freshTab = document.querySelector(`#section-faculty-view .tab-btn[data-trimester="${tab.dataset.trimester}"]`);
-    
-    // Set initial active state
-    if (freshTab.dataset.trimester === currentFacultyViewTrimester) {
-      freshTab.classList.add("active");
-    } else {
-      freshTab.classList.remove("active");
-    }
-    
-    freshTab.addEventListener("click", async () => {
-      // Remove active class from all tabs
-      document.querySelectorAll("#section-faculty-view .tab-btn").forEach(t => {
-        t.classList.remove("active");
-      });
-      // Add active class to clicked tab
-      freshTab.classList.add("active");
-      currentFacultyViewTrimester = freshTab.dataset.trimester;
-      await renderFacultyViewTables();
-    });
-  });
-}
-
-// Function to clear all courses from the database
 async function clearAllCourses() {
-  if (confirm("Are you sure you want to delete ALL courses?\nClick 'OK' for Yes or 'Cancel' for No.\n\nWARNING: This cannot be undone.")) {
-    try {
-      // Get all courses first
-      const courses = await apiGet("courses");
-      
-      // Delete each course
-      for (const course of courses) {
-        await apiDelete("courses", course.id);
-      }
-      
-      alert("All courses have been deleted successfully.");
-      renderCoursesTable();
-    } catch (error) {
-      console.error("Error clearing courses:", error);
-      alert("An error occurred while clearing courses.");
+  if (!confirm("Are you sure you want to delete ALL courses? This will also delete all course offerings and schedule entries.")) return;
+  
+  showLoadingOverlay('Clearing all courses...');
+  
+  try {
+    const courses = await apiGet("courses");
+    const offerings = await apiGet("course_offerings");
+    const schedules = await apiGet("schedules");
+    
+    // Delete schedules first (foreign key constraints)
+    for (const schedule of schedules) {
+      await apiDelete("schedules", schedule.id);
     }
+    
+    // Delete course offerings next
+    for (const offering of offerings) {
+      await apiDelete("course_offerings", offering.id);
+    }
+    
+    // Delete courses last
+    for (const course of courses) {
+      await apiDelete("courses", course.id);
+    }
+    
+    // Clear cache
+    clearApiCache("courses");
+    clearApiCache("course_offerings");
+    clearApiCache("schedules");
+    
+    // Refresh tables
+    await renderCoursesTable();
+    await renderCourseOfferingTable();
+    
+    hideLoadingOverlay();
+  } catch (error) {
+    console.error("Error clearing all courses:", error);
+    hideLoadingOverlay();
+    alert("An error occurred while clearing all courses. Please try again.");
   }
 }
 
-// Function to clear all course offerings from the database
+// Modified clear all course offerings function to use loading overlay
 async function clearAllCourseOfferings() {
-  if (confirm("Are you sure you want to delete ALL course offerings?\nClick 'OK' for Yes or 'Cancel' for No.\n\nWARNING: This cannot be undone.")) {
-    try {
-      // Get all course offerings first
-      const offerings = await apiGet("course_offerings");
-      
-      // Delete each course offering
-      for (const offering of offerings) {
-        await apiDelete("course_offerings", offering.id);
-      }
-      
-      alert("All course offerings have been deleted successfully.");
-      renderCourseOfferingTable();
-    } catch (error) {
-      console.error("Error clearing course offerings:", error);
-      alert("An error occurred while clearing course offerings.");
+  if (!confirm("Are you sure you want to delete ALL course offerings? This will also delete all schedule entries.")) return;
+  
+  showLoadingOverlay('Clearing all course offerings...');
+  
+  try {
+    const offerings = await apiGet("course_offerings");
+    const schedules = await apiGet("schedules");
+    
+    // Delete schedules first (foreign key constraints)
+    for (const schedule of schedules) {
+      await apiDelete("schedules", schedule.id);
     }
+    
+    // Delete course offerings
+    for (const offering of offerings) {
+      await apiDelete("course_offerings", offering.id);
+    }
+    
+    // Clear cache
+    clearApiCache("course_offerings");
+    clearApiCache("schedules");
+    
+    // Refresh table
+    await renderCourseOfferingTable();
+    
+    hideLoadingOverlay();
+  } catch (error) {
+    console.error("Error clearing all course offerings:", error);
+    hideLoadingOverlay();
+    alert("An error occurred while clearing all course offerings. Please try again.");
   }
 }
 
@@ -4447,4 +4128,65 @@ async function exportAllSchedulesToExcel() {
     console.error("Error exporting to Excel:", error);
     alert("Error exporting to Excel. Please try again.");
   }
+}
+
+/**************************************************************
+ * Sidebar (hamburger) toggle                                 *
+ **************************************************************/
+(function setupSidebarToggle() {
+  const toggleBtn = document.getElementById('nav-toggle');
+  const navEl = document.querySelector('nav');
+  if (!toggleBtn || !navEl) return;
+
+  // Collapse by default on narrow screens
+  function setInitialState() {
+    const collapseNeeded = window.innerWidth < 700;
+    navEl.classList.toggle('collapsed', collapseNeeded);
+    document.body.classList.toggle('nav-collapsed', collapseNeeded);
+    toggleBtn.classList.toggle('active', !collapseNeeded);
+  }
+  setInitialState();
+  window.addEventListener('resize', setInitialState);
+
+  toggleBtn.addEventListener('click', () => {
+    const isCollapsed = navEl.classList.toggle('collapsed');
+    document.body.classList.toggle('nav-collapsed', isCollapsed);
+    toggleBtn.classList.toggle('active', !isCollapsed);
+  });
+  
+  // Add ripple effect to sidebar buttons
+  const sidebarButtons = document.querySelectorAll("nav button");
+  sidebarButtons.forEach(button => {
+    button.addEventListener("click", function(e) {
+      // Remove any existing ripple effect
+      this.classList.remove("ripple-effect");
+      
+      // Force a reflow to ensure the animation plays again
+      void this.offsetWidth;
+      
+      // Add the ripple effect class
+      this.classList.add("ripple-effect");
+    });
+    
+    // Remove the animation class when it ends to allow it to be triggered again
+    button.addEventListener("animationend", function() {
+      this.classList.remove("ripple-effect");
+    });
+  });
+})();
+
+// Login modal logic (placed near other modal helpers)
+const modalLogin = document.getElementById('modal-login');
+if (modalLogin) {
+  document.getElementById('btn-login-submit').addEventListener('click', async () => {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    try {
+      await loginRequest(username, password);
+      hideModal(modalLogin);
+      openCoursesSection();
+    } catch (err) {
+      alert('Login failed. Please check your credentials.');
+    }
+  });
 }

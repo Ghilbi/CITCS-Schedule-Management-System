@@ -7,6 +7,7 @@ A comprehensive web application for managing academic course schedules, room all
 - [Getting Started](#getting-started)
 - [Features](#features)
 - [User Guide](#user-guide)
+  - [Authentication](#authentication)
   - [Navigation](#navigation)
   - [Course Management](#course-management)
   - [Section Management](#section-management)
@@ -69,6 +70,7 @@ If using the application locally for development:
 
 ## Features
 
+- **Authentication**: Secure admin login with JWT token; write operations on Courses are protected
 - **Course Management**: Add, edit, and delete course offerings with detailed information
 - **Section Management**: Create and manage course sections with year levels and letters
 - **Room Allocation**: Assign rooms to sections and visualize room usage
@@ -78,6 +80,14 @@ If using the application locally for development:
 - **Export Functionality**: Export schedules to Excel for offline use and sharing
 
 ## User Guide
+
+### Authentication
+
+When you first access any protected area (Manage Courses), the system displays a login dialog. Enter the administrator credentials provided by your system admin.
+
+• Successful login stores an `authToken` in your browser’s `localStorage` and keeps you authenticated for two hours (token expiry).
+
+If the token is missing or expired the dialog will automatically reappear.
 
 ### Navigation
 

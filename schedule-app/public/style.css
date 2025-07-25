@@ -683,6 +683,7 @@ tbody tr:hover td { background: var(--color-hover); }
 
 /* Full-width inputs */
 .modal-content input[type="text"],
+.modal-content input[type="password"],
 .modal-content select {
   width: 100%;
   padding: 10px 12px;

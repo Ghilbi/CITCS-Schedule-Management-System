@@ -1,211 +1,313 @@
-# Academic Schedule Management System
+# DCS: AN EDTECH CLOUD-NATIVE DIGITALIZED COURSE SCHEDULING SYSTEM FOR THE FACULTY OF CITCS DEPARTMENT 
 
-A comprehensive web application for managing academic course schedules, room allocations, and timetables for educational institutions.
+A comprehensive web application for managing academic course schedules, room allocations, and timetables for educational institutions. This system provides administrators and staff with powerful tools to efficiently plan and organize academic schedules across different trimesters, year levels, and degree programs.
 
 ## Table of Contents
 - [Overview](#overview)
 - [Getting Started](#getting-started)
-- [Features](#features)
-- [User Guide](#user-guide)
-  - [Authentication](#authentication)
-  - [Navigation](#navigation)
-  - [Course Management](#course-management)
-  - [Section Management](#section-management)
-  - [Room Management](#room-management)
-  - [Schedule View](#schedule-view)
-  - [Schedule Summary](#schedule-summary)
+- [Core Features](#core-features)
+  - [Manage Courses](#manage-courses)
+  - [Manage Course Offering](#manage-course-offering)
+  - [Section View](#section-view)
+  - [Room View](#room-view)
+- [Authentication & Security](#authentication--security)
+- [Conflict Detection & Validation](#conflict-detection--validation)
 - [Export Functionality](#export-functionality)
+- [Installation & Setup](#installation--setup)
+- [Technical Dependencies](#technical-dependencies)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
 
-This web application provides educational institutions with a powerful tool to plan and manage academic schedules. It handles courses, sections, room allocations, and presents schedule information in various useful views.
+This Academic Schedule Management System streamlines the complex process of academic scheduling for educational institutions. It handles course management, section creation, room allocation, and schedule visualization while automatically detecting conflicts and ensuring data integrity. The system supports multiple degree programs (BSIT, BSCS, BSDA, BMMA) and their specializations, with trimester-based scheduling across different year levels.
 
 ## Getting Started
 
-### Option 1: Local Setup
+### Option 1: Web Access (Recommended)
+1. Visit: [https://uc-schedule-management-system.onrender.com](https://uc-schedule-management-system.onrender.com)
+2. **Note**: Initial loading may be slow due to free hosting tier
+3. **Important**: Web availability depends on cloud service status
+
+### Option 2: Local Development Setup
 1. Clone this repository to your local machine
-2. Navigate to the project directory
-3. Install dependencies (if required)
-4. Open `index.html` in a web browser to launch the application
-5. **Note**: When using local setup, the database will initially be empty. You'll need to add your own data.
+2. Navigate to the `schedule-app` directory
+3. Install dependencies: `npm install`
+4. Set up environment variables (see [Installation & Setup](#installation--setup))
+5. Start the server: `npm start`
+6. Open your browser to `http://localhost:3000`
 
-### Option 2: Web Access
-1. Access the application directly at: [https://uc-schedule-management-system.onrender.com](https://uc-schedule-management-system.onrender.com)
-2. **Note**: The application may be slow to load and respond as it is hosted on a free cloud service tier.
-3. **Important**: The web access may not always be available as it depends on the cloud service's availability.
+## Core Features
 
-> **IMPORTANT**: DO NOT CHANGE OR ADD ANYTHING IN THE MANAGE COURSES SECTION AT THE MOMENT.
+### Manage Courses
 
-## Dependencies
+**Authentication Required**: Users must login with administrator credentials to access course management features.
 
-The following dependencies are required **only for local setup**:
+**Key Capabilities:**
+- **Add New Courses**: Create courses with comprehensive details including:
+  - Subject code and name
+  - Unit categories (PureLec for pure lecture, Lec/Lab for lecture with laboratory)
+  - Credit units (automatically determined by unit category)
+  - Year level assignment (1st, 2nd, 3rd year)
+  - Degree program association (BSIT, BSIT specializations, BSCS, BSDA, BMMA)
+  - Trimester scheduling (1st, 2nd, 3rd trimester)
+  - Course descriptions
 
-- Modern web browser (Chrome, Firefox, Edge, Safari)
-- Node.js and npm (for development)
-- PostgreSQL database
-- Required npm packages:
-  ```
-  npm install express pg dotenv cors
-  ```
+- **Edit Existing Courses**: Modify any course information while maintaining data integrity
+- **Delete Courses**: Remove courses from the system (with proper validation)
+- **Advanced Filtering & Search**:
+  - Search by course name or subject code
+  - Filter by degree program
+  - Sort by subject name (A-Z, Z-A) or credit units (ascending/descending)
 
-If using the application locally for development:
-1. Create a `.env` file in the root directory with database connection parameters:
-   ```
-   DB_USER=your_username
-   DB_PASSWORD=your_password
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_DATABASE=schedule_db
-   PORT=3000
-   ```
-2. Initialize the database:
-   ```
-   psql -U your_username -d schedule_db -f database/init.sql
-   ```
-3. Start the server:
-   ```
-   npm start
-   ```
+**Navigation**: Browsing other sections is available without login - authentication is only required for course management operations.
 
-## Features
+### Manage Course Offering
 
-- **Authentication**: Secure admin login with JWT token; write operations on Courses are protected
-- **Course Management**: Add, edit, and delete course offerings with detailed information
-- **Section Management**: Create and manage course sections with year levels and letters
-- **Room Allocation**: Assign rooms to sections and visualize room usage
-- **Schedule Planning**: Plan schedules by trimester and year level
-- **Conflict Detection**: Automatic detection and warning of scheduling conflicts
-- **Multiple Views**: Different ways to visualize schedule data (by room, section, summary)
-- **Export Functionality**: Export schedules to Excel for offline use and sharing
+**Purpose**: Create and manage specific course sections for each academic program and semester.
 
-## User Guide
+**Single Section Addition:**
+- Select from existing courses filtered by degree program
+- Create sections with systematic naming (Year + Letter format: 1A, 2B, 3C)
+- Automatic unit and trimester inheritance from parent course
+- Support for different offering types:
+  - **Lec** (Lecture component for Lec/Lab courses)
+  - **Lab** (Laboratory component for Lec/Lab courses)  
+  - **PureLec** (Complete course for pure lecture courses)
 
-### Authentication
+**Bulk Section Addition:**
+- **Degree-wide Operations**: Add all courses for an entire degree program at once
+- **Multi-section Creation**: Generate multiple sections using comma-separated letters (A,B,C creates sections 1A, 1B, 1C)
+- **Filter Controls**:
+  - Year level filtering (All years, 1st, 2nd, 3rd year)
+  - Trimester selection for bulk operations
+- **Preview System**: See exactly which sections will be created before confirming
 
-When you first access any protected area (Manage Courses), the system displays a login dialog. Enter the administrator credentials provided by your system admin.
+**Section Management:**
+- Edit section details for any created offering
+- Delete individual sections or clear all offerings
+- Trimester-based viewing with filtering tabs (All, 1st, 2nd, 3rd Trimester)
 
-• Successful login stores an `authToken` in your browser’s `localStorage` and keeps you authenticated for two hours (token expiry).
+**Important Note**: Before deleting course offerings, ensure the Section View tables are emptied to maintain data consistency.
 
-If the token is missing or expired the dialog will automatically reappear.
+### Section View
 
-### Navigation
+**Primary Function**: Assign specific subject schedules and room allocations for each created section.
 
-The top navigation bar provides quick access to all main functions of the application. Click on the corresponding button to navigate to different sections:
+**Schedule Assignment Features:**
+- **Trimester Navigation**: Switch between 1st, 2nd, and 3rd trimester schedules
+- **Year Level Filtering**: View and manage schedules by year level (1st, 2nd, 3rd year)
+- **Interactive Time Grid**: Click on time slots to assign courses to sections
+- **Dual Section Support**: Assign shared courses between two sections simultaneously
+- **Room Assignment Integration**:
+  - Filter rooms by groups (Group A, Group B, or All Rooms)
+  - Real-time room availability checking
+  - Visual room allocation indicators
 
-- Courses
-- Sections
-- Rooms
-- Schedule View
-- Schedule Summary
+**Advanced Scheduling Tools:**
+- **Time Slot Management**: Full weekly schedule grid with MWF and TTH time patterns
+- **Section Code Preview**: Dynamic preview of section assignments before saving
+- **Edit Capabilities**: Modify existing schedule assignments
+- **Delete Operations**: Remove specific time slot assignments
 
-### Course Management
+**Conflict Prevention System:**
+- **Room Conflict Detection**: Prevents double-booking of rooms at the same time
+- **Duplicate Schedule Warnings**: Alerts when the same subject is scheduled multiple times for a section
+- **Cross-Year Validation**: Ensures rooms aren't double-booked across different year levels
+- **Section Overlap Checking**: Prevents scheduling conflicts for individual sections
 
-#### Adding a New Course
+**User Interface Features:**
+- **Filter Tabs**: Easy switching between trimesters and year levels
+- **Visual Indicators**: Color-coded schedule blocks for easy identification
+- **Responsive Design**: Optimized for different screen sizes and devices
 
-1. Navigate to the Courses section
-2. Click the "Add Course" button
-3. Fill in the course details:
-   - Course Code
-   - Course Name
-   - Description
-   - Units
-   - Prerequisites (if any)
-4. Click "Save" to add the course
+### Room View
 
-#### Editing a Course
+**Access Level**: View-only interface for schedule visualization and reporting.
 
-1. Find the course in the course table
-2. Click the "Edit" button in the course row
-3. Modify the course details
-4. Click "Save" to apply changes
+**Room Schedule Visualization:**
+- **Comprehensive Room Display**: View subject allocations across all rooms
+- **Grouped Room Views**: Separate displays for Room Group A and Room Group B
+- **Time Pattern Organization**: 
+  - **MWF Schedule View**: Monday, Wednesday, Friday time blocks
+  - **TTHS Schedule View**: Tuesday, Thursday, Saturday time blocks
+- **Multi-Level Viewing**: Filter by trimester and year level for focused analysis
 
-#### Deleting a Course
+**Schedule Summary Features:**
+- **"Show Summary" Button**: Access detailed schedule reports
+- **Section-Based Filtering**: View complete schedules for specific sections
+- **Comprehensive Schedule Tables**: Display course details, time slots, room assignments, and shared section information
 
-1. Find the course in the course table
-2. Click the "Delete" button in the course row
-3. Confirm deletion when prompted
+**Export Capabilities:**
+- **Excel Export Functionality**: Generate offline-ready Excel spreadsheets
+- **Complete Schedule Export**: Export all schedules across all sections and time periods
+- **Professional Formatting**: Well-organized spreadsheet layout for institutional use
+- **Batch Export Options**: Export multiple schedules simultaneously
 
-### Section Management
+**Additional Room Management:**
+- **Room Addition**: Add new rooms to the system through the "Manage Rooms" interface
+- **Room Organization**: Systematic room naming and categorization
+- **Capacity Planning**: Visual overview of room utilization across time periods
 
-#### Adding Course Sections
+## Authentication & Security
 
-1. Navigate to the Sections view
-2. Click the "Add Section" button
-3. Choose a course from the dropdown
-4. Specify section details:
-   - Year level (1st, 2nd, 3rd, 4th)
-   - Section letter(s)
-5. For bulk section creation, use the "Bulk Add" tab
-   - Enter multiple section letters separated by commas
-   - Preview will show all sections to be created
+**JWT-Based Authentication:**
+- Secure admin login system using JSON Web Tokens
+- 2-hour token expiration for security
+- Automatic re-authentication prompts when tokens expire
+- LocalStorage-based session management
 
-#### Managing Section Schedules
+**Access Control:**
+- **Protected Operations**: Course management (add, edit, delete) requires authentication
+- **Open Access**: Section View, Room View, and browsing functions available without login
+- **Secure Credentials**: Environment-based admin credential management
 
-1. Select the appropriate trimester using the Trimester Tabs
-2. Select the year level using the Year Level Tabs
-3. Click on a time slot in the schedule to assign a course
-4. The system will warn if there are conflicts
+**Session Management:**
+- Persistent login sessions across browser refreshes
+- Automatic logout on token expiration
+- Secure credential validation on all protected endpoints
 
-### Room Management
+## Conflict Detection & Validation
 
-The Room Management functionality is view-only and allows you to:
+**Advanced Conflict Prevention:**
+- **Real-Time Room Conflict Detection**: Immediate warnings when attempting to double-book rooms
+- **Duplicate Schedule Prevention**: Alerts when the same subject is assigned multiple times to a section
+- **Cross-Year Validation**: Prevents scheduling conflicts across different year levels in the same room
+- **Section Overlap Checking**: Ensures individual sections don't have conflicting schedules
 
-1. View which subjects are assigned to specific rooms
-2. See room allocation across different time slots
-3. Access this information for exporting to Excel
+**User Warning System:**
+- **Visual Conflict Notifications**: Pop-up warnings with detailed conflict information
+- **Descriptive Error Messages**: Clear explanations of what conflicts exist and how to resolve them
+- **Prevention-Based Design**: System blocks conflicting assignments rather than allowing correction later
 
-#### Viewing Room Schedules
-
-1. Navigate to the Room View section
-2. Rooms are displayed as columns in the timetable
-3. Each cell represents a time slot for a specific room
-4. Occupied slots show the course and section information
-
-Note that room assignments are made through the Section View, not directly in the Room Management view.
-
-### Schedule View
-
-1. Use the controls at the top to filter and search schedules
-2. Toggle between different views using the view selector
-3. The timetable shows:
-   - Time slots on the left
-   - Days across the top
-   - Courses assigned to specific slots
-
-### Schedule Summary
-
-1. Navigate to the Schedule Summary section
-2. Select a section from the dropdown to see its complete schedule
-3. The summary table shows:
-   - Course details
-   - Schedule information (day and time)
-   - Room assignments
-   - Shared sections information
+**Data Integrity Features:**
+- **Constraint Validation**: Server-side validation of all schedule assignments
+- **Referential Integrity**: Ensures all foreign key relationships remain valid
+- **Cascade Protection**: Prevents deletion of courses or rooms that are actively scheduled
 
 ## Export Functionality
 
-To export the schedule:
+**Excel Export Features:**
+- **Complete Schedule Export**: Generate comprehensive Excel files containing all schedule information
+- **Professional Formatting**: Well-organized spreadsheet layout suitable for institutional reporting
+- **Multi-Sheet Organization**: Separate sheets for different views and data types
+- **Offline Access**: Fully functional Excel files for use without internet connection
 
-1. Navigate to the Schedule Summary view
-2. Click the "Export to Excel" button at the bottom of the page
-3. The browser will download an Excel file with the complete schedule
+**Export Options:**
+- **Full System Export**: All schedules across all sections, trimesters, and year levels
+- **Filtered Exports**: Export specific subsets based on current view filters
+- **Summary Reports**: Condensed overview reports for administrative review
+
+**File Management:**
+- **Automatic Download**: Browser-based file download system
+- **Standardized Naming**: Consistent file naming conventions for easy organization
+- **Cross-Platform Compatibility**: Excel files compatible with Microsoft Excel, Google Sheets, and LibreOffice
+
+## Installation & Setup
+
+### Local Development Environment
+
+**Prerequisites:**
+- Node.js (v14 or higher)
+- PostgreSQL database
+- Modern web browser
+
+**Environment Configuration:**
+Create a `.env` file in the `schedule-app/backend` directory:
+```env
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=schedule_db
+PORT=3000
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
+JWT_SECRET=your_jwt_secret_key
+```
+
+**Database Setup:**
+```bash
+# Create database
+createdb schedule_db
+
+# Initialize database schema
+psql -U your_username -d schedule_db -f database/init.sql
+```
+
+**Application Setup:**
+```bash
+# Navigate to application directory
+cd schedule-app
+
+# Install dependencies
+npm install
+
+# Start the server
+npm start
+```
+
+## Technical Dependencies
+
+**Backend Dependencies:**
+- **Express.js**: Web application framework
+- **PostgreSQL (pg)**: Database connectivity
+- **JWT**: Authentication token management
+- **CORS**: Cross-origin resource sharing
+- **dotenv**: Environment variable management
+
+**Frontend Dependencies:**
+- **SheetJS (XLSX)**: Excel file generation and export
+- **Modern Browser APIs**: For localStorage, fetch, and DOM manipulation
+
+**Development Dependencies:**
+- **Node.js & npm**: Runtime and package management
+- **PostgreSQL**: Database server
 
 ## Troubleshooting
 
-### Schedule Conflicts
+### Common Issues and Solutions
 
-If you see a conflict warning:
-1. Check for overlapping schedules in the same room
-2. Check for sections scheduled in multiple rooms at the same time
-3. Check for faculty assigned to multiple sections at the same time
+**Login Problems:**
+- Verify admin credentials in environment variables
+- Check browser console for authentication errors
+- Clear browser localStorage and retry login
+- Ensure JWT_SECRET is properly configured
 
-### Data Not Saving
+**Schedule Conflicts:**
+- **Room Conflicts**: Check for overlapping time slots in the same room
+- **Section Conflicts**: Verify sections aren't scheduled in multiple rooms simultaneously
+- **Data Integrity**: Use the "Clear" functions to reset problematic data sets
 
-1. Ensure all required fields are completed
-2. Check your internet connection
-3. Try refreshing the page and entering the data again
+**Data Not Saving:**
+- Verify all required fields are completed
+- Check internet connection for web-hosted version
+- Review browser console for error messages
+- Ensure proper authentication for protected operations
+
+**Performance Issues:**
+- **Web Version**: Allow extra time for initial loading on free hosting tier
+- **Local Version**: Verify database connection and proper resource allocation
+- **Large Datasets**: Use filtering options to work with smaller data subsets
+
+**Export Problems:**
+- Ensure modern browser with JavaScript enabled
+- Check for pop-up blockers preventing file downloads
+- Verify sufficient disk space for exported files
+- Try alternative browsers if export fails
+
+### System Maintenance
+
+**Regular Maintenance Tasks:**
+- Monitor database size and performance
+- Review and clean up unused course offerings
+- Validate schedule integrity across trimesters
+- Update room information as needed
+
+**Data Backup Recommendations:**
+- Regular database backups before major changes
+- Export schedules to Excel as backup copies
+- Document any custom configurations or modifications
 
 ---
 
-For additional support, please contact the system administrator. 
+**For additional technical support or feature requests, please contact the system administrator.** 

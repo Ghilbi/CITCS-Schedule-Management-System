@@ -337,6 +337,13 @@ tbody tr:hover td { background: var(--color-hover); }
   min-width: 150px;
 }
 
+#btn-save-sectionview, #btn-delete-sectionview,
+#btn-save-roomview, #btn-delete-roomview {
+  margin-top: 20px;
+  width: 100%;
+  display: block;
+}
+
 /* Trimester tabs and Year level tabs */
 .trimester-tabs,
 .year-level-tabs {
@@ -399,6 +406,7 @@ tbody tr:hover td { background: var(--color-hover); }
 }
 
 .controls input[type="text"],
+.controls input[type="password"],
 .controls select {
   padding: 10px 15px;
   border: 1px solid #e0e0e0;
@@ -410,6 +418,7 @@ tbody tr:hover td { background: var(--color-hover); }
 }
 
 .controls input[type="text"]:focus,
+.controls input[type="password"]:focus,
 .controls select:focus {
   outline: none;
   border-color: #2e7d32;
@@ -454,23 +463,15 @@ tbody tr:hover td { background: var(--color-hover); }
 /* ----- Section View layout tweaks ----- */
 #section-view-container {
   display: flex;
-  flex-wrap: nowrap;
+  flex-direction: column; /* Stack tables vertically */
   justify-content: center;
   gap: 16px;
-  align-items: flex-start;
+  align-items: center;
 }
 #section-view-container .table-container {
-  flex: 0 0 48%;        /* two tables side-by-side */
-  margin: 0;            /* remove extra spacing */
-  max-width: none;      /* let flex control width */
-}
-@media (max-width: 900px) {
-  #section-view-container {
-    flex-wrap: wrap;    /* stack on smaller screens */
-  }
-  #section-view-container .table-container {
-    flex: 1 1 100%;
-  }
+  width: 95%;           /* Full width for vertical stacking */
+  margin: 0 0 20px 0;   /* Add bottom margin for spacing */
+  max-width: 1400px;    /* Consistent with other tables */
 }
 
 /* Schedule table styling - more compact */
@@ -628,13 +629,16 @@ tbody tr:hover td { background: var(--color-hover); }
 }
 
 .modal-content {
-  background: rgba(255,255,255,0.9);
-  width: 400px;
-  padding: 25px;
+  background: white;
+  width: 800px; /* Increased width for wider horizontal layout */
+  max-width: 90vw; /* Ensure it doesn't exceed viewport width */
+  max-height: 85vh; /* Ensure it doesn't exceed viewport height */
+  padding: 28px;
   border-radius: 16px;
   position: relative;
   box-shadow: var(--shadow-lg);
   animation: modalScale 0.35s cubic-bezier(.34,1.56,.64,1);
+  overflow-y: auto; /* Add scrolling for tall content */
 }
 
 @keyframes modalScale {
@@ -646,9 +650,11 @@ tbody tr:hover td { background: var(--color-hover); }
   margin-top: 0;
   font-weight: 500;
   text-align: center;
-  font-size: 20px;
-  margin-bottom: 15px;
+  font-size: 22px;
+  margin-bottom: 20px;
   color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary-light);
+  padding-bottom: 10px;
 }
 
 .close-button {
@@ -668,21 +674,26 @@ tbody tr:hover td { background: var(--color-hover); }
 
 .modal-content label {
   display: block;
-  margin-top: 15px;
-  font-size: 14px;
+  margin-top: 12px;
+  margin-bottom: 6px;
   font-weight: 500;
-  color: #3c4043;
+  color: #5f6368;
+  font-size: 14px;
 }
 
-.modal-content input[type="text"],
-.modal-content select,
-.modal-content input[type="radio"] {
-  margin-top: 6px;
+.modal-content select, .modal-content input[type="text"], .modal-content input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 14px;
+  margin-bottom: 12px;
+  background-color: #f8f9fa;
 }
 
 /* Full-width inputs */
 .modal-content input[type="text"],
+.modal-content input[type="password"],
 .modal-content select {
   width: 100%;
   padding: 10px 12px;
@@ -694,6 +705,7 @@ tbody tr:hover td { background: var(--color-hover); }
 }
 
 .modal-content input[type="text"]:focus,
+.modal-content input[type="password"]:focus,
 .modal-content select:focus {
   outline: none;
   border-color: #2e7d32;
@@ -816,39 +828,44 @@ tbody tr:hover td { background: var(--color-hover); }
 }
 
 .save-btn {
-  margin-top: 25px;
-  background-color: #2e7d32;
-  border: 1px solid #226627;
+  margin-top: 20px;
+  background-color: #2e7d32; 
+  border: none;
   color: #fff;
-  padding: 12px 16px;
+  padding: 12px 18px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   width: 100%;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .save-btn:hover {
   background-color: #1b5e20;
-  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.4);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
   transform: translateY(-2px);
 }
 
 .delete-btn {
-  margin-top: 15px;
-  background-color: #ea4335; 
-  border: 1px solid #d33426;
-  color: #fff;
+  margin-top: 12px;
+  background-color: transparent;
+  border: 1px solid #ea4335;
+  color: #ea4335;
   padding: 10px 16px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   width: 100%;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .delete-btn:hover {
-  background-color: #d33426;
-  box-shadow: 0 4px 8px rgba(234, 67, 53, 0.4);
-  transform: translateY(-2px);
+  background-color: #fef7f6;
+  border-color: #d33426;
+  color: #d33426;
+  box-shadow: 0 2px 5px rgba(234, 67, 53, 0.2);
 }
 
 /* Delete button outside of modal */
@@ -883,24 +900,62 @@ button.delete-btn {
 
 /* Room assignment section in Section View modal */
 .room-assignment-section {
-  margin-top: 25px;
-  padding-top: 20px;
-  border-top: 1px solid #e8eaed;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.room-assignment-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.room-assignment-section .room-group-filter {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 10px;
+}
+
+.room-assignment-section label,
+.room-assignment-section select {
+  margin-bottom: 10px;
+  display: block;
+}
+
+.room-assignment-section label {
+  width: 100%;
+}
+
+.room-assignment-section select {
+  width: 100%;
 }
 
 .room-assignment-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
+  margin: 0 0 15px 0;
+  color: var(--color-primary);
+  font-size: 18px;
   font-weight: 500;
-  color: #202124;
+  border-bottom: 2px solid var(--color-primary-light);
+  padding-bottom: 8px;
+  display: inline-block;
+  width: 100%; /* Full width in the flex container */
 }
 
 .room-group-filter {
   margin: 12px 0;
-  padding: 12px;
+  padding: 12px 15px;
   background-color: #f8f9fa;
   border-radius: 8px;
-  border: 1px solid #e8eaed;
 }
 
 .room-group-radio {
@@ -912,9 +967,9 @@ button.delete-btn {
 .room-group-radio label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .info-text {
@@ -1371,15 +1426,15 @@ section {
 }
 
 /* Inputs & selects: subtle elevation + focus ring */
-input[type="text"], textarea, select {
+input[type="text"], input[type="password"], textarea, select {
   transition: box-shadow 0.25s, border-color 0.25s;
 }
-input[type="text"], textarea, select {
+input[type="text"], input[type="password"], textarea, select {
   border-radius: 10px;
   border: 1px solid var(--color-border);
   background: var(--color-secondary);
 }
-input[type="text"]:focus, textarea:focus, select:focus {
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.25);
@@ -1799,4 +1854,240 @@ section h2 {
   0% { opacity: 0.7; }
   50% { opacity: 1; }
   100% { opacity: 0.7; }
+}
+
+/* ===================================================================== */
+/* Enhanced LecLab Assignment Styles - Simplified - Horizontal Layout     */
+/* ===================================================================== */
+
+.room-assignment-section {
+  margin-top: 25px;
+  padding: 18px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 15px;
+  max-height: 400px; /* Limit height */
+  overflow-y: auto; /* Add scrolling for tall content */
+}
+
+.leclab-assignment-section {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+  display: flex; /* Make it horizontal */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  align-items: flex-start;
+  gap: 15px;
+  max-height: 400px; /* Limit height */
+  overflow-y: auto; /* Add scrolling for tall content */
+}
+
+.leclab-assignment-section h4 {
+  margin: 0 0 15px 0;
+  color: var(--color-primary);
+  font-size: 18px;
+  font-weight: 500;
+  border-bottom: 2px solid var(--color-primary-light);
+  padding-bottom: 8px;
+  display: inline-block;
+  width: 100%; /* Full width in the flex container */
+}
+
+.assignment-mode-selection {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.assignment-mode-selection label:first-of-type {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.assignment-option {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  flex: 1; /* Take remaining space */
+  min-width: 300px; /* Ensure minimum width */
+}
+
+.room-assignment-component {
+  margin-bottom: 15px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  flex: 1;
+  min-width: 250px;
+}
+
+.assignment-option p.info-text {
+  margin: 0;
+  padding: 10px 12px;
+  background-color: var(--color-primary-xlight);
+  border-radius: 6px;
+  font-style: normal;
+  color: var(--color-primary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.assignment-option p.info-text::before {
+  content: "ℹ️";
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.component-assignment {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  flex: 1; /* Take remaining space */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.lec-assignment, .lab-assignment {
+  flex: 1;
+  min-width: 250px; /* Ensure minimum width for readability */
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: white;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.lec-assignment:hover, .lab-assignment:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.lec-assignment {
+  border-left: 4px solid #2e7d32;
+}
+
+.lab-assignment {
+  border-left: 4px solid #1976d2;
+}
+
+.lec-assignment h5, .lab-assignment h5 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+}
+
+.lec-assignment h5 {
+  color: #2e7d32;
+}
+
+.lab-assignment h5 {
+  color: #1976d2;
+}
+
+.lec-assignment h5::before, .lab-assignment h5::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.lec-assignment h5::before {
+  background-color: #2e7d32;
+}
+
+.lab-assignment h5::before {
+  background-color: #1976d2;
+}
+
+.lec-assignment label, .lab-assignment label {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-top: 10px;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.lec-assignment select, .lab-assignment select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+}
+
+.lec-assignment select:focus, .lab-assignment select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+}
+
+/* Responsive design for component assignment */
+@media (max-width: 600px) {
+  .component-assignment {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Animation for showing/hiding assignment options */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 200px;
+  }
+}
+
+.assignment-option {
+  animation: slideDown 0.3s ease forwards;
+}
+
+/* Enhanced visual indicators for LecLab components in schedule */
+.schedule-leclab-indicator {
+  position: relative;
+}
+
+.schedule-leclab-indicator::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff9800;
+  border: 1px solid white;
+}
+
+.schedule-lec-component {
+  border-left: 3px solid #2e7d32;
+}
+
+.schedule-lab-component {
+  border-left: 3px solid #1976d2;
 }

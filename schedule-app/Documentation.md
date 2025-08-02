@@ -6,6 +6,7 @@
 - [Backend Functionalities](#backend-functionalities)
   - [Database Schema](#database-schema)
   - [API Endpoints](#api-endpoints)
+  - [Authentication](#authentication)
 - [Frontend Functionalities](#frontend-functionalities)
   - [Navigation](#navigation)
   - [Course Management](#course-management)
@@ -14,6 +15,7 @@
   - [Room View](#room-view)
   - [Schedule Management](#schedule-management)
   - [Export Functionality](#export-functionality)
+  - [Authentication & Session Handling](#authentication-&-session-handling)
 - [Key Features](#key-features)
 - [Constraints and Validations](#constraints-and-validations)
 
@@ -50,6 +52,21 @@ The backend provides RESTful API endpoints for CRUD operations on the database t
 - **DELETE /api/:table/:id**: Deletes an item from the specified table.
 
 Supported tables for API operations are `rooms`, `courses`, `schedules`, and `course_offerings`. The system includes validation to ensure only valid table names are processed.
+
+### Authentication
+
+The application uses JSON Web Tokens (JWT) for admin authentication.
+
+• **POST /api/login** – Accepts `{ username, password }` and returns `{ token }` on success. The token is signed with `JWT_SECRET` and is valid for 2 hours.
+
+• For write operations on the **courses** table (POST/PUT/DELETE) the backend requires a valid `Authorization: Bearer <token>` header. Other tables currently remain open for simplicity.
+
+• Environment variables needed:
+  - `ADMIN_USERNAME` – admin user name
+  - `ADMIN_PASSWORD_HASH` – bcrypt hash of the admin password
+  - `JWT_SECRET` – secret key for signing tokens
+
+The frontend stores the token in `localStorage` (`authToken`) and sends it automatically on protected requests. Clearing the token (or letting it expire) will require logging in again.
 
 ## Frontend Functionalities
 
@@ -96,6 +113,10 @@ The application features a navigation bar with buttons for quick access to diffe
 ### Export Functionality
 
 - **Export to Excel**: Users can export the complete schedule to an Excel file for offline use and sharing from the Schedule Summary view.
+
+### Authentication & Session Handling
+
+• On first access to a protected section the **Login Modal** appears. After successful login the token is stored, and protected requests automatically include an `Authorization` header.
 
 ## Key Features
 

@@ -596,6 +596,9 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: 2px 0 0 #e8eaed;
 }
 
+/* Container for action buttons */
+
+
 /* Radio group styling for the Course modal */
 .radio-group {
   display: flex;
@@ -952,8 +955,6 @@ button.delete-btn {
 }
 
 .room-group-filter {
-  margin: 12px 0;
-  padding: 12px 15px;
   background-color: #f8f9fa;
   border-radius: 8px;
 }
@@ -1856,6 +1857,129 @@ section h2 {
   100% { opacity: 0.7; }
 }
 
+/* Remove All Schedules Button */
+.remove-all-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.remove-all-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+  background: linear-gradient(135deg, #ff5252 0%, #d63031 100%);
+}
+
+.remove-all-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.remove-all-btn .btn-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.remove-all-btn .btn-text {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.remove-all-btn .btn-subtitle {
+  font-size: 12px;
+  opacity: 0.9;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.remove-all-btn.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.remove-all-btn.loading .btn-icon {
+  animation: spin 1s linear infinite;
+}
+
+.remove-all-btn.success {
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  animation: successPulse 0.6s ease-out;
+}
+
+.remove-all-btn.success .btn-icon {
+  animation: none;
+}
+
+/* Small subtle remove button positioned below tables */
+.remove-all-btn-small {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.remove-all-btn-small:hover {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: rgba(255, 107, 107, 0.5);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.remove-all-btn-small:active {
+  transform: translateY(0);
+}
+
+.remove-all-btn-small .btn-icon {
+  font-size: 14px;
+}
+
+.remove-all-btn-small .btn-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.remove-all-btn-small.loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.remove-all-btn-small.loading .btn-icon {
+  animation: spin 1s linear infinite;
+}
+
+.remove-all-btn-small.success {
+  background: rgba(0, 184, 148, 0.1);
+  color: #00b894;
+  border-color: rgba(0, 184, 148, 0.3);
+}
+
 /* ===================================================================== */
 /* Enhanced LecLab Assignment Styles - Simplified - Horizontal Layout     */
 /* ===================================================================== */
@@ -1916,8 +2040,6 @@ section h2 {
 }
 
 .assignment-option {
-  margin: 10px 0;
-  padding: 12px;
   border-radius: 8px;
   transition: all 0.3s ease;
   flex: 1; /* Take remaining space */

@@ -1269,22 +1269,6 @@ async function renderCourseOfferingTable() {
   sortedCategoryKeys.forEach(categoryKey => {
     const offerings = categorizedOfferings[categoryKey];
     
-    // Create category group
-    const categoryGroup = document.createElement('div');
-    categoryGroup.className = 'category-group';
-    
-    // Create header
-    const categoryHeader = document.createElement('div');
-    categoryHeader.className = 'category-header';
-    categoryHeader.innerHTML = `
-      <span>${categoryKey}</span>
-      <span class="category-count">${offerings.length}</span>
-    `;
-    
-    // Create content container
-    const categoryContent = document.createElement('div');
-    categoryContent.className = 'category-content';
-    
     // Further group by section
     const sectionGroups = {};
     offerings.forEach(off => {
@@ -1296,6 +1280,22 @@ async function renderCourseOfferingTable() {
       
       sectionGroups[section].push(off);
     });
+    
+    // Create category group
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'category-group';
+    
+    // Create header
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'category-header';
+    categoryHeader.innerHTML = `
+      <span>${categoryKey}</span>
+      <span class="category-count">${Object.keys(sectionGroups).length}</span>
+    `;
+    
+    // Create content container
+    const categoryContent = document.createElement('div');
+    categoryContent.className = 'category-content';
     
     // Sort sections alphabetically
     const sortedSections = Object.keys(sectionGroups).sort();
@@ -2391,13 +2391,32 @@ async function renderSectionViewTables() {
   isRenderingSectionView = true;
   
   try {
-    // Clear the container first to prevent duplication
+    // Clear the container first to prevent duplication, but preserve the remove button
     const container = document.getElementById("section-view-container");
     
     // Remove transition styles
     container.style.transition = "";
     
-    container.innerHTML = ""; // Completely empty the container before adding new content
+    // Remove only table containers, preserve the remove button
+    const tableContainers = container.querySelectorAll('.table-container');
+    tableContainers.forEach(tc => tc.remove());
+    
+    // Also remove any "no sections" messages
+     const noSectionsMessages = container.querySelectorAll('div:not(.remove-all-btn-small):not(button)');
+     noSectionsMessages.forEach(msg => {
+       if (msg.textContent && msg.textContent.includes('No sections found')) {
+         msg.remove();
+       }
+     });
+     
+     // Ensure the remove button exists
+     if (!container.querySelector('#btn-remove-all-schedules')) {
+       const removeBtn = document.createElement('button');
+       removeBtn.id = 'btn-remove-all-schedules';
+       removeBtn.className = 'remove-all-btn-small';
+       removeBtn.innerHTML = '<span class="btn-icon">🗑️</span><span class="btn-text">Clear All</span>';
+       container.appendChild(removeBtn);
+     }
 
   const sections = await getUniqueSectionsForTrimesterAndYear(currentSectionViewTrimester, currentSectionViewYearLevel);
   
@@ -2408,6 +2427,7 @@ async function renderSectionViewTables() {
     noSectionsMsg.style.textAlign = "center";
     noSectionsMsg.style.padding = "20px";
     noSectionsMsg.style.color = "#666";
+    noSectionsMsg.style.marginBottom = "60px"; // Add margin to avoid overlapping with button
     container.appendChild(noSectionsMsg);
     return;
   }
@@ -2779,8 +2799,21 @@ document.querySelectorAll('input[name="roomGroup"]').forEach(radio => {
 async function populateSectionViewCourseOfferingDropdown(section) {
   const offerings = await apiGet("course_offerings");
   const courses = await apiGet("courses");
+  const schedules = await apiGet("schedules");
   const sectionviewCourseOfferingSelect = document.getElementById("sectionview-courseOffering");
   sectionviewCourseOfferingSelect.innerHTML = `<option value="">-- Select Course Offering --</option>`;
+  
+  // Get already scheduled subjects for this section to exclude them
+  const scheduledSubjects = new Set();
+  schedules.forEach(sch => {
+    if (sch.col === 0 && (sch.section === section || sch.section2 === section)) {
+      const course = courses.find(c => c.id === sch.courseId);
+      if (course && course.trimester === currentSectionViewTrimester && course.year_level === currentSectionViewYearLevel) {
+        // Create a unique key for subject + unit type to allow different components (Lec/Lab)
+        scheduledSubjects.add(`${course.subject}_${sch.unitType}`);
+      }
+    }
+  });
   
   // Filter offerings that match the current trimester and year level
   const filteredOfferings = offerings.filter(off => {
@@ -2799,6 +2832,14 @@ async function populateSectionViewCourseOfferingDropdown(section) {
              course && course.year_level === currentSectionViewYearLevel;
     });
   }
+  
+  // Filter out already scheduled subjects
+  offeringsToShow = offeringsToShow.filter(off => {
+    const course = courses.find(c => c.id === off.courseId);
+    if (!course) return false;
+    const subjectKey = `${course.subject}_${off.type}`;
+    return !scheduledSubjects.has(subjectKey);
+  });
   
   // Group offerings by course and section to combine LecLab subjects
   const groupedOfferings = {};
@@ -3033,13 +3074,32 @@ function setupAssignmentModeListeners() {
   document.getElementById("combined-assignment").style.display = "none";
   document.getElementById("separate-assignment").style.display = "block";
   
-  // Add listeners for day changes to update time slots
-  document.getElementById("lec-day").addEventListener('change', function() {
+  // Add listeners for day changes to update time slots and room dropdowns
+  document.getElementById("lec-day").addEventListener('change', async function() {
     populateTimeSlots("lec-time", this.value);
+    // Update room dropdowns when day changes to refresh filtering
+    await populateRoomDropdown("lec-room");
+    await populateRoomDropdown("lab-room");
   });
   
-  document.getElementById("lab-day").addEventListener('change', function() {
+  document.getElementById("lab-day").addEventListener('change', async function() {
     populateTimeSlots("lab-time", this.value);
+    // Update room dropdowns when day changes to refresh filtering
+    await populateRoomDropdown("lec-room");
+    await populateRoomDropdown("lab-room");
+  });
+  
+  // Add listeners for time changes to update room dropdowns
+  document.getElementById("lec-time").addEventListener('change', async function() {
+    // Update room dropdowns when time changes to refresh filtering
+    await populateRoomDropdown("lec-room");
+    await populateRoomDropdown("lab-room");
+  });
+  
+  document.getElementById("lab-time").addEventListener('change', async function() {
+    // Update room dropdowns when time changes to refresh filtering
+    await populateRoomDropdown("lec-room");
+    await populateRoomDropdown("lab-room");
   });
   
   // Add listeners for room group radio buttons in the Lec/Lab assignment section
@@ -3048,7 +3108,7 @@ function setupAssignmentModeListeners() {
     radio.addEventListener('change', async function() {
       // Store the selected group in the data attribute
       document.getElementById("separate-assignment").dataset.selectedRoomGroup = this.value;
-      // Update both room dropdowns with the same room group
+      // Update both room dropdowns with the same room group and filtering
       await populateRoomDropdown("lec-room");
       await populateRoomDropdown("lab-room");
     });
@@ -3085,24 +3145,112 @@ async function populateRoomDropdown(elementId) {
     roomGroup = document.getElementById("separate-assignment").dataset.selectedRoomGroup || "A";
   }
   
-  // Filter rooms based on the selected group and get their original column indices
-  const filteredRooms = [];
-  for (let i = 0; i < allColumns.length; i++) {
-    if (allColumns[i].endsWith(` ${roomGroup}`)) {
-      filteredRooms.push({
-        name: allColumns[i],
-        col: i + 1 // Room columns are 1-indexed
+  // For Lec/Lab assignment, add room filtering logic similar to main popup
+  if (elementId === "lec-room" || elementId === "lab-room") {
+    const schedules = await apiGet("schedules");
+    const courses = await apiGet("courses");
+    
+    // Get the current assignment details
+    const lecDay = document.getElementById("lec-day").value;
+    const lecTime = document.getElementById("lec-time").value;
+    const labDay = document.getElementById("lab-day").value;
+    const labTime = document.getElementById("lab-time").value;
+    
+    // Find existing room assignments for this course and section
+    const courseId = document.getElementById("sectionview-courseOffering").selectedOptions[0]?.getAttribute("data-course-id");
+    const section = document.getElementById("sectionview-section").value;
+    
+    let existingLecRoomCol = null;
+    let existingLabRoomCol = null;
+    
+    if (courseId && section) {
+      // Find existing Lec room assignment
+      const lecRoomEntry = schedules.find(sch => {
+        const course = courses.find(c => c.id === sch.courseId);
+        return sch.courseId == courseId &&
+               sch.unitType === "Lec" &&
+               (sch.section === section || sch.section2 === section) &&
+               course &&
+               course.trimester === currentSectionViewTrimester &&
+               course.year_level === currentSectionViewYearLevel &&
+               sch.col > 0; // Room View entry
       });
+      
+      // Find existing Lab room assignment
+      const labRoomEntry = schedules.find(sch => {
+        const course = courses.find(c => c.id === sch.courseId);
+        return sch.courseId == courseId &&
+               sch.unitType === "Lab" &&
+               (sch.section === section || sch.section2 === section) &&
+               course &&
+               course.trimester === currentSectionViewTrimester &&
+               course.year_level === currentSectionViewYearLevel &&
+               sch.col > 0; // Room View entry
+      });
+      
+      existingLecRoomCol = lecRoomEntry ? lecRoomEntry.col : null;
+      existingLabRoomCol = labRoomEntry ? labRoomEntry.col : null;
     }
+    
+    // Find occupied rooms for the specific day and time this dropdown is for
+    const targetDay = elementId === "lec-room" ? lecDay : labDay;
+    const targetTime = elementId === "lec-room" ? lecTime : labTime;
+    
+    const occupiedCols = schedules.filter(sch => {
+      const course = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === targetDay &&
+             sch.time === targetTime &&
+             sch.col > 0 && // Room View entries only
+             course && 
+             course.trimester === currentSectionViewTrimester; // Check all year levels in current trimester
+    }).map(sch => sch.col);
+    
+    // Filter rooms based on the selected group and availability
+    allColumns.forEach((roomName, index) => {
+      const colValue = index + 1; // Column values start at 1
+      
+      // Check if the room belongs to the selected group
+      const isGroupA = roomName.endsWith(" A");
+      const isGroupB = roomName.endsWith(" B");
+      const matchesSelectedGroup = 
+        (roomGroup === "A" && isGroupA) || 
+        (roomGroup === "B" && isGroupB);
+      
+      // Determine if this room is already assigned to the current Lec/Lab components
+      const isCurrentlyAssigned = 
+        (elementId === "lec-room" && colValue === existingLecRoomCol) ||
+        (elementId === "lab-room" && colValue === existingLabRoomCol);
+      
+      // Only add the room if:
+      // 1. It matches the selected group, AND
+      // 2. It's not occupied OR it's already assigned to this Lec/Lab component
+      if (matchesSelectedGroup && (!occupiedCols.includes(colValue) || isCurrentlyAssigned)) {
+        const option = document.createElement("option");
+        option.value = colValue;
+        option.textContent = roomName;
+        roomSelect.appendChild(option);
+      }
+    });
+  } else {
+    // For non-Lec/Lab dropdowns, use the original logic
+    const filteredRooms = [];
+    for (let i = 0; i < allColumns.length; i++) {
+      if (allColumns[i].endsWith(` ${roomGroup}`)) {
+        filteredRooms.push({
+          name: allColumns[i],
+          col: i + 1 // Room columns are 1-indexed
+        });
+      }
+    }
+    
+    // Add room options with correct column values
+    filteredRooms.forEach(room => {
+      const option = document.createElement("option");
+      option.value = room.col; // Use the actual column number
+      option.textContent = room.name;
+      roomSelect.appendChild(option);
+    });
   }
-  
-  // Add room options with correct column values
-   filteredRooms.forEach(room => {
-     const option = document.createElement("option");
-     option.value = room.col; // Use the actual column number
-     option.textContent = room.name;
-     roomSelect.appendChild(option);
-   });
 }
 
 async function setExistingRoomAssignments(courseId, unitType, section, dayType, time) {
@@ -4965,3 +5113,97 @@ if (modalLogin) {
     }
   });
 }
+
+
+
+// Remove All Schedules button event listener
+document.getElementById('btn-remove-all-schedules').addEventListener('click', async () => {
+  const button = document.getElementById('btn-remove-all-schedules');
+  const icon = button.querySelector('.btn-icon');
+  const text = button.querySelector('.btn-text');
+  
+  // Get current trimester and year level
+  const trimester = currentSectionViewTrimester;
+  const yearLevel = currentSectionViewYearLevel;
+  
+  // Confirm deletion
+  const confirmMessage = `Are you sure you want to remove ALL schedules for ${yearLevel} in ${trimester}?\n\nThis action cannot be undone.`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  try {
+    // Show loading state
+    button.classList.add('loading');
+    icon.textContent = '⟳';
+    text.textContent = 'Removing...';
+    showLoadingOverlay('Removing all scheduled subjects...');
+    
+    // Get all schedules and courses
+    const schedules = await apiGet('schedules');
+    const courses = await apiGet('courses');
+    
+    // Filter schedules for current trimester and year level
+    const schedulesToDelete = schedules.filter(schedule => {
+      const course = courses.find(c => c.id === schedule.courseId);
+      return course && 
+             course.trimester === trimester && 
+             course.year_level === yearLevel;
+    });
+    
+    if (schedulesToDelete.length === 0) {
+      throw new Error('No schedules found for the selected trimester and year level.');
+    }
+    
+    // Delete all matching schedules
+    let deletedCount = 0;
+    for (const schedule of schedulesToDelete) {
+      try {
+        await apiDelete('schedules', schedule.id);
+        deletedCount++;
+      } catch (error) {
+        console.error('Failed to delete schedule:', error, schedule);
+      }
+    }
+    
+    // Show success state
+    button.classList.remove('loading');
+    button.classList.add('success');
+    icon.textContent = '✓';
+    text.textContent = 'Schedules Removed!';
+    
+    // Show results
+    alert(`Successfully removed ${deletedCount} scheduled classes!`);
+    
+    // Clear API cache and refresh all views
+    clearApiCache('schedules');
+    await renderSectionViewTables();
+    await renderRoomViewTables();
+    await validateAllComplementary();
+    
+    // Reset button after delay
+    setTimeout(() => {
+      button.classList.remove('success');
+      icon.textContent = '🗑️';
+      text.textContent = 'Clear All';
+    }, 3000);
+    
+  } catch (error) {
+    console.error('Remove all schedules failed:', error);
+    
+    // Show error state
+    button.classList.remove('loading');
+    icon.textContent = '⚠';
+    text.textContent = 'Removal Failed';
+    
+    alert('Failed to remove schedules: ' + error.message);
+    
+    // Reset button after delay
+    setTimeout(() => {
+      icon.textContent = '🗑️';
+      text.textContent = 'Clear All';
+    }, 3000);
+  } finally {
+    hideLoadingOverlay();
+  }
+});

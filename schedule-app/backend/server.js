@@ -12,7 +12,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON and serve static files
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
+
+// Serve index.html at root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
 
 // Initialize (or create) PostgreSQL database
 const pool = new Pool({

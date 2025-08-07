@@ -6,7 +6,6 @@
 - [Backend Functionalities](#backend-functionalities)
   - [Database Schema](#database-schema)
   - [API Endpoints](#api-endpoints)
-  - [Authentication](#authentication)
 - [Frontend Functionalities](#frontend-functionalities)
   - [Navigation](#navigation)
   - [Course Management](#course-management)
@@ -15,7 +14,6 @@
   - [Room View](#room-view)
   - [Schedule Management](#schedule-management)
   - [Export Functionality](#export-functionality)
-  - [Authentication & Session Handling](#authentication-&-session-handling)
 - [Key Features](#key-features)
 - [Constraints and Validations](#constraints-and-validations)
 
@@ -52,21 +50,6 @@ The backend provides RESTful API endpoints for CRUD operations on the database t
 - **DELETE /api/:table/:id**: Deletes an item from the specified table.
 
 Supported tables for API operations are `rooms`, `courses`, `schedules`, and `course_offerings`. The system includes validation to ensure only valid table names are processed.
-
-### Authentication
-
-The application uses JSON Web Tokens (JWT) for admin authentication.
-
-• **POST /api/login** – Accepts `{ username, password }` and returns `{ token }` on success. The token is signed with `JWT_SECRET` and is valid for 2 hours.
-
-• For write operations on the **courses** table (POST/PUT/DELETE) the backend requires a valid `Authorization: Bearer <token>` header. Other tables currently remain open for simplicity.
-
-• Environment variables needed:
-  - `ADMIN_USERNAME` – admin user name
-  - `ADMIN_PASSWORD_HASH` – bcrypt hash of the admin password
-  - `JWT_SECRET` – secret key for signing tokens
-
-The frontend stores the token in `localStorage` (`authToken`) and sends it automatically on protected requests. Clearing the token (or letting it expire) will require logging in again.
 
 ## Frontend Functionalities
 
@@ -109,29 +92,33 @@ The application features a navigation bar with buttons for quick access to diffe
 - **Schedule View**: Displays timetables with time slots, days, and assigned courses.
 - **Schedule Summary**: Provides a detailed view of schedules for selected sections, including course details, days, times, and room assignments.
 - **Conflict Detection**: Alerts users to scheduling conflicts such as room overlaps or section double-booking.
+- **Smart Room Filtering**: Automatically filters out already occupied rooms from dropdown selections in both main popup and Lec/Lab assignment sections.
+- **Duplicate Subject Prevention**: Prevents scheduling the same subject multiple times for a section by filtering out already scheduled subjects from course offering dropdowns.
+- **Real-time Updates**: Room availability and subject filtering updates dynamically when day, time, or room group selections change.
 
 ### Export Functionality
 
 - **Export to Excel**: Users can export the complete schedule to an Excel file for offline use and sharing from the Schedule Summary view.
 
-### Authentication & Session Handling
-
-• On first access to a protected section the **Login Modal** appears. After successful login the token is stored, and protected requests automatically include an `Authorization` header.
-
 ## Key Features
 
 - **Comprehensive Scheduling**: Manage schedules by trimester, year level, and section with detailed views.
-- **Conflict Detection**: Automatic warnings for scheduling conflicts involving rooms or sections.
+- **Intelligent Conflict Prevention**: Automatic filtering of occupied rooms and duplicate subjects to prevent scheduling conflicts.
+- **Real-time Filtering**: Dynamic updates of available options based on current selections and existing schedules.
+- **Enhanced Lec/Lab Management**: Separate assignment interface for lecture and laboratory components with smart room filtering.
 - **Multiple Visualizations**: View schedules by room, section, or summary for different perspectives.
 - **Data Management**: Full CRUD operations for courses, sections, and rooms.
-- **User-Friendly Interface**: Intuitive navigation and modal dialogs for data entry and modifications.
+- **User-Friendly Interface**: Intuitive navigation, consistent button states, and modal dialogs for data entry and modifications.
 
 ## Constraints and Validations
 
 - **Room Naming**: Room names must contain only letters and numbers, no spaces or special characters.
 - **Duplicate Room Names**: Prevent adding rooms with names that already exist (case-insensitive).
 - **Deletion Restrictions**: Cannot delete rooms if they are currently scheduled or assigned.
+- **Schedule Conflicts**: System prevents double-booking of rooms and duplicate subject assignments for the same section.
+- **Room Group Filtering**: Rooms are filtered by group (A or B) and availability based on existing schedules.
+- **Subject Uniqueness**: Each subject can only be scheduled once per section to maintain academic integrity.
 
 ---
 
-This documentation provides a complete overview of the Academic Schedule Management System, detailing all functionalities as they exist in the current implementation. For further assistance or feature requests, please contact the system administrator. 
+This documentation provides a complete overview of the Academic Schedule Management System, detailing all functionalities as they exist in the current implementation. For further assistance or feature requests, please contact the system administrator.

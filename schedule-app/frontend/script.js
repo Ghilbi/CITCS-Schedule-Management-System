@@ -1,4 +1,51 @@
 /**************************************************************
+ * STARTUP ANIMATION CONTROLLER
+ **************************************************************/
+function initStartupAnimation() {
+  const loader = document.getElementById('startup-loader');
+  const mainApp = document.getElementById('main-app');
+  
+  // Ensure the loader is visible initially
+  loader.style.display = 'flex';
+  
+  // Start the fade out sequence after content is loaded
+  setTimeout(() => {
+    // Add fade-out class to loader
+    loader.classList.add('fade-out');
+    
+    // Enable scrolling and show main app
+    document.body.style.overflow = 'auto';
+    mainApp.classList.add('loaded');
+    
+    // Remove loader from DOM after animation completes
+    setTimeout(() => {
+      loader.style.display = 'none';
+    }, 800);
+  }, 3500); // Total loading time: 3.5 seconds
+}
+
+// Check if this is the first visit
+function isFirstVisit() {
+  const hasVisited = localStorage.getItem('schedule-app-visited');
+  if (!hasVisited) {
+    localStorage.setItem('schedule-app-visited', 'true');
+    return true;
+  }
+  return false;
+}
+
+// Skip animation for returning users
+function skipStartupAnimation() {
+  const loader = document.getElementById('startup-loader');
+  const mainApp = document.getElementById('main-app');
+  
+  loader.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  mainApp.classList.add('loaded');
+  mainApp.style.animationDelay = '0s';
+}
+
+/**************************************************************
  * API wrapper functions for backend calls
  **************************************************************/
 // Utility: debounce to limit frequent calls on inputs
@@ -368,8 +415,10 @@ async function renderCoursesTable() {
       <td>${c.trimester}</td>
       <td>${c.description || ''}</td>
       <td>
-        <button class="table-edit-btn" onclick="editCourse(${c.id})">Edit</button>
-        <button class="table-delete-btn" onclick="deleteCourse(${c.id})">Delete</button>
+        <div class="action-buttons-container">
+          <button class="action-edit-btn" onclick="editCourse(${c.id})">Edit</button>
+          <button class="action-delete-btn" onclick="deleteCourse(${c.id})">Delete</button>
+        </div>
       </td>
     `;
     tableCoursesBody.appendChild(tr);
@@ -463,6 +512,249 @@ courseSearch.addEventListener("input", debounce(renderCoursesTable, 200));
 courseFilterDegree.addEventListener("change", debounce(renderCoursesTable, 200));
 courseSort.addEventListener("change", debounce(renderCoursesTable, 200));
 
+// CSV Import/Export functionality
+const btnImportCsv = document.getElementById("btn-import-csv");
+const btnExportCsv = document.getElementById("btn-export-csv");
+const csvFileInput = document.getElementById("csv-file-input");
+
+// CSV Import Event Listener
+btnImportCsv.addEventListener("click", () => {
+  csvFileInput.click();
+});
+
+csvFileInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    alert('Please select a CSV file.');
+    return;
+  }
+  
+  try {
+    const text = await file.text();
+    await importCoursesFromCsv(text);
+    csvFileInput.value = ''; // Reset file input
+  } catch (error) {
+    console.error('Error reading CSV file:', error);
+    alert('Error reading CSV file. Please try again.');
+  }
+});
+
+// CSV Export Event Listener
+btnExportCsv.addEventListener("click", async () => {
+  try {
+    await exportCoursesToCsv();
+  } catch (error) {
+    console.error('Error exporting CSV:', error);
+    alert('Error exporting CSV file. Please try again.');
+  }
+});
+
+// Function to import courses from CSV
+async function importCoursesFromCsv(csvText) {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) {
+    alert('CSV file must contain at least a header row and one data row.');
+    return;
+  }
+  
+  // Show loading overlay for validation
+  showLoadingOverlay('Validating CSV file...');
+  
+  try {
+    // Parse header
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const requiredHeaders = ['subject', 'unit_category', 'units', 'year_level', 'degree', 'trimester'];
+    
+    // Check if all required headers are present
+    const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+    if (missingHeaders.length > 0) {
+      hideLoadingOverlay();
+      alert(`Missing required columns: ${missingHeaders.join(', ')}\nRequired columns: ${requiredHeaders.join(', ')}`);
+      return;
+    }
+    
+    const courses = [];
+    const errors = [];
+    
+    // Parse data rows
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length !== headers.length) {
+        errors.push(`Row ${i + 1}: Column count mismatch`);
+        continue;
+      }
+      
+      const course = {};
+      headers.forEach((header, index) => {
+        course[header] = values[index];
+      });
+      
+      // Validate required fields
+      if (!course.subject || !course.units) {
+        errors.push(`Row ${i + 1}: Subject and units are required`);
+        continue;
+      }
+      
+      // Validate unit_category
+      if (!['PureLec', 'Lec/Lab'].includes(course.unit_category)) {
+        errors.push(`Row ${i + 1}: unit_category must be 'PureLec' or 'Lec/Lab'`);
+        continue;
+      }
+      
+      // Validate year_level
+      if (!['1st yr', '2nd yr', '3rd yr'].includes(course.year_level)) {
+        errors.push(`Row ${i + 1}: year_level must be '1st yr', '2nd yr', or '3rd yr'`);
+        continue;
+      }
+      
+      // Validate degree
+      const validDegrees = ['BSIT', 'BSIT(Webtech)', 'BSIT(NetSec)', 'BSIT(ERP)', 'BSCS', 'BSDA', 'BMMA'];
+      if (!validDegrees.includes(course.degree)) {
+        errors.push(`Row ${i + 1}: Invalid degree '${course.degree}'. Valid degrees: ${validDegrees.join(', ')}`);
+        continue;
+      }
+      
+      // Validate trimester
+      const validTrimesters = ['1st Trimester', '2nd Trimester', '3rd Trimester'];
+      if (!validTrimesters.includes(course.trimester)) {
+        errors.push(`Row ${i + 1}: Invalid trimester '${course.trimester}'. Valid trimesters: ${validTrimesters.join(', ')}`);
+        continue;
+      }
+      
+      // Validate units is a number
+      if (isNaN(parseFloat(course.units))) {
+        errors.push(`Row ${i + 1}: Units must be a valid number`);
+        continue;
+      }
+      
+      courses.push({
+        subject: course.subject,
+        unitCategory: course.unit_category,
+        units: course.units,
+        yearLevel: course.year_level,
+        degree: course.degree,
+        trimester: course.trimester,
+        description: course.description || ''
+      });
+    }
+    
+    hideLoadingOverlay();
+    
+    if (errors.length > 0) {
+      alert(`Found ${errors.length} error(s):\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? '\n... and more' : ''}`);
+      return;
+    }
+    
+    if (courses.length === 0) {
+      alert('No valid courses found in CSV file.');
+      return;
+    }
+    
+    // Confirm import
+    if (!confirm(`Import ${courses.length} course(s)? This will add new courses to the existing ones.`)) {
+      return;
+    }
+    
+    // Show loading overlay for import process
+    showLoadingOverlay('Importing courses...');
+    
+    // Import courses
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const course of courses) {
+      try {
+        await apiPost('courses', course);
+        successCount++;
+      } catch (error) {
+        console.error('Error importing course:', course, error);
+        failCount++;
+      }
+    }
+    
+    hideLoadingOverlay();
+    
+    alert(`Import completed:\n${successCount} courses imported successfully\n${failCount} courses failed to import`);
+    
+    if (successCount > 0) {
+      showLoadingOverlay('Refreshing course table...');
+      await renderCoursesTable();
+      await validateAllComplementary();
+      hideLoadingOverlay();
+    }
+  } catch (error) {
+    hideLoadingOverlay();
+    console.error('Error during CSV import:', error);
+    alert('An error occurred during import. Please try again.');
+  }
+}
+
+// Function to export courses to CSV
+async function exportCoursesToCsv() {
+  try {
+    // Show loading overlay
+    showLoadingOverlay('Fetching courses...');
+    
+    const coursesList = await apiGet('courses');
+    
+    if (coursesList.length === 0) {
+      hideLoadingOverlay();
+      alert('No courses to export.');
+      return;
+    }
+    
+    // Update loading message
+    showLoadingOverlay(`Generating CSV file for ${coursesList.length} courses...`);
+    
+    // CSV headers
+    const headers = ['subject', 'unit_category', 'units', 'year_level', 'degree', 'trimester', 'description'];
+    
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+    
+    coursesList.forEach(course => {
+      const row = [
+        course.subject || '',
+        course.unit_category || '',
+        course.units || '',
+        course.year_level || '',
+        course.degree || '',
+        course.trimester || '',
+        (course.description || '').replace(/,/g, ';') // Replace commas with semicolons in description
+      ];
+      csvContent += row.join(',') + '\n';
+    });
+    
+    // Update loading message
+    showLoadingOverlay('Preparing download...');
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `courses_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      hideLoadingOverlay();
+    } else {
+      hideLoadingOverlay();
+      alert('CSV export is not supported in this browser.');
+    }
+  } catch (error) {
+    hideLoadingOverlay();
+    console.error('Error during CSV export:', error);
+    alert('An error occurred during export. Please try again.');
+  }
+}
+
 /**************************************************************
  * 7) COURSE OFFERING CRUD with Search, Filter, Sort, and Trimester Tabs
  **************************************************************/
@@ -500,7 +792,13 @@ let currentTrimesterFilter = "all";
 async function updateSectionCodePreview() {
   const year = courseOfferingYearSelect.value;
   const sectionLetter = courseOfferingSectionLetter.value.toUpperCase();
-  const sectionCode = year + sectionLetter;
+  let sectionCode;
+  
+  if (year === "INTERNATIONAL") {
+    sectionCode = "INTERNATIONAL " + sectionLetter;
+  } else {
+    sectionCode = year + sectionLetter;
+  }
   
   sectionCodePreview.textContent = sectionCode;
   courseOfferingSectionInput.value = sectionCode;
@@ -558,6 +856,7 @@ async function updateBulkSectionCodePreview() {
   }
   
   const sectionLetters = parseSectionInput(courseOfferingSectionLetters.value);
+  
   const sectionCodes = sectionLetters.map(letter => yearPrefix + letter);
   
   bulkSectionCodePreview.textContent = sectionCodes.join(', ');
@@ -653,9 +952,12 @@ async function populateCourseOfferingCourses() {
   // Get the selected degree filter value - use the manual tab's degree filter
   const degreeFilter = document.getElementById("courseOffering-degree").value;
   
-  // Filter by trimester if needed
-  if (currentTrimesterFilter !== "all") {
-    coursesList = coursesList.filter(c => c.trimester === currentTrimesterFilter);
+  // Get the selected trimester filter value from manual add section
+  const trimesterFilter = document.querySelector('input[name="manualTrimester"]:checked').value;
+  
+  // Filter by trimester if selected
+  if (trimesterFilter) {
+    coursesList = coursesList.filter(c => c.trimester === trimesterFilter);
   }
   
   // Filter by degree if selected
@@ -687,17 +989,21 @@ document.getElementById("courseOffering-degree").addEventListener("change", asyn
     option.disabled = false;
   });
   
-  // Apply restrictions based on degree
+  // Apply restrictions based on degree (INTERNATIONAL is always available)
   if (selectedDegree === "BSIT") {
-    // For BSIT, only 1st year (value="1") is available
+    // For BSIT, only 1st year (value="1") and INTERNATIONAL are available
     document.querySelectorAll('#courseOffering-year option[value="2"], #courseOffering-year option[value="3"]').forEach(option => {
       option.disabled = true;
     });
+    // INTERNATIONAL remains enabled
+    document.querySelector('#courseOffering-year option[value="INTERNATIONAL"]').disabled = false;
     courseOfferingYearSelect.value = "1";
   } 
   else if (selectedDegree === "BSIT(Webtech)" || selectedDegree === "BSIT(NetSec)" || selectedDegree === "BSIT(ERP)") {
-    // For specialization tracks, 1st year is not available
+    // For specialization tracks, 1st year is not available but INTERNATIONAL is
     document.querySelector('#courseOffering-year option[value="1"]').disabled = true;
+    // INTERNATIONAL remains enabled
+    document.querySelector('#courseOffering-year option[value="INTERNATIONAL"]').disabled = false;
     
     // If current selection is 1st year, change to 2nd year
     if (courseOfferingYearSelect.value === "1") {
@@ -708,6 +1014,15 @@ document.getElementById("courseOffering-degree").addEventListener("change", asyn
   // Update the section code preview
   await updateSectionCodePreview();
 });
+
+// Add event listeners for trimester radio buttons in manual add section
+document.querySelectorAll('input[name="manualTrimester"]').forEach(radio => {
+  radio.addEventListener('change', async function() {
+    // Update course list based on trimester filter
+    await populateCourseOfferingCourses();
+  });
+});
+
 // We don't need to add functionality to the bulk degree dropdown as it's only used on the button click
 
 // Add event listener to control year level options based on selected degree in bulk add
@@ -715,7 +1030,6 @@ document.getElementById("courseOffering-degree-bulk").addEventListener("change",
   const selectedDegree = this.value;
   
   // Get all year level radio buttons
-  const yearAll = document.getElementById("year-all");
   const year1st = document.getElementById("year-1st-bulk");
   const year2nd = document.getElementById("year-2nd-bulk");
   const year3rd = document.getElementById("year-3rd-bulk");
@@ -739,7 +1053,6 @@ document.getElementById("courseOffering-degree-bulk").addEventListener("change",
     
     // Select 1st year by default
     year1st.checked = true;
-    yearAll.checked = false;
   } 
   else if (selectedDegree === "BSIT(Webtech)" || selectedDegree === "BSIT(NetSec)" || selectedDegree === "BSIT(ERP)") {
     // For specialization tracks, 1st year is not selectable
@@ -748,9 +1061,9 @@ document.getElementById("courseOffering-degree-bulk").addEventListener("change",
     year3rd.disabled = false;
     year1st.parentElement.style.opacity = 0.5;
     
-    // If 1st year was selected, change to "All Years"
+    // If 1st year was selected, change to 2nd year
     if (year1st.checked) {
-      yearAll.checked = true;
+      year2nd.checked = true;
     }
   }
 });
@@ -806,7 +1119,7 @@ function showLoadingOverlay(message = 'Processing...') {
 function hideLoadingOverlay() {
   const overlay = document.querySelector('.loading-overlay');
   overlay.classList.remove('active');
-  document.body.style.overflow = ''; // Restore scrolling
+  document.body.style.overflow = 'auto'; // Restore scrolling
 }
 
 // Modified btn-add-all-courses event listener to use loading overlay
@@ -847,17 +1160,31 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
     return;
   }
   
-  // Check for duplicate sections across all degrees
-  const duplicateSections = [];
-  for (const section of sections) {
-    const duplicateCheck = await checkDuplicateSection(section, selectedTrimesterBulk);
-    if (duplicateCheck.isDuplicate) {
-      duplicateSections.push(`${section}: ${duplicateCheck.message}`);
+  // Get all courses for the selected degree to check for duplicates
+  let coursesToAdd = await apiGet("courses");
+  coursesToAdd = coursesToAdd.filter(course =>
+    course.degree === selectedDegree &&
+    (!selectedTrimesterBulk || course.trimester === selectedTrimesterBulk)
+  );
+  
+  // Apply year level filter if one is selected
+  if (selectedYearLevel) {
+    coursesToAdd = coursesToAdd.filter(course => course.year_level === selectedYearLevel);
+  }
+  
+  // Check for duplicate course offerings (same course, same section, same trimester)
+  const duplicateOfferings = [];
+  for (const course of coursesToAdd) {
+    for (const section of sections) {
+      const duplicateCheck = await checkDuplicateSection(section, course.trimester, course.id);
+      if (duplicateCheck.isDuplicate) {
+        duplicateOfferings.push(`${course.subject} in section ${section}: ${duplicateCheck.message}`);
+      }
     }
   }
   
-  if (duplicateSections.length > 0) {
-    showConflictNotification("Duplicate sections detected:\n" + duplicateSections.join("\n"));
+  if (duplicateOfferings.length > 0) {
+    showConflictNotification("Duplicate course offerings detected:\n" + duplicateOfferings.join("\n"));
     return;
   }
   
@@ -975,16 +1302,14 @@ async function checkDuplicateSection(section, trimester, courseId = null, id = n
   const offerings = await apiGet("course_offerings");
   const courses = await apiGet("courses");
   
-  // Filter offerings for the given section and trimester
+  // Filter offerings for the exact same course, section, trimester, and type combination
   const duplicates = offerings.filter(off => {
     // Skip comparing with the current offering if we're editing
     if (id && off.id == id) return false;
     
-    // Skip comparing the same course if courseId is provided
-    if (courseId && off.courseId == courseId) return false;
-    
-    // Check if this offering has the same section and trimester
-    return off.section === section && off.trimester === trimester;
+    // Only check for duplicates of the same course in the same section and trimester
+    // This allows multiple different courses to be assigned to the same section
+    return off.courseId == courseId && off.section === section && off.trimester === trimester;
   });
   
   if (duplicates.length > 0) {
@@ -994,7 +1319,7 @@ async function checkDuplicateSection(section, trimester, courseId = null, id = n
     const degree = duplicate.degree || (course ? course.degree : "Unknown");
     return {
       isDuplicate: true,
-      message: `Duplicate section: "${section}" is already used for ${course ? course.subject : 'Unknown'} (${degree}) in ${trimester}`
+      message: `Duplicate offering: "${course ? course.subject : 'Unknown'}" is already offered for section "${section}" in ${trimester}`
     };
   }
   
@@ -1014,7 +1339,7 @@ btnAddCourseOffering.addEventListener("click", async () => {
   
   document.getElementById("courseOffering-degree").value = ""; // Reset degree filter
   document.getElementById("courseOffering-degree-bulk").value = ""; // Reset bulk degree filter
-  document.querySelector('input[id="year-all"]').checked = true; // Reset year level to "All Years"
+  document.querySelector('input[id="year-1st-bulk"]').checked = true; // Reset year level to "1st Year"
   
   // Reset all year options to enabled state
   courseOfferingYearSelect.querySelectorAll('option').forEach(option => {
@@ -1225,13 +1550,21 @@ async function renderCourseOfferingTable() {
   filteredOfferings.forEach(off => {
     const course = coursesList.find(c => c.id == off.courseId);
     const degree = off.degree || (course ? course.degree : "Unknown");
-    const yearPrefix = off.section ? off.section.charAt(0) : "?";
-    const yearLabel = 
-      yearPrefix === "1" ? "1st Year" :
-      yearPrefix === "2" ? "2nd Year" :
-      yearPrefix === "3" ? "3rd Year" : "Other";
     
-    const categoryKey = `${yearLabel} - ${degree}`;
+    let categoryKey;
+    
+    // Check if this is an INTERNATIONAL section
+    if (off.section && off.section.startsWith("INTERNATIONAL ")) {
+      categoryKey = "International";
+    } else {
+      const yearPrefix = off.section ? off.section.charAt(0) : "?";
+      const yearLabel = 
+        yearPrefix === "1" ? "1st Year" :
+        yearPrefix === "2" ? "2nd Year" :
+        yearPrefix === "3" ? "3rd Year" : "Other";
+      
+      categoryKey = `${yearLabel} - ${degree}`;
+    }
     
     if (!categorizedOfferings[categoryKey]) {
       categorizedOfferings[categoryKey] = [];
@@ -1313,7 +1646,7 @@ async function renderCourseOfferingTable() {
       sectionCategoryHeader.className = 'section-category-header';
       sectionCategoryHeader.innerHTML = `
         <span>Section: ${section}</span>
-        <span class="section-category-count">${sectionOfferings.length}</span>
+        <button class="section-delete-btn" onclick="deleteSection('${section}', '${categoryKey}'); event.stopPropagation();" title="Delete Section">×</button>
       `;
       
       // Create section content container
@@ -1362,8 +1695,10 @@ async function renderCourseOfferingTable() {
           <td>${trimester}</td>
           <td>${degree}</td>
           <td>
-            <button class="table-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
-            <button class="table-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
+            <div class="action-buttons-container">
+              <button class="action-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
+              <button class="action-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
+            </div>
           </td>
         `;
         sectionTbody.appendChild(tr);
@@ -1447,8 +1782,8 @@ btnSaveCourseOffering.addEventListener("click", async () => {
     return;
   }
   
-  // Validate section based on degree
-  if (section && section.length >= 2) {
+  // Validate section based on degree (skip validation for INTERNATIONAL sections)
+  if (section && section.length >= 2 && !section.startsWith("INTERNATIONAL ")) {
     const yearDigit = section.charAt(0);
     
     // For BSIT, only first year sections (starting with 1) are allowed
@@ -1506,8 +1841,8 @@ window.editCourseOffering = async function(id) {
   
   // Reset the degree filter when editing
   document.getElementById("courseOffering-degree").value = "";
-  // Reset year level to "All Years"
-  document.querySelector('input[id="year-all"]').checked = true;
+  // Reset year level to "1st Year"
+  document.querySelector('input[id="year-1st-bulk"]').checked = true;
   
   courseOfferingIdInput.value = offering.id;
   await populateCourseOfferingCourses();
@@ -1616,6 +1951,53 @@ window.deleteCourseOffering = async function(id) {
   await apiDelete("course_offerings", id);
   await renderCourseOfferingTable();
   await validateAllComplementary();
+};
+
+window.deleteSection = async function(section, categoryKey) {
+  if (!confirm(`Are you sure you want to delete section "${section}" and all its contents? This will also remove any associated schedules.`)) return;
+  
+  // Find the delete button that was clicked
+  const deleteButton = event.target;
+  const originalContent = deleteButton.innerHTML;
+  
+  try {
+    // Show loading state
+    deleteButton.innerHTML = '⟳';
+    deleteButton.style.animation = 'spin 1s linear infinite';
+    deleteButton.disabled = true;
+    
+    // Get all course offerings for this section
+    const offerings = await apiGet("course_offerings");
+    const sectionOfferings = offerings.filter(off => off.section === section);
+    
+    // Get all schedules that reference this section
+    const schedules = await apiGet("schedules");
+    const sectionSchedules = schedules.filter(sch => sch.section === section || sch.section2 === section);
+    
+    // Delete all schedules for this section
+    for (const schedule of sectionSchedules) {
+      await apiDelete("schedules", schedule.id);
+    }
+    
+    // Delete all course offerings for this section
+    for (const offering of sectionOfferings) {
+      await apiDelete("course_offerings", offering.id);
+    }
+    
+    // Refresh the table and validate complementary courses
+    await renderCourseOfferingTable();
+    await validateAllComplementary();
+    
+    alert(`Section "${section}" and all its contents have been deleted successfully.`);
+  } catch (error) {
+    console.error('Error deleting section:', error);
+    alert('An error occurred while deleting the section. Please try again.');
+    
+    // Restore button state on error
+    deleteButton.innerHTML = originalContent;
+    deleteButton.style.animation = '';
+    deleteButton.disabled = false;
+  }
 };
 
 // Debounced controls for Course Offerings
@@ -2222,8 +2604,10 @@ async function renderRoomsTable() {
       <td>${room.id}</td>
       <td>${room.name}</td>
       <td>
-        <button class="table-edit-btn" onclick="editRoom(${room.id})">Edit</button>
-        <button class="table-delete-btn" onclick="deleteRoom(${room.id})">Delete</button>
+        <div class="action-buttons-container">
+          <button class="action-edit-btn" onclick="editRoom(${room.id})">Edit</button>
+          <button class="action-delete-btn" onclick="deleteRoom(${room.id})">Delete</button>
+        </div>
       </td>
     `;
     tableRoomsBody.appendChild(tr);
@@ -2545,9 +2929,14 @@ async function renderSectionViewTables() {
           const degree = courseOffering && courseOffering.degree ? 
                         courseOffering.degree : 
                         (course ? course.degree : "");
-                        
+          
+          // Check if this is an international section to exclude (BSIT) display
+          const isInternational = sch.section && sch.section.startsWith("INTERNATIONAL ");
+          
           let cellContent = course ? 
-            `${course.subject} (${degree})<br>${sch.unitType}` : 
+            (isInternational ? 
+              `${course.subject}<br>${sch.unitType}` : 
+              `${course.subject} (${degree})<br>${sch.unitType}`) : 
             "Unknown";
           
           // Add section2 info if it exists
@@ -2871,12 +3260,20 @@ async function populateSectionViewCourseOfferingDropdown(section) {
     if (group.unitCategory === "Lec/Lab" && group.offerings.length > 1) {
       // Find the Lec offering to use as the primary one
       const lecOffering = group.offerings.find(off => off.type === "Lec") || group.offerings[0];
-      const displayText = `${group.subject} (${group.degree}) - ${group.section}`;
+      // Check if this is an international section to exclude (BSIT) display
+      const isInternational = group.section && group.section.startsWith("INTERNATIONAL ");
+      const displayText = isInternational ? 
+        `${group.subject} - ${group.section}` : 
+        `${group.subject} (${group.degree}) - ${group.section}`;
       sectionviewCourseOfferingSelect.innerHTML += `<option value="${lecOffering.id}" data-course-id="${lecOffering.courseId}" data-unit-type="${lecOffering.type}">${displayText}</option>`;
     } else {
       // For non-LecLab subjects, show each offering with its type
       group.offerings.forEach(off => {
-        const displayText = `${group.subject} (${group.degree}) - ${off.type} - ${off.section}`;
+        // Check if this is an international section to exclude (BSIT) display
+        const isInternational = off.section && off.section.startsWith("INTERNATIONAL ");
+        const displayText = isInternational ? 
+          `${group.subject} - ${off.type} - ${off.section}` : 
+          `${group.subject} (${group.degree}) - ${off.type} - ${off.section}`;
         sectionviewCourseOfferingSelect.innerHTML += `<option value="${off.id}" data-course-id="${off.courseId}" data-unit-type="${off.type}">${displayText}</option>`;
       });
     }
@@ -4039,8 +4436,13 @@ async function updateSectionViewCell(dayType, time, section) {
                   courseOffering.degree : 
                   (course ? course.degree : "");
     
+    // Check if this is an international section to exclude (BSIT) display
+    const isInternational = sch.section && sch.section.startsWith("INTERNATIONAL ");
+    
     let cellContent = course ? 
-      `${course.subject} (${degree})<br>${sch.unitType}` : 
+      (isInternational ? 
+        `${course.subject}<br>${sch.unitType}` : 
+        `${course.subject} (${degree})<br>${sch.unitType}`) : 
       "Unknown";
     
     // Add section2 info if it exists
@@ -4448,6 +4850,13 @@ function hideModal(modal) {
  * INITIAL PAGE LOAD
  **************************************************************/
 (async function initialLoad() {
+  // Check if this is the first visit and show startup animation
+  if (isFirstVisit()) {
+    initStartupAnimation();
+  } else {
+    skipStartupAnimation();
+  }
+  
   // Initial loading for all tables
   await renderCoursesTable();
   await renderCourseOfferingTable();
@@ -4725,7 +5134,11 @@ async function generateScheduleSummary() {
       }
     }
     
-    sectionDiv.innerHTML = `<h4>Section ${section} - ${sectionDegree}</h4>`;
+    // Check if this is an international section to exclude degree display
+    const isInternational = section && section.startsWith("INTERNATIONAL ");
+    sectionDiv.innerHTML = isInternational ? 
+      `<h4>Section ${section}</h4>` : 
+      `<h4>Section ${section} - ${sectionDegree}</h4>`;
     
     // Get all schedules for this section
     const sectionSchedules = schedules.filter(sch => {
@@ -4961,7 +5374,11 @@ async function exportAllSchedulesToExcel() {
           const group = countA >= countB ? "A" : "B";
 
           // Section header rows
-          wsData.push([`${degree}, ${yearLevel}, ${trimester}`]);
+          // Check if this is an international section to exclude degree display
+          const isInternational = section && section.startsWith("INTERNATIONAL ");
+          wsData.push(isInternational ? 
+            [`${yearLevel}, ${trimester}`] : 
+            [`${degree}, ${yearLevel}, ${trimester}`]);
           wsData.push([`${section} - Group ${group}`]);
 
           // Handle schedules by day type

@@ -15,10 +15,42 @@
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-  <!-- Sidebar toggle button (hamburger) -->
-  <button id="nav-toggle" aria-label="Toggle navigation">
-    <span></span><span></span><span></span>
-  </button>
+  <!-- Startup Loading Screen -->
+  <div id="startup-loader" class="startup-loader">
+    <div class="loader-content">
+      <div class="logo-container">
+        <img src="/assets/citcs_logo.png" alt="CITCS Logo" class="startup-logo">
+        <div class="logo-glow"></div>
+      </div>
+      <div class="loading-text">
+        <h1>Schedule Management System</h1>
+        <p>Loading your workspace...</p>
+      </div>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+      <div class="loading-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+    <div class="startup-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+  </div>
+
+  <!-- Main Application Content -->
+  <div id="main-app" class="main-app">
+    <!-- Sidebar toggle button (hamburger) -->
+    <button id="nav-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
 
   <nav>
     <button id="btn-courses">Manage Courses</button>
@@ -30,10 +62,15 @@
 
   <section id="section-courses" class="hidden">
     <h2>Manage Courses</h2>
-    <div class="button-container">
+    <div class="top-button-container">
       <button id="btn-add-course" class="add-btn">Add New Course</button>
+    </div>
+    <div class="button-container">
+      <button id="btn-import-csv" class="import-btn">Import CSV</button>
+      <button id="btn-export-csv" class="export-btn">Export CSV</button>
       <button id="btn-clear-courses" class="delete-btn">Clear All Courses</button>
     </div>
+    <input type="file" id="csv-file-input" accept=".csv" style="display: none;" />
     <div class="controls">
       <input type="text" id="course-search" placeholder="Search courses..." />
       <select id="course-filter-degree">
@@ -418,6 +455,15 @@
           <option value="BSDA">BSDA</option>
           <option value="BMMA">BMMA</option>
         </select>
+        <div class="filter-group">
+          <label>Filter by Trimester:</label>
+          <div class="radio-group trimester-radio-group">
+            <label for="manual-trim-all"><input type="radio" id="manual-trim-all" name="manualTrimester" value="" checked>All Trimesters</label>
+            <label for="manual-trim-1"><input type="radio" id="manual-trim-1" name="manualTrimester" value="1st Trimester">1st Trimester</label>
+            <label for="manual-trim-2"><input type="radio" id="manual-trim-2" name="manualTrimester" value="2nd Trimester">2nd Trimester</label>
+            <label for="manual-trim-3"><input type="radio" id="manual-trim-3" name="manualTrimester" value="3rd Trimester">3rd Trimester</label>
+          </div>
+        </div>
         <label for="courseOffering-course">Course:</label>
         <select id="courseOffering-course">
           <option value="">-- Select Course --</option>
@@ -431,6 +477,7 @@
                 <option value="1">First Year (1)</option>
                 <option value="2">Second Year (2)</option>
                 <option value="3">Third Year (3)</option>
+                <option value="INTERNATIONAL">INTERNATIONAL</option>
               </select>
             </div>
             <div class="section-letter-input">
@@ -473,8 +520,7 @@
           <div class="filter-group">
             <label>Year Level:</label>
             <div class="radio-group year-radio-group">
-              <label for="year-all"><input type="radio" id="year-all" name="bulkAddYearLevel" value="" checked> All Years</label>
-              <label for="year-1st-bulk"><input type="radio" id="year-1st-bulk" name="bulkAddYearLevel" value="1st yr"> 1st Year</label>
+              <label for="year-1st-bulk"><input type="radio" id="year-1st-bulk" name="bulkAddYearLevel" value="1st yr" checked> 1st Year</label>
               <label for="year-2nd-bulk"><input type="radio" id="year-2nd-bulk" name="bulkAddYearLevel" value="2nd yr"> 2nd Year</label>
               <label for="year-3rd-bulk"><input type="radio" id="year-3rd-bulk" name="bulkAddYearLevel" value="3rd yr"> 3rd Year</label>
             </div>
@@ -528,6 +574,8 @@
     <div class="spinner"></div>
     <div class="loading-message">Processing...</div>
   </div>
+
+  </div> <!-- End main-app -->
 
   <script src="script.js"></script>
 </body>

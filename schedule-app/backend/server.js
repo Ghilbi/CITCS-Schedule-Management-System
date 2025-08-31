@@ -56,8 +56,26 @@ async function createTables() {
     year_level TEXT NOT NULL,
     degree TEXT NOT NULL,
     trimester TEXT NOT NULL,
-    description TEXT
-  )`);
+    description TEXT,
+    curriculum TEXT
+  )`)
+  
+  // Add curriculum column to existing courses table if it doesn't exist
+  try {
+    await pool.query(`ALTER TABLE courses ADD COLUMN IF NOT EXISTS curriculum TEXT`);
+    // Update existing courses without curriculum to have the most recent curriculum year
+    await pool.query(`
+      UPDATE courses 
+      SET curriculum = (
+        SELECT year FROM curricula 
+        ORDER BY year DESC 
+        LIMIT 1
+      ) 
+      WHERE curriculum IS NULL AND EXISTS (SELECT 1 FROM curricula)
+    `);
+  } catch (err) {
+    console.log('Curriculum column already exists or error adding it:', err.message);
+  };
   await pool.query(`CREATE TABLE IF NOT EXISTS schedules (
     id SERIAL PRIMARY KEY,
     dayType TEXT NOT NULL,
@@ -82,11 +100,39 @@ async function createTables() {
     degree TEXT,
     FOREIGN KEY(courseId) REFERENCES courses(id)
   )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS curricula (
+    id SERIAL PRIMARY KEY
+  )`);
+  // Ensure 'year' column exists and unique for curricula (handles pre-existing table without column)
+  try {
+    await pool.query(`ALTER TABLE curricula ADD COLUMN IF NOT EXISTS year TEXT`);
+    // Handle legacy schemas where a NOT NULL name column exists
+    try {
+      await pool.query(`ALTER TABLE curricula ALTER COLUMN name DROP NOT NULL`);
+    } catch (e) {
+      // ignore if name column doesn't exist
+    }
+    // Backfill year from legacy name column if present
+    try {
+      await pool.query(`UPDATE curricula SET year = name WHERE year IS NULL AND name IS NOT NULL`);
+    } catch (e) {
+      // ignore if name column doesn't exist
+    }
+    // Drop legacy 'name' column if it exists to avoid future conflicts
+    try {
+      await pool.query(`ALTER TABLE curricula DROP COLUMN IF EXISTS name`);
+    } catch (e) {
+      // ignore if name column doesn't exist
+    }
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_curricula_year ON curricula(year)`);
+  } catch (err) {
+    console.log('Ensuring curricula.year column/index:', err.message);
+  }
 }
 createTables().catch(err => console.error("Error creating tables", err));
 
 // Only allow valid table names
-const validTables = ['rooms', 'courses', 'schedules', 'course_offerings'];
+const validTables = ['rooms', 'courses', 'schedules', 'course_offerings', 'curricula'];
 function isValidTable(table) {
   return validTables.includes(table);
 }
@@ -176,6 +222,14 @@ app.use('/api/:table', protectCoursesWrite);
 app.get('/api/:table', async (req, res) => {
   const table = req.params.table;
   if (!isValidTable(table)) return res.status(400).json({ error: 'Invalid table name' });
+  
+  // Add cache-busting headers to prevent browser caching
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  
   try {
     let result;
     if (table === 'course_offerings') {
@@ -236,8 +290,28 @@ app.post('/api/:table', async (req, res) => {
       params = [data.name];
       break;
     case 'courses':
-      query = 'INSERT INTO courses (subject, unit_category, units, year_level, degree, trimester, description) VALUES ($1, $2, $3, $4, $5, $6, $7)';
-      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description];
+      // Ensure curriculum is not NULL/missing and normalize before duplicate check
+      // Use provided curriculum or keep as null to let database handle default
+      const curriculumValuePost = (data.curriculum && String(data.curriculum).trim()) ? String(data.curriculum).trim() : null;
+      // Check for existing course with same subject, curriculum, and degree first
+      try {
+        let checkQuery, checkParams;
+        if (curriculumValuePost === null) {
+          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum IS NULL AND degree = $2';
+          checkParams = [data.subject, data.degree];
+        } else {
+          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum = $2 AND degree = $3';
+          checkParams = [data.subject, curriculumValuePost, data.degree];
+        }
+        const checkResult = await pool.query(checkQuery, checkParams);
+        if (checkResult.rows.length > 0) {
+          return res.status(400).json({ error: 'Course with this subject already exists in the selected curriculum and degree program' });
+        }
+      } catch (checkErr) {
+        console.error("Error checking for duplicate course:", checkErr);
+      }
+      query = 'INSERT INTO courses (subject, unit_category, units, year_level, degree, trimester, description, curriculum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
+      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description, curriculumValuePost];
       break;
     case 'schedules':
       query = 'INSERT INTO schedules (dayType, time, col, roomId, courseId, color, unitType, section, section2) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
@@ -246,6 +320,10 @@ app.post('/api/:table', async (req, res) => {
     case 'course_offerings':
       query = 'INSERT INTO course_offerings (courseId, section, type, units, trimester, degree) VALUES ($1, $2, $3, $4, $5, $6)';
       params = [data.courseId, data.section, data.type, data.units, data.trimester, data.degree];
+      break;
+    case 'curricula':
+      query = 'INSERT INTO curricula (year) VALUES ($1)';
+      params = [data.year];
       break;
     default:
       return res.status(400).json({ error: 'Invalid table' });
@@ -274,8 +352,28 @@ app.put('/api/:table/:id', async (req, res) => {
       params = [data.name, id];
       break;
     case 'courses':
-      query = 'UPDATE courses SET subject = $1, unit_category = $2, units = $3, year_level = $4, degree = $5, trimester = $6, description = $7 WHERE id = $8';
-      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description, id];
+      // Ensure curriculum is not NULL/missing and normalize before duplicate check
+      // Use provided curriculum or keep as null to let database handle default
+      const curriculumValuePut = (data.curriculum && String(data.curriculum).trim()) ? String(data.curriculum).trim() : null;
+      // Check for duplicate course with same subject and curriculum (excluding current course)
+      try {
+        let checkQuery, checkParams;
+        if (curriculumValuePut === null) {
+          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum IS NULL AND id != $2';
+          checkParams = [data.subject, id];
+        } else {
+          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum = $2 AND id != $3';
+          checkParams = [data.subject, curriculumValuePut, id];
+        }
+        const checkResult = await pool.query(checkQuery, checkParams);
+        if (checkResult.rows.length > 0) {
+          return res.status(400).json({ error: 'Another course with this subject already exists in the selected curriculum' });
+        }
+      } catch (checkErr) {
+        console.error("Error checking for duplicate course during update:", checkErr);
+      }
+      query = 'UPDATE courses SET subject = $1, unit_category = $2, units = $3, year_level = $4, degree = $5, trimester = $6, description = $7, curriculum = $8 WHERE id = $9';
+      params = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description, curriculumValuePut, id];
       break;
     case 'schedules':
       query = 'UPDATE schedules SET dayType = $1, time = $2, col = $3, roomId = $4, courseId = $5, color = $6, unitType = $7, section = $8, section2 = $9 WHERE id = $10';
@@ -284,6 +382,10 @@ app.put('/api/:table/:id', async (req, res) => {
     case 'course_offerings':
       query = 'UPDATE course_offerings SET courseId = $1, section = $2, type = $3, units = $4, trimester = $5, degree = $6 WHERE id = $7';
       params = [data.courseId, data.section, data.type, data.units, data.trimester, data.degree, id];
+      break;
+    case 'curricula':
+      query = 'UPDATE curricula SET year = $1 WHERE id = $2';
+      params = [data.year, id];
       break;
     default:
       return res.status(400).json({ error: 'Invalid table' });

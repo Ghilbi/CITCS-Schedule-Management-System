@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - Schedule Management System</title>
+  <link rel="icon" href="/assets/citcs_logo.png" type="image/png">
+  <link rel="shortcut icon" href="/assets/citcs_logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/citcs_logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --color-primary: #2e7d32;
+      --color-primary-dark: #1b5e20;
+      --color-secondary: #ffffff;
+      --color-bg: #f4f7fa;
+      --color-card-bg: #ffffff;
+      --color-border: #e0e0e0;
+      --color-text: #303030;
+      --color-muted: #5f6368;
+      --color-hover: rgba(46, 125, 50, 0.1);
+      --border-radius: 8px;
+      --gap: 16px;
+      --transition: 0.3s;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+      --color-primary-light: #e8f5e9;
+      --color-primary-xlight: #f1f9f2;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text);
+      line-height: 1.6;
+      font-variation-settings: "wght" 400;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .login-container {
+      background: var(--color-card-bg);
+      padding: 3rem;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .logo-container {
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--color-primary-light);
+      padding: 15px;
+      box-shadow: var(--shadow-md);
+      margin: 0 auto 1rem;
+    }
+
+    .login-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      color: var(--color-muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--color-text);
+      font-size: 0.9rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid var(--color-border);
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      background: var(--color-secondary);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: var(--color-primary);
+      color: var(--color-secondary);
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background-color var(--transition), transform var(--transition);
+      margin-bottom: 1rem;
+    }
+
+    .login-button:hover {
+      background: var(--color-primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .login-button:active {
+      transform: translateY(0);
+    }
+
+    .login-button:disabled {
+      background: var(--color-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 0.75rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      border-left: 4px solid #c62828;
+      display: none;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid var(--color-secondary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .login-button.loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-button.loading .loading-spinner {
+      display: inline-block;
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+      }
+
+      .login-title {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* Animation for container entrance */
+    .login-container {
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo-container">
+      <img src="/assets/citcs_logo.png" alt="CITCS Logo" class="logo">
+      <h1 class="login-title">Schedule Management System</h1>
+      <p class="login-subtitle">Please sign in to continue</p>
+    </div>
+
+    <form id="login-form">
+      <div id="error-message" class="error-message"></div>
+      
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" id="login-button" class="login-button">
+        <span class="loading-spinner"></span>
+        <span class="button-text">Sign In</span>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Check if already logged in
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+      window.location.href = 'index.html';
+    }
+
+    const loginForm = document.getElementById('login-form');
+    const loginButton = document.getElementById('login-button');
+    const errorMessage = document.getElementById('error-message');
+    const buttonText = loginButton.querySelector('.button-text');
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+    }
+
+    function hideError() {
+      errorMessage.style.display = 'none';
+    }
+
+    function setLoading(loading) {
+      if (loading) {
+        loginButton.classList.add('loading');
+        loginButton.disabled = true;
+        buttonText.textContent = 'Signing in...';
+      } else {
+        loginButton.classList.remove('loading');
+        loginButton.disabled = false;
+        buttonText.textContent = 'Sign In';
+      }
+    }
+
+    async function loginRequest(username, password) {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
+      }
+      
+      const data = await response.json();
+      return data.token;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      
+      if (!username || !password) {
+        showError('Please enter both username and password.');
+        return;
+      }
+      
+      setLoading(true);
+      
+      try {
+        const token = await loginRequest(username, password);
+        localStorage.setItem('authToken', token);
+        window.location.href = 'index.html';
+      } catch (error) {
+        showError(error.message || 'Invalid credentials. Please try again.');
+        setLoading(false);
+      }
+    });
+
+    // Allow Enter key to submit form
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !loginButton.disabled) {
+        loginForm.dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
+</body>
+</html>

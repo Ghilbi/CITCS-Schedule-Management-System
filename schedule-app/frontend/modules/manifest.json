@@ -1,0 +1,29 @@
+{
+  "original_js": "script.js",
+  "modules_dir": "modules",
+  "parts": [
+    "globals-utilities.js",
+    "startup-animation-controller.js",
+    "api-wrapper-functions-for-backend-calls.js",
+    "global-variables-for-room-view-columns.js",
+    "navigation.js",
+    "faculty-section-removed.js",
+    "courses-crud-with-search-filter-and-sort.js",
+    "course-offering-crud-with-search-filter-sort-and-trimester-tabs.js",
+    "loading-overlay-functions.js",
+    "room-view-trimester-tabs-headers-and-tables.js",
+    "room-view-modal-open-populate-and-save-with-trimester-filter.js",
+    "room-management-crud.js",
+    "section-view-functionality-existing.js",
+    "new-section-view-trimester-tabs-headers-and-tables.js",
+    "new-section-view-modal-open-populate-and-save.js",
+    "enhanced-leclab-interface-functions.js",
+    "enhanced-leclab-save-functions.js",
+    "complementary-validation-for-lec-lab-duplicate-check.js",
+    "conflict-notification-popup.js",
+    "modal-show-hide.js",
+    "initial-page-load.js",
+    "helper-functions.js",
+    "dashboard.js"
+  ]
+}

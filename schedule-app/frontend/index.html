@@ -53,11 +53,13 @@
     </button>
 
   <nav>
+    <button id="btn-dashboard">Dashboard</button>
     <button id="btn-courses">Manage Courses</button>
     <button id="btn-course-offering">Manage Course Offering</button>
     <button id="btn-section-view">Section Management</button>
     <button id="btn-room-view">Room Management</button>
     <button id="btn-schedule-summary">Schedule Summary</button>
+    <button id="btn-logout" onclick="logout()" class="delete-btn" style="margin-top: auto;">Logout</button>
   </nav>
 
   <section id="section-courses" class="hidden">
@@ -83,6 +85,14 @@
         <option value="BSDA">BSDA</option>
         <option value="BMMA">BMMA</option>
       </select>
+      <select id="course-filter-curriculum">
+        <option value="">Filter by Curriculum</option>
+        <option value="2024-2025">2024-2025</option>
+        <option value="2023-2024">2023-2024</option>
+        <option value="2022-2023">2022-2023</option>
+        <option value="2021-2022">2021-2022</option>
+        <option value="2020-2021">2020-2021</option>
+      </select>
       <select id="course-sort">
         <option value="">Sort by</option>
         <option value="subject-asc">Subject (A-Z)</option>
@@ -101,6 +111,7 @@
           <th>Year Level</th>
           <th>Degree</th>
           <th>Trimester</th>
+          <th>Curriculum</th>
           <th>Description</th>
           <th>Actions</th>
         </tr>
@@ -116,8 +127,7 @@
       <button id="btn-clear-courseOffering" class="delete-btn">Clear All Offerings</button>
     </div>
     <div class="trimester-tabs">
-      <button class="tab-btn active" data-trimester="all">All</button>
-      <button class="tab-btn" data-trimester="1st Trimester">1st Trimester</button>
+      <button class="tab-btn active" data-trimester="1st Trimester">1st Trimester</button>
       <button class="tab-btn" data-trimester="2nd Trimester">2nd Trimester</button>
       <button class="tab-btn" data-trimester="3rd Trimester">3rd Trimester</button>
     </div>
@@ -230,6 +240,84 @@
     <div id="schedule-summary-content"></div>
   </section>
 
+  <section id="section-dashboard" class="hidden">
+    <h2>Dashboard & Analytics</h2>
+    <div class="dashboard-controls">
+      <button id="btn-refresh-dashboard" class="add-btn">Refresh Data</button>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <div class="stat-icon">📚</div>
+        <div class="stat-content">
+          <h3 id="stat-total-courses">0</h3>
+          <p>Total Courses</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+          <h3 id="stat-total-offerings">0</h3>
+          <p>Course Offerings</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🗓️</div>
+        <div class="stat-content">
+          <h3 id="stat-total-schedules">0</h3>
+          <p>Scheduled Sessions</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏫</div>
+        <div class="stat-content">
+          <h3 id="stat-total-rooms">0</h3>
+          <p>Total Rooms</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📖</div>
+        <div class="stat-content">
+          <h3 id="stat-total-curricula">0</h3>
+          <p>Curricula</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <h3 id="stat-room-utilization">0%</h3>
+          <p>Room Utilization</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div class="dashboard-charts">
+      <div class="chart-row">
+        <div class="chart-container">
+          <div id="chart-degree-distribution" class="chart"></div>
+        </div>
+        <div class="chart-container">
+          <div id="chart-trimester-distribution" class="chart"></div>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-container">
+          <div id="chart-offering-type" class="chart"></div>
+        </div>
+        <div class="chart-container">
+          <div id="chart-room-utilization" class="chart"></div>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-container">
+          <div id="chart-year-level" class="chart"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div id="conflict-popup" class="hidden"></div>
 
   <div class="modal hidden" id="modal-course">
@@ -267,10 +355,60 @@
         <option value="2nd Trimester">2nd Trimester</option>
         <option value="3rd Trimester">3rd Trimester</option>
       </select>
+      <label for="course-curriculum">Curriculum:</label>
+      <select id="course-curriculum">
+        <option value="2024-2025">2024-2025</option>
+        <option value="2023-2024">2023-2024</option>
+        <option value="2022-2023">2022-2023</option>
+        <option value="2021-2022">2021-2022</option>
+        <option value="2020-2021">2020-2021</option>
+      </select>
+      <div class="curriculum-manage-container">
+        <button id="btn-manage-curriculum" class="action-edit-btn" style="margin-top: 5px; font-size: 12px; padding: 4px 8px;">Manage Curricula</button>
+      </div>
       <label for="course-description">Description:</label>
       <textarea id="course-description" rows="4" placeholder="Enter course description"></textarea>
       <input type="hidden" id="course-id" />
       <button id="btn-save-course" class="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- Curriculum Management Modal -->
+  <div class="modal hidden" id="modal-curriculum-management">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-curriculum-management">×</span>
+      <h3>Manage Curricula</h3>
+      <div class="curriculum-controls">
+        <button id="btn-add-curriculum" class="add-btn">Add New Curriculum</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Curriculum Year</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="curriculum-table-body">
+            <!-- Curriculum rows will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Curriculum Modal -->
+  <div class="modal hidden" id="modal-add-edit-curriculum">
+    <div class="modal-content">
+      <span class="close-button" data-close-modal="modal-add-edit-curriculum">×</span>
+      <h3 id="modal-curriculum-title">Add Curriculum</h3>
+      <label for="curriculum-year">Curriculum Year:</label>
+      <input type="text" id="curriculum-year" placeholder="e.g., 2025-2026" />
+      <input type="hidden" id="curriculum-id" />
+      <div class="modal-buttons">
+        <button id="btn-save-curriculum" class="save-btn">Save</button>
+        <button id="btn-cancel-curriculum" class="cancel-btn">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -556,18 +694,7 @@
 
   <!-- Schedule Summary Modal removed - now using section-based approach -->
 
-  <!-- Login Modal -->
-  <div class="modal hidden" id="modal-login">
-    <div class="modal-content" style="width: 350px;">
-      <span class="close-button" data-close-modal="modal-login">×</span>
-      <h3>Admin Login</h3>
-      <label for="login-username">Username:</label>
-      <input type="text" id="login-username" autocomplete="username" />
-      <label for="login-password">Password:</label>
-      <input type="password" id="login-password" autocomplete="current-password" />
-      <button id="btn-login-submit" class="save-btn">Login</button>
-    </div>
-  </div>
+  <!-- Login Modal Removed - Now using dedicated login page -->
 
   <!-- Loading Overlay -->
   <div class="loading-overlay">
@@ -577,6 +704,40 @@
 
   </div> <!-- End main-app -->
 
-  <script src="script.js"></script>
+  <!-- Authentication Check -->
+  <script>
+    // Check authentication before loading the app
+    if (!localStorage.getItem('authToken')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <!-- modularized start -->
+<script src="modules/globals-utilities.js"></script>
+<script src="modules/global-state-manager.js"></script>
+<script src="modules/active-curriculum-manager.js"></script>
+<script src="modules/startup-animation-controller.js"></script>
+<script src="modules/api-wrapper-functions-for-backend-calls.js"></script>
+<script src="modules/global-variables-for-room-view-columns.js"></script>
+<script src="modules/navigation.js"></script>
+<script src="modules/faculty-section-removed.js"></script>
+<script src="modules/courses-crud-with-search-filter-and-sort.js"></script>
+<script src="modules/course-offering-crud-with-search-filter-sort-and-trimester-tabs.js"></script>
+<script src="modules/loading-overlay-functions.js"></script>
+<script src="modules/room-view-trimester-tabs-headers-and-tables.js"></script>
+<script src="modules/room-view-modal-open-populate-and-save-with-trimester-filter.js"></script>
+<script src="modules/room-management-crud.js"></script>
+<script src="modules/section-view-functionality-existing.js"></script>
+<script src="modules/new-section-view-trimester-tabs-headers-and-tables.js"></script>
+<script src="modules/new-section-view-modal-open-populate-and-save.js"></script>
+<script src="modules/enhanced-leclab-interface-functions.js"></script>
+<script src="modules/enhanced-leclab-save-functions.js"></script>
+<script src="modules/complementary-validation-for-lec-lab-duplicate-check.js"></script>
+<script src="modules/conflict-notification-popup.js"></script>
+<script src="modules/modal-show-hide.js"></script>
+<script src="modules/initial-page-load.js"></script>
+<script src="modules/helper-functions.js"></script>
+<script src="modules/dashboard.js"></script>
+<!-- modularized end -->
 </body>
 </html>

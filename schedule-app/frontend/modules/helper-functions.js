@@ -349,7 +349,7 @@ async function generateScheduleSummary() {
             tdRoom.textContent = columns[colIndex];
           } else {
             tdRoom.textContent = "Not assigned";
-            tdRoom.style.color = "#ff6666";
+            tdRoom.style.color = window.colorUtils ? window.colorUtils.roomError : "#ff6666";
           }
         } else {
           // Find matching room view entry
@@ -369,11 +369,11 @@ async function generateScheduleSummary() {
               tdRoom.textContent = columns[colIndex];
             } else {
               tdRoom.textContent = "Not assigned";
-              tdRoom.style.color = "#ff6666";
+              tdRoom.style.color = window.colorUtils ? window.colorUtils.roomError : "#ff6666";
             }
           } else {
             tdRoom.textContent = "Not assigned";
-            tdRoom.style.color = "#ff6666";
+            tdRoom.style.color = window.colorUtils ? window.colorUtils.roomError : "#ff6666";
           }
         }
         tr.appendChild(tdRoom);

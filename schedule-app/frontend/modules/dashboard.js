@@ -152,7 +152,11 @@ async function renderDashboardCharts() {
 /**
  * Create a simple bar chart
  */
-function createBarChart(containerId, data, title, color = '#4f46e5') {
+function createBarChart(containerId, data, title, color = null) {
+  // Use color utility if no color specified
+  if (!color) {
+    color = window.colorUtils ? window.colorUtils.getChartColor(0) : '#4f46e5';
+  }
   const container = document.getElementById(containerId);
   if (!container) return;
   
@@ -193,7 +197,8 @@ function createPieChart(containerId, data, title) {
     return;
   }
   
-  const colors = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+  // Use color utility for chart colors
+  const colors = window.colorUtils ? window.colorUtils.chartColors : ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
   
   let cumulativePercentage = 0;
   const segments = Object.entries(data).map(([label, value], index) => {
@@ -243,7 +248,8 @@ function createPieChart(containerId, data, title) {
  * Render specific charts
  */
 function renderDegreeDistributionChart(data) {
-  createBarChart('chart-degree-distribution', data, 'Courses by Degree Program', '#4f46e5');
+  const color = window.colorUtils ? window.colorUtils.getChartColor(0) : '#4f46e5';
+  createBarChart('chart-degree-distribution', data, 'Courses by Degree Program', color);
 }
 
 function renderTrimesterDistributionChart(data) {
@@ -251,15 +257,18 @@ function renderTrimesterDistributionChart(data) {
 }
 
 function renderOfferingTypeChart(data) {
-  createBarChart('chart-offering-type', data, 'Course Offerings by Type', '#06b6d4');
+  const color = window.colorUtils ? window.colorUtils.getChartColor(1) : '#06b6d4';
+  createBarChart('chart-offering-type', data, 'Course Offerings by Type', color);
 }
 
 function renderRoomUtilizationChart(data) {
-  createBarChart('chart-room-utilization', data, 'Room Usage Statistics', '#10b981');
+  const color = window.colorUtils ? window.colorUtils.getChartColor(2) : '#10b981';
+  createBarChart('chart-room-utilization', data, 'Room Usage Statistics', color);
 }
 
 function renderYearLevelChart(data) {
-  createBarChart('chart-year-level', data, 'Courses by Year Level', '#f59e0b');
+  const color = window.colorUtils ? window.colorUtils.getChartColor(3) : '#f59e0b';
+  createBarChart('chart-year-level', data, 'Courses by Year Level', color);
 }
 
 /**

@@ -770,14 +770,23 @@ async function saveRegularAssignment() {
   const allColumns = await getAllRoomColumns();
   const existingId = document.getElementById("sectionview-id").value;
   
-  // Check for conflicting schedules for this section, but only within Section View
-  const conflict = schedules.find(sch => 
-    sch.dayType === dayType &&
-    sch.time === time &&
-    (sch.section === section || sch.section2 === section) &&
-    sch.col === 0 && // Only check Section View entries
-    sch.id.toString() !== existingId
-  );
+  // Get the current course details
+  const currentCourse = courses.find(c => c.id === courseId);
+  if (!currentCourse) {
+    showConflictNotification("Could not find course details.");
+    return;
+  }
+
+  // Check for conflicting schedules for this section, but only within Section View and same trimester
+  const conflict = schedules.find(sch => {
+    const schCourse = courses.find(c => c.id === sch.courseId);
+    return sch.dayType === dayType &&
+      sch.time === time &&
+      (sch.section === section || sch.section2 === section) &&
+      sch.col === 0 && // Only check Section View entries
+      sch.id.toString() !== existingId &&
+      schCourse && schCourse.trimester === currentCourse.trimester;
+  });
   
   if (conflict) {
     const conflictCourse = courses.find(c => c.id === conflict.courseId);
@@ -788,13 +797,15 @@ async function saveRegularAssignment() {
   
   // Check if section2 is busy at this time slot
   if (section2) {
-    const section2Conflict = schedules.find(sch => 
-      sch.dayType === dayType &&
-      sch.time === time &&
-      (sch.section === section2 || sch.section2 === section2) &&
-      sch.col === 0 && // Only check Section View entries
-      sch.id.toString() !== existingId
-    );
+    const section2Conflict = schedules.find(sch => {
+      const schCourse = courses.find(c => c.id === sch.courseId);
+      return sch.dayType === dayType &&
+        sch.time === time &&
+        (sch.section === section2 || sch.section2 === section2) &&
+        sch.col === 0 && // Only check Section View entries
+        sch.id.toString() !== existingId &&
+        schCourse && schCourse.trimester === currentCourse.trimester;
+    });
     
     if (section2Conflict) {
       const conflictCourse = courses.find(c => c.id === section2Conflict.courseId);
@@ -802,13 +813,6 @@ async function saveRegularAssignment() {
         `Conflict with: ${conflictCourse?.subject || 'Unknown'} - ${section2Conflict.unitType}`);
       return;
     }
-  }
-
-  // Get the current course details
-  const currentCourse = courses.find(c => c.id === courseId);
-  if (!currentCourse) {
-    showConflictNotification("Could not find course details.");
-    return;
   }
 
   // Check for duplicate subjects in the same section (allowing different components: Lec/Lab)
@@ -825,6 +829,7 @@ async function saveRegularAssignment() {
     // Get subject details for this schedule entry
     const schCourse = courses.find(c => c.id === sch.courseId);
     if (!schCourse) return false;
+    if (schCourse.trimester !== currentCourse.trimester) return false;
     
     // Check if this is the same subject name
     if (schCourse.subject !== currentCourse.subject) return false;
@@ -853,6 +858,7 @@ async function saveRegularAssignment() {
       // Get subject details for this schedule entry
       const schCourse = courses.find(c => c.id === sch.courseId);
       if (!schCourse) return false;
+      if (schCourse.trimester !== currentCourse.trimester) return false;
       
       // Check if this is the same subject name
       if (schCourse.subject !== currentCourse.subject) return false;

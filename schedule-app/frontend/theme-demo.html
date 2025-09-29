@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme System Demo - CITCS Schedule Management</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .demo-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .demo-header p {
+            color: var(--color-text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .theme-controls {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .theme-controls h3 {
+            color: var(--color-text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .demo-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .demo-card h4 {
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .color-swatch {
+            height: 60px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            padding: 0.25rem;
+            font-size: 0.75rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .button-demo {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--color-secondary);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+        
+        .btn-error {
+            background: var(--color-error);
+            color: white;
+        }
+        
+        .status-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .status-item {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: var(--color-success-light);
+            color: var(--color-success-dark);
+            border: 1px solid var(--color-success);
+        }
+        
+        .status-warning {
+            background: var(--color-warning-light);
+            color: var(--color-warning-dark);
+            border: 1px solid var(--color-warning);
+        }
+        
+        .status-error {
+            background: var(--color-error-light);
+            color: var(--color-error-dark);
+            border: 1px solid var(--color-error);
+        }
+        
+        .status-info {
+            background: var(--color-info-light);
+            color: var(--color-info-dark);
+            border: 1px solid var(--color-info);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🎨 Theme System Demo</h1>
+            <p>Experience the new streamlined color management system</p>
+        </div>
+        
+        <div class="theme-controls">
+            <h3>🎛️ Theme Controls</h3>
+            <div id="theme-selector"></div>
+        </div>
+        
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h4>🎨 Primary Colors</h4>
+                <div class="color-palette">
+                    <div class="color-swatch" style="background: var(--color-primary);">Primary</div>
+                    <div class="color-swatch" style="background: var(--color-primary-dark);">Dark</div>
+                    <div class="color-swatch" style="background: var(--color-primary-light);">Light</div>
+                    <div class="color-swatch" style="background: var(--color-secondary);">Secondary</div>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>🔘 Interactive Elements</h4>
+                <div class="button-demo">
+                    <button class="btn btn-primary">Primary</button>
+                    <button class="btn btn-secondary">Secondary</button>
+                    <button class="btn btn-success">Success</button>
+                    <button class="btn btn-warning">Warning</button>
+                    <button class="btn btn-error">Error</button>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>📊 Status Colors</h4>
+                <div class="status-demo">
+                    <div class="status-item status-success">✅ Success</div>
+                    <div class="status-item status-warning">⚠️ Warning</div>
+                    <div class="status-item status-error">❌ Error</div>
+                    <div class="status-item status-info">ℹ️ Info</div>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>🌈 Chart Colors</h4>
+                <div class="color-palette">
+                    <div class="color-swatch" style="background: var(--color-chart-1);">Chart 1</div>
+                    <div class="color-swatch" style="background: var(--color-chart-2);">Chart 2</div>
+                    <div class="color-swatch" style="background: var(--color-chart-3);">Chart 3</div>
+                    <div class="color-swatch" style="background: var(--color-chart-4);">Chart 4</div>
+                    <div class="color-swatch" style="background: var(--color-chart-5);">Chart 5</div>
+                    <div class="color-swatch" style="background: var(--color-chart-6);">Chart 6</div>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>🏢 Room & Schedule</h4>
+                <div class="color-palette">
+                    <div class="color-swatch" style="background: var(--color-room-available);">Available</div>
+                    <div class="color-swatch" style="background: var(--color-room-occupied);">Occupied</div>
+                    <div class="color-swatch" style="background: var(--color-room-error);">Error</div>
+                    <div class="color-swatch" style="background: var(--color-schedule-conflict);">Conflict</div>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>🎯 Accent Colors</h4>
+                <div class="color-palette">
+                    <div class="color-swatch" style="background: var(--color-purple);">Purple</div>
+                    <div class="color-swatch" style="background: var(--color-cyan);">Cyan</div>
+                    <div class="color-swatch" style="background: var(--color-pink);">Pink</div>
+                    <div class="color-swatch" style="background: var(--color-amber);">Amber</div>
+                    <div class="color-swatch" style="background: var(--color-light-blue);">Light Blue</div>
+                    <div class="color-swatch" style="background: var(--color-lime);">Lime</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-card">
+            <h4>💡 How to Use</h4>
+            <p style="color: var(--color-text-secondary); line-height: 1.6;">
+                This theme system allows you to easily switch between different color schemes. 
+                All colors are now centralized using CSS custom properties, making it simple to:
+            </p>
+            <ul style="color: var(--color-text-secondary); line-height: 1.6; margin-top: 1rem;">
+                <li>🎨 Change themes instantly</li>
+                <li>🔧 Customize colors from one central location</li>
+                <li>🌙 Support dark mode and multiple themes</li>
+                <li>📱 Maintain consistency across all components</li>
+                <li>⚡ Update colors dynamically via JavaScript</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="modules/color-utils.js"></script>
+    <script src="modules/theme-manager.js"></script>
+    <script>
+        // Initialize the theme system
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize theme manager
+            window.themeManager = new ThemeManager();
+            
+            // Initialize color utils
+            window.colorUtils = new ColorUtils();
+            
+            // Create theme selector
+            const selectorContainer = document.getElementById('theme-selector');
+            window.themeManager.createThemeSelector(selectorContainer);
+            
+            console.log('🎨 Theme Demo loaded successfully!');
+            console.log('Available themes:', window.themeManager.getAvailableThemes());
+            console.log('Current theme:', window.themeManager.getCurrentTheme());
+        });
+    </script>
+</body>
+</html>

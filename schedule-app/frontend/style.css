@@ -1,26 +1,177 @@
 /* Use Inter font */
 :root {
-  /* Color Palette */
+  /* ===== PRIMARY COLOR PALETTE ===== */
   --color-primary: #2e7d32;
   --color-primary-dark: #1b5e20;
+  --color-primary-light: #e8f5e9;
+  --color-primary-xlight: #f1f9f2;
   --color-secondary: #ffffff;
+  
+  /* ===== BACKGROUND COLORS ===== */
   --color-bg: #f4f7fa;
   --color-card-bg: #ffffff;
-  --color-border: #e0e0e0;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-overlay-light: rgba(0, 0, 0, 0.6);
+  
+  /* ===== TEXT COLORS ===== */
   --color-text: #303030;
+  --color-text-light: #3c4043;
+  --color-text-dark: #1e5f21;
   --color-muted: #5f6368;
+  --color-muted-light: #666;
+  
+  /* ===== BORDER COLORS ===== */
+  --color-border: #e0e0e0;
+  --color-border-light: #e8eaed;
+  --color-border-lighter: #f8f9fa;
+  
+  /* ===== STATUS COLORS ===== */
+  --color-error: #ea4335;
+  --color-error-dark: #d33426;
+  --color-error-light: #fef7f6;
+  --color-error-bg: #ffebee;
+  --color-error-text: #c62828;
+  --color-error-border: #c5221f;
+  
+  --color-warning: #ff6600;
+  --color-warning-light: #fff3cd;
+  --color-warning-bg: #fff3cd;
+  
+  --color-success: #388e3c;
+  --color-success-dark: #2e7d32;
+  --color-success-light: #f1f8f2;
+  --color-success-bg: #e8f5e9;
+  
+  --color-info: #1976d2;
+  --color-info-dark: #1565c0;
+  --color-info-light: #f3f8ff;
+  
+  /* ===== CHART COLORS ===== */
+  --color-chart-1: #4f46e5;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #10b981;
+  --color-chart-4: #f59e0b;
+  --color-chart-5: #ef4444;
+  --color-chart-6: #8b5cf6;
+  --color-chart-7: #ec4899;
+  
+  /* ===== ACCENT COLORS ===== */
+  --color-blue: #2563eb;
+  --color-blue-dark: #1d4ed8;
+  --color-blue-light: #e9f1fb;
+  
+  --color-purple: #9c27b0;
+  --color-purple-light: rgba(156, 39, 176, 0.12);
+  
+  --color-cyan: #00bcd4;
+  --color-cyan-light: rgba(0, 188, 212, 0.12);
+  
+  --color-pink: #e91e63;
+  --color-pink-light: rgba(233, 30, 99, 0.12);
+  
+  --color-amber: #ffc107;
+  --color-amber-light: rgba(255, 193, 7, 0.12);
+  
+  --color-light-blue: #51b6f6;
+  --color-light-blue-light: rgba(81, 182, 246, 0.15);
+  
+  --color-lime: #8bc34a;
+  --color-lime-light: rgba(139, 195, 74, 0.15);
+  
+  /* ===== HOVER STATES ===== */
   --color-hover: rgba(46, 125, 50, 0.1);
+  --color-hover-strong: rgba(46, 125, 50, 0.15);
+  --color-hover-light: rgba(46, 125, 50, 0.08);
+  
+  /* ===== ROOM/SCHEDULE SPECIFIC ===== */
+  --color-room-error: #ff6666;
+  --color-room-warning: #fff3cd;
+  --color-schedule-default: #e9f1fb;
+  
+  /* ===== DESIGN TOKENS ===== */
   --border-radius: 8px;
   --gap: 16px;
   --transition: 0.3s;
-  /* Elevated shadow presets */
+  --sidebar-width: 250px;
+  
+  /* ===== SHADOW PRESETS ===== */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
-  --sidebar-width: 250px;
-  --color-primary-light: #e8f5e9;            /*  light tint of primary */
-  --color-primary-xlight: #f1f9f2;           /* even lighter */
-  --color-hover-strong: rgba(46,125,50,0.15);/* stronger hover */
+  --shadow-primary: 0 4px 8px rgba(46, 125, 50, 0.4);
+  --shadow-error: 0 2px 5px rgba(234, 67, 53, 0.2);
+  --shadow-success: 0 2px 5px rgba(56, 142, 60, 0.2);
+  --shadow-info: 0 2px 5px rgba(25, 118, 210, 0.2);
+  
+  /* ===== SEMANTIC COLOR ALIASES ===== */
+  /* These provide meaningful names for specific use cases */
+  
+  /* Button Colors */
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-hover: var(--color-primary-dark);
+  --btn-primary-text: var(--color-secondary);
+  --btn-danger-bg: var(--color-error);
+  --btn-danger-hover: var(--color-error-dark);
+  --btn-danger-text: var(--color-secondary);
+  --btn-success-bg: var(--color-success);
+  --btn-success-hover: var(--color-success-dark);
+  --btn-success-text: var(--color-secondary);
+  --btn-info-bg: var(--color-info);
+  --btn-info-hover: var(--color-info-dark);
+  --btn-info-text: var(--color-secondary);
+  
+  /* Form Colors */
+  --input-border: var(--color-border);
+  --input-border-focus: var(--color-primary);
+  --input-bg: var(--color-secondary);
+  --input-text: var(--color-text);
+  --input-placeholder: var(--color-muted);
+  
+  /* Table Colors */
+  --table-header-bg: var(--color-secondary);
+  --table-header-text: var(--color-muted);
+  --table-row-even: #fafafa;
+  --table-row-hover: var(--color-hover);
+  --table-border: var(--color-border);
+  
+  /* Modal Colors */
+  --modal-overlay: var(--color-overlay);
+  --modal-bg: var(--color-card-bg);
+  --modal-border: var(--color-border);
+  
+  /* Alert Colors */
+  --alert-error-bg: var(--color-error-bg);
+  --alert-error-text: var(--color-error-text);
+  --alert-error-border: var(--color-error);
+  --alert-warning-bg: var(--color-warning-bg);
+  --alert-warning-text: var(--color-warning);
+  --alert-warning-border: var(--color-warning);
+  --alert-success-bg: var(--color-success-bg);
+  --alert-success-text: var(--color-success);
+  --alert-success-border: var(--color-success);
+  --alert-info-bg: var(--color-info-light);
+  --alert-info-text: var(--color-info);
+  --alert-info-border: var(--color-info);
+  
+  /* Schedule/Room Specific */
+  --schedule-cell-bg: var(--color-schedule-default);
+  --schedule-conflict-border: var(--color-room-error);
+  --schedule-conflict-text: var(--color-room-error);
+  --schedule-warning-bg: var(--color-room-warning);
+  
+  /* Navigation Colors */
+  --nav-bg: var(--color-primary);
+  --nav-text: var(--color-secondary);
+  --nav-hover: var(--color-primary-dark);
+  --sidebar-bg: var(--color-card-bg);
+  --sidebar-border: var(--color-border);
+  
+  /* Chart Theme */
+  --chart-primary: var(--color-chart-1);
+  --chart-secondary: var(--color-chart-2);
+  --chart-accent: var(--color-chart-3);
+  --chart-warning: var(--color-chart-4);
+  --chart-danger: var(--color-chart-5);
 }
 
 body {
@@ -45,14 +196,26 @@ body {
   visibility: hidden;
   animation: siteFade 0.8s ease-out forwards;
   animation-delay: 0.5s;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .main-app.loaded {
   opacity: 1;
   visibility: visible;
 }
+
 body.nav-collapsed .main-app {
   margin-left: 0;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .main-app {
+    margin-left: 0;
+    padding: 10px;
+  }
 }
 
 /* ===== STARTUP LOADING ANIMATION ===== */
@@ -368,6 +531,7 @@ nav {
   left: 0;
   height: 100vh;
   width: var(--sidebar-width);
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
@@ -380,11 +544,44 @@ nav {
   transition: transform 0.3s ease;
   z-index: 1000;
   box-shadow: var(--shadow-md);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Collapse state */
 nav.collapsed {
   transform: translateX(-100%);
+}
+
+/* Mobile navigation overlay */
+@media (max-width: 768px) {
+  nav {
+    transform: translateX(-100%);
+    z-index: 1100;
+    width: min(var(--sidebar-width), 80vw);
+  }
+  
+  nav.open {
+    transform: translateX(0);
+  }
+  
+  /* Mobile overlay */
+  body.nav-open::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 }
 
 /* Hamburger styles */
@@ -507,6 +704,43 @@ table {
   box-shadow: 0 1px 6px rgba(0,0,0,0.1);
 }
 
+/* Table container for responsive scrolling */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--border-radius);
+}
+
+/* Mobile table improvements */
+@media (max-width: 768px) {
+  table {
+    font-size: 0.8rem;
+  }
+  
+  th, td {
+    padding: 8px 6px;
+    min-width: 80px;
+  }
+  
+  .table-edit-btn,
+  .table-delete-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    min-width: 50px;
+    margin-right: 4px;
+  }
+  
+  /* Stack action buttons vertically on very small screens */
+  @media (max-width: 480px) {
+    .table-edit-btn,
+    .table-delete-btn {
+      display: block;
+      width: 100%;
+      margin: 2px 0;
+    }
+  }
+}
+
 thead { background: var(--color-secondary); }
 th, td {
   padding: 12px 10px;
@@ -573,8 +807,44 @@ tbody tr:hover td { background: var(--color-hover); }
 /* Responsive tweaks */
 @media (max-width: 768px) {
   nav { gap: 4px; }
-  nav button { padding: 4px 8px; font-size: 0.8rem; }
+  nav button { padding: 8px 12px; font-size: 0.9rem; }
   table, section { padding: var(--gap)/2; }
+  
+  /* Improve section spacing on mobile */
+  section {
+    margin: 8px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  /* Better button spacing */
+  .add-btn {
+    width: 100%;
+    margin: 12px 0;
+    padding: 12px 16px;
+    font-size: 1rem;
+  }
+}
+
+/* Additional mobile breakpoint for very small screens */
+@media (max-width: 480px) {
+  .main-app {
+    padding: 5px;
+  }
+  
+  section {
+    margin: 4px;
+    padding: 8px;
+  }
+  
+  nav button {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+  
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
 }
 
 /* Hide sections by default */
@@ -711,6 +981,32 @@ tbody tr:hover td { background: var(--color-hover); }
   outline: none;
   border-color: #2e7d32;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+
+/* Mobile form improvements */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin: 15px auto;
+    padding: 12px;
+  }
+  
+  .controls input[type="text"],
+  .controls input[type="password"],
+  .controls select {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  .controls {
+    margin: 10px auto;
+    padding: 8px;
+  }
 }
 
 /* Schedule table container */

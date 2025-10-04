@@ -140,7 +140,7 @@ function updateCurriculaList(newCurriculaList) {
  * Create and manage active curriculum indicator UI
  */
 function createActiveCurriculumIndicator() {
-  // Only show indicator on manage courses page
+  // Only show indicator on course catalog page
   const coursesSection = document.getElementById('section-courses');
   if (!coursesSection || coursesSection.classList.contains('hidden')) {
     // Hide indicator if not on courses page

@@ -24,6 +24,6 @@
     "modal-show-hide.js",
     "initial-page-load.js",
     "helper-functions.js",
-    "dashboard.js"
+    "analytics.js"
   ]
 }

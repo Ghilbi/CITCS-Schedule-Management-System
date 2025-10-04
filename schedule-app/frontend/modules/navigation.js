@@ -15,7 +15,7 @@ function applyFadeAnimation(element) {
 function hideAllSections() {
   // remove fade-in from all sections
   document.querySelectorAll("[id^='section-']").forEach(sec => sec.classList.remove("fade-in"));
-  document.getElementById("section-dashboard").classList.add("hidden");
+  document.getElementById("section-analytics").classList.add("hidden");
   document.getElementById("section-courses").classList.add("hidden");
   document.getElementById("section-course-offering").classList.add("hidden");
   document.getElementById("section-section-view").classList.add("hidden");
@@ -50,16 +50,16 @@ function showSection(section) {
     }
   } else if (section === "course-offering") {
     renderCourseOfferingTable();
-  } else if (section === "dashboard") {
-    // Initialize dashboard data when showing dashboard section
-    if (typeof loadDashboardData === 'function' && typeof renderDashboardStats === 'function' && typeof renderDashboardCharts === 'function') {
+  } else if (section === "analytics") {
+    // Initialize analytics data when showing analytics section
+    if (typeof loadAnalyticsData === 'function' && typeof renderAnalyticsStats === 'function' && typeof renderAnalyticsCharts === 'function') {
       setTimeout(async () => {
         try {
-          await loadDashboardData();
-          await renderDashboardStats();
-          await renderDashboardCharts();
+          await loadAnalyticsData();
+          await renderAnalyticsStats();
+          await renderAnalyticsCharts();
         } catch (error) {
-          console.error('Error loading dashboard:', error);
+          console.error('Error loading analytics:', error);
         }
       }, 100);
     }
@@ -181,11 +181,11 @@ document.getElementById("btn-schedule-summary").addEventListener("click", async 
   await initializeScheduleSummarySection();
 });
 
-document.getElementById("btn-dashboard").addEventListener("click", async () => {
-  if (typeof showDashboard === 'function') {
-    showDashboard();
+document.getElementById("btn-analytics").addEventListener("click", async () => {
+  if (typeof showAnalytics === 'function') {
+    showAnalytics();
   } else {
-    console.error('Dashboard function not available');
+    console.error('Analytics function not available');
   }
 });
 

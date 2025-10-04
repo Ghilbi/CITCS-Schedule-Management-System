@@ -6,7 +6,7 @@ A comprehensive web application for managing academic course schedules, room all
 - [Overview](#overview)
 - [Getting Started](#getting-started)
 - [Core Features](#core-features)
-  - [Manage Courses](#manage-courses)
+  - [Course Catalog](#course-catalog)
   - [Manage Course Offering](#manage-course-offering)
   - [Section View](#section-view)
   - [Room View](#room-view)
@@ -38,7 +38,7 @@ This Academic Schedule Management System streamlines the complex process of acad
 
 ## Core Features
 
-### Manage Courses
+### Course Catalog
 
 **Authentication Required**: Users must login with administrator credentials to access course management features.
 
@@ -310,4 +310,4 @@ npm start
 
 ---
 
-**For additional technical support or feature requests, please contact the system administrator.** 
+**For additional technical support or feature requests, please contact the system administrator.**

@@ -52,8 +52,8 @@
     </button>
 
   <nav>
-    <button id="btn-dashboard">Dashboard</button>
-    <button id="btn-courses">Manage Courses</button>
+    <button id="btn-analytics">Analytics</button>
+    <button id="btn-courses">Course Catalog</button>
     <button id="btn-course-offering">Manage Course Offering</button>
     <button id="btn-section-view">Section Management</button>
     <button id="btn-room-view">Room Management</button>
@@ -62,7 +62,7 @@
   </nav>
 
   <section id="section-courses" class="hidden">
-    <h2>Manage Courses</h2>
+    <h2>Course Catalog</h2>
     <div class="top-button-container">
       <button id="btn-add-course" class="add-btn">Add New Course</button>
     </div>
@@ -239,14 +239,14 @@
     <div id="schedule-summary-content"></div>
   </section>
 
-  <section id="section-dashboard" class="hidden">
-    <h2>Dashboard & Analytics</h2>
-    <div class="dashboard-controls">
-      <button id="btn-refresh-dashboard" class="add-btn">Refresh Data</button>
+  <section id="section-analytics" class="hidden">
+    <h2>Analytics</h2>
+    <div class="analytics-controls">
+      <button id="btn-refresh-analytics" class="add-btn">Refresh Data</button>
     </div>
     
     <!-- Statistics Cards -->
-    <div class="dashboard-stats">
+    <div class="analytics-stats">
       <div class="stat-card">
         <div class="stat-icon">📚</div>
         <div class="stat-content">
@@ -292,7 +292,7 @@
     </div>
     
     <!-- Charts Section -->
-    <div class="dashboard-charts">
+    <div class="analytics-charts">
       <div class="chart-row">
         <div class="chart-container">
           <div id="chart-degree-distribution" class="chart"></div>
@@ -738,7 +738,7 @@
 <script src="modules/modal-show-hide.js"></script>
 <script src="modules/initial-page-load.js"></script>
 <script src="modules/helper-functions.js"></script>
-<script src="modules/dashboard.js"></script>
+<script src="modules/analytics.js"></script>
 <!-- modularized end -->
 </body>
 </html>

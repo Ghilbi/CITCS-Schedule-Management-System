@@ -109,8 +109,8 @@ The application features an engaging startup sequence:
 
 The application provides a responsive sidebar navigation system with hamburger menu toggle:
 
-- **Dashboard**: Overview of the system with quick access to main features
-- **Manage Courses**: Interface for adding, editing, and deleting courses (authentication required)
+- **Analytics**: Overview of the system with quick access to main features
+- **Course Catalog**: Interface for adding, editing, and deleting courses (authentication required)
 - **Manage Course Offering**: Interface for managing course offerings and sections
 - **Section Management**: Displays courses organized by sections with filtering options
 - **Room Management**: Shows room allocations and schedules with CRUD operations

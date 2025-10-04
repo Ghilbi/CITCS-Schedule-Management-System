@@ -1,9 +1,9 @@
 /**************************************************************
- * Dashboard Module - Statistics and Analytics
+ * Analytics Module - Statistics and Analytics
  **************************************************************/
 
-// Dashboard data cache
-let dashboardData = {
+// Analytics data cache
+let analyticsData = {
   courses: [],
   courseOfferings: [],
   schedules: [],
@@ -11,31 +11,31 @@ let dashboardData = {
   curricula: []
 };
 
-// Dashboard refresh interval (5 minutes)
-let dashboardRefreshInterval = null;
+// Analytics refresh interval (5 minutes)
+let analyticsRefreshInterval = null;
 
 /**
- * Initialize Dashboard
+ * Initialize Analytics
  */
-async function initializeDashboard() {
+async function initializeAnalytics() {
   try {
-    showLoadingOverlay('Loading dashboard data...');
-    await loadDashboardData();
-    renderDashboardStats();
-    renderDashboardCharts();
-    startDashboardAutoRefresh();
+    showLoadingOverlay('Loading analytics data...');
+    await loadAnalyticsData();
+    renderAnalyticsStats();
+    renderAnalyticsCharts();
+    startAnalyticsAutoRefresh();
     hideLoadingOverlay();
   } catch (error) {
-    console.error('Error initializing dashboard:', error);
+    console.error('Error initializing analytics:', error);
     hideLoadingOverlay();
-    alert('Error loading dashboard data: ' + error.message);
+    alert('Error loading analytics data: ' + error.message);
   }
 }
 
 /**
- * Load all dashboard data
+ * Load all analytics data
  */
-async function loadDashboardData() {
+async function loadAnalyticsData() {
   try {
     const [courses, courseOfferings, schedules, rooms, curricula] = await Promise.all([
       apiGet('courses', true),
@@ -45,7 +45,7 @@ async function loadDashboardData() {
       apiGet('curricula', true)
     ]);
     
-    dashboardData = {
+    analyticsData = {
       courses: courses || [],
       courseOfferings: courseOfferings || [],
       schedules: schedules || [],
@@ -53,75 +53,83 @@ async function loadDashboardData() {
       curricula: curricula || []
     };
   } catch (error) {
-    console.error('Error loading dashboard data:', error);
+    console.error('Error loading analytics data:', error);
     throw error;
   }
 }
 
 /**
- * Calculate dashboard statistics
+ * Calculate analytics statistics
  */
-async function calculateDashboardStats() {
+async function calculateAnalyticsStats() {
   const stats = {
-    totalCourses: dashboardData.courses.length,
-    totalCourseOfferings: dashboardData.courseOfferings.length,
-    totalScheduledSessions: dashboardData.schedules.length,
-    totalRooms: dashboardData.rooms.length,
-    totalCurricula: dashboardData.curricula.length
+    totalCourses: analyticsData.courses.length,
+    totalCourseOfferings: analyticsData.courseOfferings.length,
+    totalScheduledSessions: analyticsData.schedules.length,
+    totalRooms: analyticsData.rooms.length,
+    totalCurricula: analyticsData.curricula.length
   };
 
-  // Course statistics by degree
-  stats.coursesByDegree = {};
-  dashboardData.courses.forEach(course => {
-    stats.coursesByDegree[course.degree] = (stats.coursesByDegree[course.degree] || 0) + 1;
+  // Calculate degree distribution
+  const degreeDistribution = {};
+  analyticsData.courses.forEach(course => {
+    const degree = course.degree || 'Unknown';
+    degreeDistribution[degree] = (degreeDistribution[degree] || 0) + 1;
   });
 
-  // Course offerings by trimester
-  stats.offeringsByTrimester = {};
-  dashboardData.courseOfferings.forEach(offering => {
-    stats.offeringsByTrimester[offering.trimester] = (stats.offeringsByTrimester[offering.trimester] || 0) + 1;
+  // Calculate trimester distribution
+  const trimesterDistribution = {};
+  analyticsData.courseOfferings.forEach(offering => {
+    const trimester = offering.trimester || 'Unknown';
+    trimesterDistribution[trimester] = (trimesterDistribution[trimester] || 0) + 1;
   });
 
-  // Course offerings by type
-  stats.offeringsByType = {};
-  dashboardData.courseOfferings.forEach(offering => {
-    stats.offeringsByType[offering.type] = (stats.offeringsByType[offering.type] || 0) + 1;
+  // Calculate offering type distribution
+  const offeringTypeDistribution = {};
+  analyticsData.courseOfferings.forEach(offering => {
+    const type = offering.offering_type || 'Unknown';
+    offeringTypeDistribution[type] = (offeringTypeDistribution[type] || 0) + 1;
   });
 
-  // Room utilization - count schedules that have room assignments (col > 0)
-  stats.roomUtilization = {};
-  const allColumns = await getAllRoomColumns();
-  dashboardData.schedules.forEach(schedule => {
-    if (schedule.col > 0) { // Room View entries have col > 0
-      // Get room name from allColumns array (col is 1-indexed)
-      const roomName = allColumns[schedule.col - 1];
-      if (roomName) {
-        stats.roomUtilization[roomName] = (stats.roomUtilization[roomName] || 0) + 1;
-      }
+  // Calculate room utilization
+  const roomUtilization = {};
+  analyticsData.schedules.forEach(schedule => {
+    const roomId = schedule.room_id;
+    if (roomId) {
+      roomUtilization[roomId] = (roomUtilization[roomId] || 0) + 1;
     }
   });
 
-  // Units distribution
-  stats.unitDistribution = {};
-  dashboardData.courses.forEach(course => {
-    const units = course.units || '0';
-    stats.unitDistribution[units] = (stats.unitDistribution[units] || 0) + 1;
+  // Calculate year level distribution
+  const yearLevelDistribution = {};
+  analyticsData.courses.forEach(course => {
+    const yearLevel = course.year_level || 'Unknown';
+    yearLevelDistribution[yearLevel] = (yearLevelDistribution[yearLevel] || 0) + 1;
   });
 
-  // Year level distribution
-  stats.yearLevelDistribution = {};
-  dashboardData.courses.forEach(course => {
-    stats.yearLevelDistribution[course.year_level] = (stats.yearLevelDistribution[course.year_level] || 0) + 1;
+  // Calculate curriculum distribution
+  const curriculumDistribution = {};
+  analyticsData.courses.forEach(course => {
+    const curriculum = course.curriculum || 'Unknown';
+    curriculumDistribution[curriculum] = (curriculumDistribution[curriculum] || 0) + 1;
   });
 
-  return stats;
+  return {
+    ...stats,
+    degreeDistribution,
+    trimesterDistribution,
+    offeringTypeDistribution,
+    roomUtilization,
+    yearLevelDistribution,
+    curriculumDistribution
+  };
 }
 
 /**
- * Render dashboard statistics cards
+ * Render analytics statistics cards
  */
-async function renderDashboardStats() {
-  const stats = await calculateDashboardStats();
+async function renderAnalyticsStats() {
+  const stats = await calculateAnalyticsStats();
   
   // Update stat cards
   document.getElementById('stat-total-courses').textContent = stats.totalCourses;
@@ -129,22 +137,23 @@ async function renderDashboardStats() {
   document.getElementById('stat-total-schedules').textContent = stats.totalScheduledSessions;
   document.getElementById('stat-total-rooms').textContent = stats.totalRooms;
   document.getElementById('stat-total-curricula').textContent = stats.totalCurricula;
-  
-  // Calculate utilization percentage
-  const utilizationPercentage = stats.totalRooms > 0 ? 
-    Math.round((Object.keys(stats.roomUtilization).length / stats.totalRooms) * 100) : 0;
-  document.getElementById('stat-room-utilization').textContent = `${utilizationPercentage}%`;
+  // Calculate room utilization percentage
+  const totalRooms = stats.totalRooms;
+  const usedRooms = Object.keys(stats.roomUtilization).length;
+  const utilizationPercentage = totalRooms > 0 ? Math.round((usedRooms / totalRooms) * 100) : 0;
+  document.getElementById('stat-room-utilization').textContent = utilizationPercentage + '%';
 }
 
 /**
- * Render dashboard charts
+ * Render analytics charts
  */
-async function renderDashboardCharts() {
-  const stats = await calculateDashboardStats();
+async function renderAnalyticsCharts() {
+  const stats = await calculateAnalyticsStats();
   
-  renderDegreeDistributionChart(stats.coursesByDegree);
-  renderTrimesterDistributionChart(stats.offeringsByTrimester);
-  renderOfferingTypeChart(stats.offeringsByType);
+  // Render all charts
+  renderDegreeDistributionChart(stats.degreeDistribution);
+  renderTrimesterDistributionChart(stats.trimesterDistribution);
+  renderOfferingTypeChart(stats.offeringTypeDistribution);
   renderRoomUtilizationChart(stats.roomUtilization);
   renderYearLevelChart(stats.yearLevelDistribution);
 }
@@ -272,21 +281,21 @@ function renderYearLevelChart(data) {
 }
 
 /**
- * Start auto-refresh for dashboard
+ * Start auto-refresh for analytics
  */
-function startDashboardAutoRefresh() {
+function startAnalyticsAutoRefresh() {
   // Clear existing interval
-  if (dashboardRefreshInterval) {
-    clearInterval(dashboardRefreshInterval);
+  if (analyticsRefreshInterval) {
+    clearInterval(analyticsRefreshInterval);
   }
   
   // Set new interval (5 minutes)
-  dashboardRefreshInterval = setInterval(async () => {
+  analyticsRefreshInterval = setInterval(async () => {
     try {
-      await loadDashboardData();
-      renderDashboardStats();
-      renderDashboardCharts();
-      console.log('Dashboard data refreshed automatically');
+      await loadAnalyticsData();
+      renderAnalyticsStats();
+      renderAnalyticsCharts();
+      console.log('Analytics data refreshed automatically');
     } catch (error) {
       console.error('Error during auto-refresh:', error);
     }
@@ -296,70 +305,70 @@ function startDashboardAutoRefresh() {
 /**
  * Stop auto-refresh
  */
-function stopDashboardAutoRefresh() {
-  if (dashboardRefreshInterval) {
-    clearInterval(dashboardRefreshInterval);
-    dashboardRefreshInterval = null;
+function stopAnalyticsAutoRefresh() {
+  if (analyticsRefreshInterval) {
+    clearInterval(analyticsRefreshInterval);
+    analyticsRefreshInterval = null;
   }
 }
 
 /**
- * Manual refresh dashboard
+ * Manual refresh analytics
  */
-async function refreshDashboard() {
+async function refreshAnalytics() {
   try {
-    showLoadingOverlay('Refreshing dashboard...');
-    await loadDashboardData();
-    await renderDashboardStats();
-    await renderDashboardCharts();
+    showLoadingOverlay('Refreshing analytics...');
+    await loadAnalyticsData();
+    await renderAnalyticsStats();
+    await renderAnalyticsCharts();
     hideLoadingOverlay();
-    console.log('Dashboard refreshed successfully');
+    console.log('Analytics refreshed successfully');
   } catch (error) {
-    console.error('Error refreshing dashboard:', error);
+    console.error('Error refreshing analytics:', error);
     hideLoadingOverlay();
-    alert('Error refreshing dashboard: ' + error.message);
+    alert('Error refreshing analytics: ' + error.message);
   }
 }
 
 
 
 /**
- * Show dashboard section
+ * Show analytics section
  */
-async function showDashboard() {
+async function showAnalytics() {
   hideAllSections();
-  const dashboardSection = document.getElementById('section-dashboard');
-  dashboardSection.classList.remove('hidden');
-  applyFadeAnimation(dashboardSection);
+  const analyticsSection = document.getElementById('section-analytics');
+  analyticsSection.classList.remove('hidden');
+  applyFadeAnimation(analyticsSection);
   
   // Update active button
   document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-  document.getElementById('btn-dashboard').classList.add('active');
+  document.getElementById('btn-analytics').classList.add('active');
   
-  // Load and render dashboard data
-  showLoadingOverlay('Loading dashboard...');
-  await loadDashboardData();
-  await renderDashboardStats();
-  await renderDashboardCharts();
+  // Load and render analytics data
+  showLoadingOverlay('Loading analytics...');
+  await loadAnalyticsData();
+  await renderAnalyticsStats();
+  await renderAnalyticsCharts();
   hideLoadingOverlay();
   
   // Start auto-refresh
-  startDashboardAutoRefresh();
+  startAnalyticsAutoRefresh();
 }
 
-// Event listeners for dashboard
+// Event listeners for analytics
 document.addEventListener('DOMContentLoaded', () => {
-  // Add event listeners when dashboard elements are available
+  // Add event listeners when analytics elements are available
   setTimeout(() => {
-    const refreshBtn = document.getElementById('btn-refresh-dashboard');
+    const refreshBtn = document.getElementById('btn-refresh-analytics');
     
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', refreshDashboard);
+      refreshBtn.addEventListener('click', refreshAnalytics);
     }
   }, 1000);
 });
 
 // Clean up on page unload
 window.addEventListener('beforeunload', () => {
-  stopDashboardAutoRefresh();
+  stopAnalyticsAutoRefresh();
 });

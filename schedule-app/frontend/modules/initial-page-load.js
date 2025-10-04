@@ -51,9 +51,9 @@
   await validateAllComplementary(); // Debounced validation
   });
   
-  // Show Dashboard by default (authentication handled at HTML level)
-  showSection('dashboard');
-  await loadDashboardData();
+  // Show Analytics by default (authentication handled at HTML level)
+  showSection('analytics');
+  await loadAnalyticsData();
 })();
 
 /**************************************************************

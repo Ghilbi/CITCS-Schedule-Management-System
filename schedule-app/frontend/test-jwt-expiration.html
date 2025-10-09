@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWT Expiration Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .status {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>JWT Expiration Notification Test</h1>
+    <p>This page tests the JWT expiration notification system.</p>
+    
+    <div class="test-section">
+      <h3>1. Login Status</h3>
+      <div id="login-status" class="status info">Checking login status...</div>
+      <button onclick="checkLoginStatus()">Check Login Status</button>
+      <button onclick="goToLogin()">Go to Login</button>
+    </div>
+    
+    <div class="test-section">
+      <h3>2. Token Status Check</h3>
+      <div id="token-status" class="status info">Click button to check token status</div>
+      <button onclick="checkTokenStatus()">Check Token Status</button>
+      <pre id="token-details"></pre>
+    </div>
+    
+    <div class="test-section">
+      <h3>3. JWT Monitor Status</h3>
+      <div id="monitor-status" class="status info">Checking JWT monitor...</div>
+      <button onclick="checkMonitorStatus()">Check Monitor Status</button>
+      <button onclick="startMonitoring()">Start Monitoring</button>
+      <button onclick="stopMonitoring()">Stop Monitoring</button>
+    </div>
+    
+    <div class="test-section">
+      <h3>4. Simulate Expiration Warning</h3>
+      <div id="simulation-status" class="status info">Click button to simulate expiration warning</div>
+      <button onclick="simulateWarning()">Simulate 15min Warning</button>
+      <button onclick="simulateCritical()">Simulate 5min Warning</button>
+      <button onclick="hideNotification()">Hide Notification</button>
+    </div>
+    
+    <div class="test-section">
+      <h3>5. Test API Calls</h3>
+      <div id="api-status" class="status info">Click button to test API calls</div>
+      <button onclick="testApiCall()">Test API Call</button>
+      <button onclick="testWithExpiredToken()">Test with Expired Token</button>
+    </div>
+  </div>
+
+  <!-- Include necessary modules -->
+  <script src="modules/api-wrapper-functions-for-backend-calls.js"></script>
+  <script src="modules/global-variables-for-room-view-columns.js"></script>
+  <script src="modules/jwt-expiration-monitor.js"></script>
+
+  <script>
+    // Test functions
+    function updateStatus(elementId, message, type = 'info') {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = `status ${type}`;
+    }
+
+    function checkLoginStatus() {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        updateStatus('login-status', 'User is logged in', 'success');
+      } else {
+        updateStatus('login-status', 'User is not logged in', 'error');
+      }
+    }
+
+    function goToLogin() {
+      window.location.href = 'login.html';
+    }
+
+    async function checkTokenStatus() {
+      try {
+        const response = await fetch('/api/token-status', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          updateStatus('token-status', 'Token is valid', 'success');
+          document.getElementById('token-details').textContent = JSON.stringify(data, null, 2);
+        } else {
+          const error = await response.json();
+          updateStatus('token-status', `Token error: ${error.error}`, 'error');
+          document.getElementById('token-details').textContent = JSON.stringify(error, null, 2);
+        }
+      } catch (error) {
+        updateStatus('token-status', `Request failed: ${error.message}`, 'error');
+      }
+    }
+
+    function checkMonitorStatus() {
+      if (window.jwtMonitor) {
+        const isMonitoring = window.jwtMonitor.isMonitoring;
+        updateStatus('monitor-status', `JWT Monitor is ${isMonitoring ? 'active' : 'inactive'}`, isMonitoring ? 'success' : 'info');
+      } else {
+        updateStatus('monitor-status', 'JWT Monitor not found', 'error');
+      }
+    }
+
+    function startMonitoring() {
+      if (window.jwtMonitor) {
+        window.jwtMonitor.startMonitoring();
+        updateStatus('monitor-status', 'JWT Monitor started', 'success');
+      } else {
+        updateStatus('monitor-status', 'JWT Monitor not available', 'error');
+      }
+    }
+
+    function stopMonitoring() {
+      if (window.jwtMonitor) {
+        window.jwtMonitor.stopMonitoring();
+        updateStatus('monitor-status', 'JWT Monitor stopped', 'info');
+      } else {
+        updateStatus('monitor-status', 'JWT Monitor not available', 'error');
+      }
+    }
+
+    function simulateWarning() {
+      if (window.jwtMonitor) {
+        window.jwtMonitor.showExpirationWarning(900); // 15 minutes
+        updateStatus('simulation-status', 'Simulated 15-minute warning', 'success');
+      } else {
+        updateStatus('simulation-status', 'JWT Monitor not available', 'error');
+      }
+    }
+
+    function simulateCritical() {
+      if (window.jwtMonitor) {
+        window.jwtMonitor.showExpirationWarning(300); // 5 minutes
+        updateStatus('simulation-status', 'Simulated 5-minute critical warning', 'success');
+      } else {
+        updateStatus('simulation-status', 'JWT Monitor not available', 'error');
+      }
+    }
+
+    function hideNotification() {
+      if (window.jwtMonitor) {
+        window.jwtMonitor.hideNotification();
+        updateStatus('simulation-status', 'Notification hidden', 'info');
+      } else {
+        updateStatus('simulation-status', 'JWT Monitor not available', 'error');
+      }
+    }
+
+    async function testApiCall() {
+      try {
+        const response = await fetch('/api/rooms', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          updateStatus('api-status', `API call successful. Got ${data.length} rooms.`, 'success');
+        } else {
+          updateStatus('api-status', `API call failed: ${response.status}`, 'error');
+        }
+      } catch (error) {
+        updateStatus('api-status', `API call error: ${error.message}`, 'error');
+      }
+    }
+
+    async function testWithExpiredToken() {
+      try {
+        const response = await fetch('/api/rooms', {
+          headers: {
+            'Authorization': 'Bearer expired.token.here',
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        const data = await response.json();
+        if (response.status === 401 && data.expired) {
+          updateStatus('api-status', 'Expired token correctly detected', 'success');
+        } else {
+          updateStatus('api-status', `Unexpected response: ${response.status}`, 'error');
+        }
+      } catch (error) {
+        updateStatus('api-status', `Test error: ${error.message}`, 'error');
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      checkLoginStatus();
+      checkMonitorStatus();
+    });
+  </script>
+</body>
+</html>

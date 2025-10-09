@@ -178,10 +178,42 @@ function authenticateToken(req, res, next) {
   if (!authHeader) return res.status(401).json({ error: 'Missing token' });
   const token = authHeader.split(' ')[1];
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Token expired', expired: true });
+      }
+      return res.status(403).json({ error: 'Invalid token' });
+    }
     req.user = user;
     next();
   });
+}
+
+// New middleware to check token expiration and send warnings
+function checkTokenExpiration(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return next();
+  
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.decode(token);
+    if (decoded && decoded.exp) {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = decoded.exp - currentTime;
+      
+      // Add expiration info to response headers
+      res.set('X-Token-Expires-In', timeUntilExpiry.toString());
+      res.set('X-Token-Expires-At', decoded.exp.toString());
+      
+      // If token expires in less than 15 minutes, add warning header
+      if (timeUntilExpiry < 900) { // 15 minutes
+        res.set('X-Token-Expiry-Warning', 'true');
+      }
+    }
+  } catch (err) {
+    // If token can't be decoded, continue without headers
+  }
+  next();
 }
 
 // Protect write operations (POST/PUT/DELETE) on the courses table only
@@ -212,6 +244,30 @@ app.post('/api/login', async (req, res) => {
     res.json({ token });
   } catch (err) {
     res.status(500).json({ error: 'Authentication error' });
+  }
+});
+
+// Add token expiration checking to all API routes
+app.use('/api', checkTokenExpiration);
+
+// Token status endpoint for frontend to check expiration
+app.get('/api/token-status', authenticateToken, (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader.split(' ')[1];
+  
+  try {
+    const decoded = jwt.decode(token);
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = decoded.exp - currentTime;
+    
+    res.json({
+      valid: true,
+      expiresAt: decoded.exp,
+      expiresIn: timeUntilExpiry,
+      warningThreshold: timeUntilExpiry < 900 // 15 minutes
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to decode token' });
   }
 });
 

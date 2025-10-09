@@ -77,8 +77,16 @@ function setAuthToken(token) {
   authToken = token;
   if (token) {
     localStorage.setItem('authToken', token);
+    // Start JWT monitoring when token is set
+    if (window.jwtMonitor) {
+      window.jwtMonitor.startMonitoring();
+    }
   } else {
     localStorage.removeItem('authToken');
+    // Stop JWT monitoring when token is removed
+    if (window.jwtMonitor) {
+      window.jwtMonitor.stopMonitoring();
+    }
   }
 }
 

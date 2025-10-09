@@ -59,7 +59,7 @@ function hideModal(modal) {
   setupModalCloseButtons();
   
   // Add event listeners for clear all buttons
-  document.getElementById('btn-clear-courses').addEventListener('click', clearAllCourses);
+  document.getElementById('btn-clear-courses').addEventListener('click', showSelectiveDeletionModal);
   document.getElementById('btn-clear-courseOffering').addEventListener('click', clearAllCourseOfferings);
   
   // Primary navigation menu event listeners

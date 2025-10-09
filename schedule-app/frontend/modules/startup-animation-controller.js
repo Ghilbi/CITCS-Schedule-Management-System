@@ -14,6 +14,7 @@ function initStartupAnimation() {
     loader.classList.add('fade-out');
     
     // Enable scrolling and show main app
+    document.body.classList.add('app-loaded');
     document.body.style.overflow = 'auto';
     mainApp.classList.add('loaded');
     
@@ -40,6 +41,7 @@ function skipStartupAnimation() {
   const mainApp = document.getElementById('main-app');
   
   loader.style.display = 'none';
+  document.body.classList.add('app-loaded');
   document.body.style.overflow = 'auto';
   mainApp.classList.add('loaded');
   mainApp.style.animationDelay = '0s';

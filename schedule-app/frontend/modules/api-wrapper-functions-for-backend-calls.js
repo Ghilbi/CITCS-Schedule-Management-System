@@ -84,6 +84,15 @@ async function apiPost(table, data) {
       body: JSON.stringify(data)
     });
     
+    // Check for token expiration
+    if (response.status === 401) {
+      const errorData = await response.json();
+      if (errorData.expired) {
+        handleTokenExpiration();
+        throw new Error('Session expired');
+      }
+    }
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error (${response.status}) for POST to ${table}:`, errorText);
@@ -110,6 +119,16 @@ async function apiPut(table, id, data) {
     headers: addAuthHeader({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data)
   });
+  
+  // Check for token expiration
+  if (response.status === 401) {
+    const errorData = await response.json();
+    if (errorData.expired) {
+      handleTokenExpiration();
+      throw new Error('Session expired');
+    }
+  }
+  
   return response.json();
 }
 
@@ -125,7 +144,32 @@ async function apiDelete(table, id) {
     method: 'DELETE',
     headers: addAuthHeader()
   });
+  
+  // Check for token expiration
+  if (response.status === 401) {
+    const errorData = await response.json();
+    if (errorData.expired) {
+      handleTokenExpiration();
+      throw new Error('Session expired');
+    }
+  }
+  
   return response.json();
+}
+
+// Handle token expiration across the application
+function handleTokenExpiration() {
+  // Clear the token
+  localStorage.removeItem('authToken');
+  
+  // Notify JWT monitor if available
+  if (window.jwtMonitor) {
+    window.jwtMonitor.handleTokenExpired();
+  } else {
+    // Fallback if JWT monitor is not available
+    alert('Your session has expired. You will be redirected to the login page.');
+    window.location.href = 'login.html';
+  }
 }
 
 // Clear cache on POST/PUT/DELETE to keep data consistent

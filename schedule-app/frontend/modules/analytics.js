@@ -11,8 +11,27 @@ let analyticsData = {
   curricula: []
 };
 
+// Note: predefinedRooms is defined globally in global-variables-for-room-view-columns.js
+
 // Analytics refresh interval (5 minutes)
 let analyticsRefreshInterval = null;
+
+/**
+ * Get all available rooms (predefined + database rooms)
+ */
+function getAllAvailableRooms() {
+  const databaseRoomNames = analyticsData.rooms.map(room => room.name);
+  const allUniqueRooms = [...new Set([...predefinedRooms, ...databaseRoomNames])];
+  
+  // Each room has A and B variants
+  const allRoomVariants = [];
+  allUniqueRooms.forEach(room => {
+    allRoomVariants.push(`${room} A`);
+    allRoomVariants.push(`${room} B`);
+  });
+  
+  return allRoomVariants;
+}
 
 /**
  * Initialize Analytics
@@ -62,11 +81,14 @@ async function loadAnalyticsData() {
  * Calculate analytics statistics
  */
 async function calculateAnalyticsStats() {
+  // Get all available rooms (predefined + database rooms)
+  const allAvailableRooms = getAllAvailableRooms();
+  
   const stats = {
     totalCourses: analyticsData.courses.length,
     totalCourseOfferings: analyticsData.courseOfferings.length,
     totalScheduledSessions: analyticsData.schedules.length,
-    totalRooms: analyticsData.rooms.length,
+    totalRooms: allAvailableRooms.length,
     totalCurricula: analyticsData.curricula.length
   };
 
@@ -91,12 +113,16 @@ async function calculateAnalyticsStats() {
     offeringTypeDistribution[type] = (offeringTypeDistribution[type] || 0) + 1;
   });
 
-  // Calculate room utilization
+  // Calculate room utilization based on col assignments
   const roomUtilization = {};
   analyticsData.schedules.forEach(schedule => {
-    const roomId = schedule.room_id;
-    if (roomId) {
-      roomUtilization[roomId] = (roomUtilization[roomId] || 0) + 1;
+    // Check if this is a room view entry (col > 0)
+    if (schedule.col && schedule.col > 0) {
+      const colIndex = schedule.col - 1; // Convert to 0-based index
+      if (colIndex >= 0 && colIndex < allAvailableRooms.length) {
+        const roomName = allAvailableRooms[colIndex];
+        roomUtilization[roomName] = (roomUtilization[roomName] || 0) + 1;
+      }
     }
   });
 

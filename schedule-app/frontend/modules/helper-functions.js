@@ -1,28 +1,61 @@
 /**************************************************************
  * HELPER FUNCTIONS
  **************************************************************/
-async function clearAllCourses() {
-  if (!confirm("Are you sure you want to delete ALL courses? This will also delete all course offerings and schedule entries.")) return;
-  
-  showLoadingOverlay('Clearing all courses...');
+// Original clearAllCourses function removed - replaced by selective deletion functionality
+
+// Selective course deletion function
+async function selectiveClearCourses(deletionType, filters = {}) {
+  showLoadingOverlay('Deleting courses...');
   
   try {
     const courses = await apiGet("courses");
     const offerings = await apiGet("course_offerings");
     const schedules = await apiGet("schedules");
     
+    let coursesToDelete = [];
+    
+    // Filter courses based on deletion type
+    switch (deletionType) {
+      case 'all':
+        coursesToDelete = courses;
+        break;
+      case 'year-level':
+        coursesToDelete = courses.filter(course => course.year_level === filters.yearLevel);
+        break;
+      case 'trimester':
+        coursesToDelete = courses.filter(course => course.trimester === filters.trimester);
+        break;
+      case 'degree':
+        coursesToDelete = courses.filter(course => course.degree === filters.degree);
+        break;
+      default:
+        throw new Error('Invalid deletion type');
+    }
+    
+    if (coursesToDelete.length === 0) {
+      hideLoadingOverlay();
+      alert('No courses found matching the selected criteria.');
+      return;
+    }
+    
+    const courseIds = coursesToDelete.map(course => course.id);
+    
+    // Find related offerings and schedules
+    const relatedOfferings = offerings.filter(offering => courseIds.includes(offering.courseId));
+    const relatedSchedules = schedules.filter(schedule => courseIds.includes(schedule.courseId));
+    
     // Delete schedules first (foreign key constraints)
-    for (const schedule of schedules) {
+    for (const schedule of relatedSchedules) {
       await apiDelete("schedules", schedule.id);
     }
     
     // Delete course offerings next
-    for (const offering of offerings) {
+    for (const offering of relatedOfferings) {
       await apiDelete("course_offerings", offering.id);
     }
     
     // Delete courses last
-    for (const course of courses) {
+    for (const course of coursesToDelete) {
       await apiDelete("courses", course.id);
     }
     
@@ -36,10 +69,57 @@ async function clearAllCourses() {
     await renderCourseOfferingTable();
     
     hideLoadingOverlay();
+    
+    // Show success message
+    const deletedCount = coursesToDelete.length;
+    const relatedCount = relatedOfferings.length + relatedSchedules.length;
+    alert(`Successfully deleted ${deletedCount} course(s) and ${relatedCount} related offering(s) and schedule(s).`);
+    
   } catch (error) {
-    console.error("Error clearing all courses:", error);
+    console.error("Error in selective course deletion:", error);
     hideLoadingOverlay();
-    alert("An error occurred while clearing all courses. Please try again.");
+    alert("An error occurred while deleting courses. Please try again.");
+  }
+}
+
+// Function to count courses for deletion preview
+async function countCoursesForDeletion(deletionType, filters = {}) {
+  try {
+    const courses = await apiGet("courses");
+    const offerings = await apiGet("course_offerings");
+    const schedules = await apiGet("schedules");
+    
+    let coursesToDelete = [];
+    
+    switch (deletionType) {
+      case 'all':
+        coursesToDelete = courses;
+        break;
+      case 'year-level':
+        coursesToDelete = courses.filter(course => course.year_level === filters.yearLevel);
+        break;
+      case 'trimester':
+        coursesToDelete = courses.filter(course => course.trimester === filters.trimester);
+        break;
+      case 'degree':
+        coursesToDelete = courses.filter(course => course.degree === filters.degree);
+        break;
+      default:
+        return { courses: 0, offerings: 0, schedules: 0 };
+    }
+    
+    const courseIds = coursesToDelete.map(course => course.id);
+    const relatedOfferings = offerings.filter(offering => courseIds.includes(offering.courseId));
+    const relatedSchedules = schedules.filter(schedule => courseIds.includes(schedule.courseId));
+    
+    return {
+      courses: coursesToDelete.length,
+      offerings: relatedOfferings.length,
+      schedules: relatedSchedules.length
+    };
+  } catch (error) {
+    console.error("Error counting courses for deletion:", error);
+    return { courses: 0, offerings: 0, schedules: 0 };
   }
 }
 

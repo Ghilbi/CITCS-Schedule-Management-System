@@ -14,7 +14,9 @@ const courseFilterCurriculum = document.getElementById("course-filter-curriculum
 async function renderCoursesTable(forceRefresh = false) {
   let coursesList = await apiGet("courses", forceRefresh);
   const searchTerm = courseSearch.value.toLowerCase();
+  const filterYearLevel = courseFilterYearLevel.value;
   const filterDegree = courseFilterDegree.value;
+  const filterTrimester = courseFilterTrimester.value;
   const filterCurriculum = courseFilterCurriculum.value;
   const sortValue = courseSort.value;
 
@@ -28,8 +30,16 @@ async function renderCoursesTable(forceRefresh = false) {
     );
   }
 
+  if (filterYearLevel) {
+    coursesList = coursesList.filter(c => c.year_level === filterYearLevel);
+  }
+
   if (filterDegree) {
     coursesList = coursesList.filter(c => c.degree === filterDegree);
+  }
+
+  if (filterTrimester) {
+    coursesList = coursesList.filter(c => c.trimester === filterTrimester);
   }
 
   if (filterCurriculum) {
@@ -201,9 +211,34 @@ window.deleteCourse = async function(id) {
   await forceValidateAllComplementary();
 };
 
+// Collapsible filter functionality
+const filterToggleBtn = document.getElementById("filter-toggle-btn");
+const filterSection = document.getElementById("filter-section");
+
+if (filterToggleBtn && filterSection) {
+  filterToggleBtn.addEventListener("click", () => {
+    filterSection.classList.toggle("collapsed");
+    filterToggleBtn.classList.toggle("active");
+    
+    // Update the text and arrow
+    const filterText = filterToggleBtn.querySelector(".filter-text");
+    const filterArrow = filterToggleBtn.querySelector(".filter-arrow");
+    
+    if (filterSection.classList.contains("collapsed")) {
+      if (filterText) filterText.textContent = "Show Filters";
+      if (filterArrow) filterArrow.textContent = "▼";
+    } else {
+      if (filterText) filterText.textContent = "Hide Filters";
+      if (filterArrow) filterArrow.textContent = "▲";
+    }
+  });
+}
+
 // Debounced controls for Courses
 courseSearch.addEventListener("input", debounce(renderCoursesTable, 200));
+courseFilterYearLevel.addEventListener("change", debounce(renderCoursesTable, 200));
 courseFilterDegree.addEventListener("change", debounce(renderCoursesTable, 200));
+courseFilterTrimester.addEventListener("change", debounce(renderCoursesTable, 200));
 courseFilterCurriculum.addEventListener("change", debounce(renderCoursesTable, 200));
 courseSort.addEventListener("change", debounce(renderCoursesTable, 200));
 

@@ -34,7 +34,7 @@
   setupModalCloseButtons();
   
   // Add event listeners for clear all buttons
-  document.getElementById('btn-clear-courses').addEventListener('click', clearAllCourses);
+  // Note: btn-clear-courses now handled by modal-show-hide.js with selective deletion
   document.getElementById('btn-clear-courseOffering').addEventListener('click', clearAllCourseOfferings);
   
   // Primary navigation menu event listeners
@@ -59,47 +59,7 @@
 /**************************************************************
  * HELPER FUNCTIONS
  **************************************************************/
-async function clearAllCourses() {
-  if (!confirm("Are you sure you want to delete ALL courses? This will also delete all course offerings and schedule entries.")) return;
-  
-  showLoadingOverlay('Clearing all courses...');
-  
-  try {
-    const courses = await apiGet("courses");
-    const offerings = await apiGet("course_offerings");
-    const schedules = await apiGet("schedules");
-    
-    // Delete schedules first (foreign key constraints)
-    for (const schedule of schedules) {
-      await apiDelete("schedules", schedule.id);
-    }
-    
-    // Delete course offerings next
-    for (const offering of offerings) {
-      await apiDelete("course_offerings", offering.id);
-    }
-    
-    // Delete courses last
-    for (const course of courses) {
-      await apiDelete("courses", course.id);
-    }
-    
-    // Clear cache
-    clearApiCache("courses");
-    clearApiCache("course_offerings");
-    clearApiCache("schedules");
-    
-    // Refresh tables
-    await renderCoursesTable();
-    await renderCourseOfferingTable();
-    
-    hideLoadingOverlay();
-  } catch (error) {
-    console.error("Error clearing all courses:", error);
-    hideLoadingOverlay();
-    alert("An error occurred while clearing all courses. Please try again.");
-  }
-}
+// clearAllCourses function removed - replaced by selective deletion functionality
 
 // Modified clear all course offerings function to use loading overlay
 async function clearAllCourseOfferings() {

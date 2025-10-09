@@ -35,7 +35,10 @@ const btnAddCourse = document.getElementById("btn-add-course");
 const modalCourse = document.getElementById("modal-course");
 const btnSaveCourse = document.getElementById("btn-save-course");
 const courseSearch = document.getElementById("course-search");
+
+const courseFilterYearLevel = document.getElementById("course-filter-year-level");
 const courseFilterDegree = document.getElementById("course-filter-degree");
+const courseFilterTrimester = document.getElementById("course-filter-trimester");
 const courseSort = document.getElementById("course-sort");
 const btnImportCsv = document.getElementById("btn-import-csv");
 const btnExportCsv = document.getElementById("btn-export-csv");
@@ -100,8 +103,16 @@ function setAuthToken(token) {
   authToken = token;
   if (token) {
     localStorage.setItem('authToken', token);
+    // Start JWT monitoring when token is set
+    if (window.jwtMonitor) {
+      window.jwtMonitor.startMonitoring();
+    }
   } else {
     localStorage.removeItem('authToken');
+    // Stop JWT monitoring when token is removed
+    if (window.jwtMonitor) {
+      window.jwtMonitor.stopMonitoring();
+    }
   }
 }
 

@@ -58,6 +58,9 @@ function showSection(section) {
           await loadAnalyticsData();
           await renderAnalyticsStats();
           await renderAnalyticsCharts();
+          if (typeof renderPredictiveAnalyticsUI === 'function') {
+            renderPredictiveAnalyticsUI();
+          }
         } catch (error) {
           console.error('Error loading analytics:', error);
         }

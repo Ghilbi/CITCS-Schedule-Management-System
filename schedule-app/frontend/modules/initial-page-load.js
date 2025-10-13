@@ -54,6 +54,15 @@
   // Show Analytics by default (authentication handled at HTML level)
   showSection('analytics');
   await loadAnalyticsData();
+  if (typeof renderAnalyticsStats === 'function') {
+    await renderAnalyticsStats();
+  }
+  if (typeof renderAnalyticsCharts === 'function') {
+    await renderAnalyticsCharts();
+  }
+  if (typeof renderPredictiveAnalyticsUI === 'function') {
+    renderPredictiveAnalyticsUI();
+  }
 })();
 
 /**************************************************************
@@ -516,15 +525,24 @@ async function exportAllSchedulesToExcel() {
             sorted.forEach(sch => {
               const course = courses.find(c => c.id === sch.courseId);
               let roomName = "Not assigned";
-              if (sch.col > 0) roomName = allColumns[sch.col - 1] || roomName;
+              if (sch.col > 0) {
+                roomName = allColumns[sch.col - 1] || roomName;
+                // Remove letters (A, B, etc.) from room names
+                roomName = roomName.replace(/\s+[A-Z]$/, '');
+              }
               const off = offerings.find(off =>
                 off.courseId === sch.courseId && off.type === sch.unitType &&
                 (off.section === sch.section || off.section2 === sch.section2)
               );
               const shared = sch.section === section ? sch.section2 : sch.section;
+              
+              // Move unit type to description instead of course name
+              const courseDescription = course?.description || "No description";
+              const unitTypeDescription = `${courseDescription} (${sch.unitType})`;
+              
               wsData.push([
-                course ? `${course.subject} (${sch.unitType})` : "Unknown",
-                course?.description || "No description",
+                course ? course.subject : "Unknown",
+                unitTypeDescription,
                 off?.units || "N/A",
                 sch.time,
                 dayType,

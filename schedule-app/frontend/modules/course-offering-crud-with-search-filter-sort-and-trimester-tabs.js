@@ -27,6 +27,45 @@ const labelPurelec = document.getElementById("label-purelec");
 
 let currentTrimesterFilter = "1st Trimester";
 
+// Validation helper functions
+function showValidationFeedback(inputElement, message) {
+  // Remove any existing feedback
+  clearValidationFeedback(inputElement);
+  
+  // Create feedback element
+  const feedback = document.createElement('div');
+  feedback.className = 'validation-feedback';
+  feedback.textContent = message;
+  feedback.style.color = '#dc3545';
+  feedback.style.fontSize = '0.875rem';
+  feedback.style.marginTop = '4px';
+  feedback.style.display = 'block';
+  
+  // Add feedback after the input element
+  inputElement.parentNode.insertBefore(feedback, inputElement.nextSibling);
+  
+  // Add error styling to input
+  inputElement.style.borderColor = '#dc3545';
+  inputElement.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+  
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    clearValidationFeedback(inputElement);
+  }, 3000);
+}
+
+function clearValidationFeedback(inputElement) {
+  // Remove feedback element
+  const feedback = inputElement.parentNode.querySelector('.validation-feedback');
+  if (feedback) {
+    feedback.remove();
+  }
+  
+  // Reset input styling
+  inputElement.style.borderColor = '';
+  inputElement.style.boxShadow = '';
+}
+
 // Function to update the section code preview for manual entry
 async function updateSectionCodePreview() {
   const year = courseOfferingYearSelect.value;
@@ -186,11 +225,37 @@ courseOfferingYearSelect.addEventListener('change', function() {
   updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
 });
 courseOfferingSectionLetter.addEventListener('input', function() {
+  // Only allow alphabetical characters (A-Z, a-z)
+  const value = this.value;
+  const alphabeticalOnly = value.replace(/[^A-Za-z]/g, '');
+  
+  if (value !== alphabeticalOnly) {
+    this.value = alphabeticalOnly;
+    // Show validation feedback
+    showValidationFeedback(this, 'Only alphabetical characters are allowed for section letters.');
+  } else {
+    // Clear any existing validation feedback
+    clearValidationFeedback(this);
+  }
+  
   updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
 });
 
 // Add event listener for the section letters in bulk mode
 courseOfferingSectionLetters.addEventListener('input', function() {
+  // Only allow alphabetical characters, commas, hyphens, and spaces (A-Z, a-z, ,, -, space)
+  const value = this.value;
+  const validCharsOnly = value.replace(/[^A-Za-z,\-\s]/g, '');
+  
+  if (value !== validCharsOnly) {
+    this.value = validCharsOnly;
+    // Show validation feedback
+    showValidationFeedback(this, 'Only alphabetical characters, commas, and hyphens are allowed for section letters.');
+  } else {
+    // Clear any existing validation feedback
+    clearValidationFeedback(this);
+  }
+  
   updateBulkSectionCodePreview().catch(error => console.error("Error checking for bulk duplicates:", error));
 });
 

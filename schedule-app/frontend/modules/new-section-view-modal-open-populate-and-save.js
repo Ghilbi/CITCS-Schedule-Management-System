@@ -14,6 +14,9 @@ async function openSectionViewModal(dayType, time, section) {
   // Hide LecLab interface initially
   hideLecLabInterface();
   
+  // Hide room assignment section initially
+  hideRoomAssignmentSection();
+  
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
   const existing = schedules.find(sch => {
@@ -52,6 +55,9 @@ async function openSectionViewModal(dayType, time, section) {
       const course = courses.find(c => c.id === matchingOffering.courseId);
       if (course && course.unit_category === "Lec/Lab") {
         await showLecLabInterface(course, matchingOffering, dayType, time, section);
+        hideRoomAssignmentSection();
+      } else {
+        showRoomAssignmentSection();
       }
     }
     
@@ -339,13 +345,20 @@ document.getElementById("sectionview-courseOffering").addEventListener("change",
         const time = document.getElementById("sectionview-time").value;
         const section = document.getElementById("sectionview-section").value;
         await showLecLabInterface(course, offering, dayType, time, section);
+        // Hide regular room assignment section for Lec/Lab subjects
+        hideRoomAssignmentSection();
       }
     } else {
       hideLecLabInterface();
+      // Show regular room assignment section for non-Lec/Lab subjects
+      showRoomAssignmentSection();
+      await populateSectionViewRoomDropdown();
     }
   } else {
     document.getElementById("sectionview-section2").innerHTML = `<option value="">-- Select Section --</option>`;
     hideLecLabInterface();
+    // Hide room assignment section when no subject is selected
+    hideRoomAssignmentSection();
   }
 });
 
@@ -1082,5 +1095,19 @@ async function saveRegularAssignment() {
   // Update Room View as well since they're connected
   await renderRoomViewTables();
   await forceValidateAllComplementary();
+}
+
+/**************************************************************
+ * Room Assignment Section Visibility Functions
+ **************************************************************/
+
+function showRoomAssignmentSection() {
+  const roomAssignmentSection = document.querySelector(".room-assignment-section");
+  roomAssignmentSection.style.display = "block";
+}
+
+function hideRoomAssignmentSection() {
+  const roomAssignmentSection = document.querySelector(".room-assignment-section");
+  roomAssignmentSection.style.display = "none";
 }
 

@@ -247,6 +247,20 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Refresh token route to extend session without re-login
+app.post('/api/refresh-token', authenticateToken, (req, res) => {
+  try {
+    const username = req.user?.username;
+    if (!username) {
+      return res.status(400).json({ error: 'Invalid user payload' });
+    }
+    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to refresh token' });
+  }
+});
+
 // Add token expiration checking to all API routes
 app.use('/api', checkTokenExpiration);
 

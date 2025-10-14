@@ -490,35 +490,83 @@ function setupModalCloseButtons() {
 /*
  * Excel Export Functionality
  */
+// Utility: load image as base64 data URL for embedding in Excel
+async function loadImageAsBase64(url) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function exportAllSchedulesToExcel() {
   try {
-    // Fetch all data
-    const schedules = await apiGet("schedules");
-    const courses = await apiGet("courses");
-    const offerings = await apiGet("course_offerings");
-    const allColumns = await getAllRoomColumns();
-    const yearLevels = ["1st yr", "2nd yr", "3rd yr"];
-    const trimesters = ["1st Trimester", "2nd Trimester", "3rd Trimester"];
+    showLoadingOverlay('Preparing Excel export...');
 
-    // Create a new Excel workbook
-    const workbook = XLSX.utils.book_new();
+    const [schedules, courses, offerings, allColumns] = await Promise.all([
+      apiGet('schedules'),
+      apiGet('courses'),
+      apiGet('course_offerings'),
+      getAllRoomColumns()
+    ]);
 
-    // Create one sheet per trimester, including all year-level schedules
+    const yearLevels = ['1st yr', '2nd yr', '3rd yr'];
+    const trimesters = ['1st Trimester', '2nd Trimester', '3rd Trimester'];
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'CITCS Schedule App';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    // Compute School Year label (SY YYYY - YYYY+1)
+    const now = new Date();
+    const syStartYear = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1; // Start around June
+    const schoolYearLabel = `${syStartYear} - ${syStartYear + 1}`;
+
     for (const trimester of trimesters) {
-      const wsData = [];
-      // Loop through each year level
+      const sheet = workbook.addWorksheet(trimester, {
+        properties: { defaultRowHeight: 18 }
+      });
+
+      // Set columns with widths and number formatting (no auto header row)
+      sheet.columns = [
+        { key: 'course', width: 25 },
+        { key: 'desc', width: 50 },
+        { key: 'units', width: 7, style: { numFmt: '0' } },
+        { key: 'time', width: 12 },
+        { key: 'day', width: 7 },
+        { key: 'room', width: 15 },
+        { key: 'shared', width: 16 }
+      ];
+
+      // No frozen panes or fixed header rows to keep sheet fully editable
+
+      // Styling constants
+      const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
+      const headerFont = { bold: true, color: { argb: 'FFFFFFFF' } };
+      const topGreyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; // light grey
+      const subGreyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDBDBD' } }; // darker grey
+      const zebraFillA = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F9FC' } };
+      const zebraFillB = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+      const borderThin = {
+        top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
+      };
+
+      // Build content per year level and section
       for (const yearLevel of yearLevels) {
-        // Year-level header row
-        wsData.push([yearLevel]);
-        // Get all sections for this trimester & year level
         const sections = await getUniqueSectionsForTrimesterAndYear(trimester, yearLevel);
         if (sections.length === 0) {
-          wsData.push([]); // spacer if no sections
+          sheet.addRow(['']).commit();
           continue;
         }
-        // Process each section block
+
         for (const section of sections) {
-          // Filter section schedules
           const sectionSchedules = schedules.filter(sch => {
             const course = courses.find(c => c.id === sch.courseId);
             return (sch.section === section || sch.section2 === section) &&
@@ -527,43 +575,73 @@ async function exportAllSchedulesToExcel() {
           if (sectionSchedules.length === 0) continue;
 
           // Determine degree for this section
-          let degree = "Unknown";
+          let degree = 'Unknown';
           const offeringMatch = offerings.find(off =>
             off.section === section &&
             courses.find(c => c.id === off.courseId)?.trimester === trimester &&
             courses.find(c => c.id === off.courseId)?.year_level === yearLevel
           );
           if (offeringMatch) {
-            degree = offeringMatch.degree || courses.find(c => c.id === offeringMatch.courseId)?.degree || "Unknown";
+            degree = offeringMatch.degree || courses.find(c => c.id === offeringMatch.courseId)?.degree || 'Unknown';
           }
 
           // Determine group A/B based on room assignments
           let countA = 0, countB = 0;
           sectionSchedules.forEach(sch => {
             if (sch.col > 0) {
-              const roomName = allColumns[sch.col - 1] || "";
-              if (roomName.endsWith(" A")) countA++;
-              else if (roomName.endsWith(" B")) countB++;
+              const roomName = allColumns[sch.col - 1] || '';
+              if (roomName.endsWith(' A')) countA++;
+              else if (roomName.endsWith(' B')) countB++;
             }
           });
-          const group = countA >= countB ? "A" : "B";
+          const group = countA >= countB ? 'A' : 'B';
 
-          // Section header rows
-          // Check if this is an international section to exclude degree display
-          const isInternational = section && section.startsWith("INTERNATIONAL ");
-          wsData.push(isInternational ? 
-            [`${yearLevel}, ${trimester}`] : 
-            [`${degree}, ${yearLevel}, ${trimester}`]);
-          wsData.push([`${section} - Group ${group}`]);
+          // Section header rows styled per provided screenshot
+          const isInternational = section && section.startsWith('INTERNATIONAL ');
+          const yearLabel = yearLevel
+            .replace('1st yr', 'First Year')
+            .replace('2nd yr', 'Second Year')
+            .replace('3rd yr', 'Third Year');
+          const termLabel = trimester.replace('Trimester', 'Term');
+          const header1 = isInternational
+            ? `${yearLabel}, ${termLabel}, SY ${schoolYearLabel}`
+            : `${degree}, ${yearLabel}, ${termLabel}, SY ${schoolYearLabel}`;
 
-          // Handle schedules by day type
-          for (const dayType of ["MWF", "TTHS"]) {
+          const rowTop = sheet.addRow([header1]);
+          // Merge across all 7 columns and apply style
+          sheet.mergeCells(rowTop.number, 1, rowTop.number, 7);
+          rowTop.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+          rowTop.getCell(1).fill = topGreyFill;
+          rowTop.getCell(1).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+
+          // Sub header: BLOCK X - GROUP A/B
+          const blockText = section ? section.replace(/\s*-\s*/, '').replace(/^.*?\s(\d)/, '$1') : section; // keep section label simple
+          const subHeaderText = `BLOCK ${blockText || section} - GROUP ${group}`;
+          const rowSub = sheet.addRow([subHeaderText]);
+          sheet.mergeCells(rowSub.number, 1, rowSub.number, 7);
+          rowSub.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+          rowSub.getCell(1).fill = subGreyFill;
+          rowSub.getCell(1).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+
+          // Add column headers only once per section; skip repeating for TTHS
+          let headerAdded = false;
+          for (const dayType of ['MWF', 'TTHS']) {
             const dayList = sectionSchedules.filter(sch => sch.dayType === dayType);
             if (!dayList.length) continue;
-            // Column titles
-            if (dayType === "MWF") {
-              wsData.push(["Course", "Description", "Units", "Time", "Day", "Room", "Shared With"]);
+
+            // Column header — only once per section (e.g., for MWF). If MWF is empty,
+            // header will be added for TTHS so the table remains readable.
+            if (!headerAdded) {
+              const hdr = sheet.addRow(['Course', 'Description', 'Units', 'Time', 'Day', 'Room', 'Shared With']);
+              hdr.eachCell(cell => {
+                cell.fill = headerFill;
+                cell.font = headerFont;
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.border = borderThin;
+              });
+              headerAdded = true;
             }
+
             // Deduplicate and sort by time
             const map = new Map();
             dayList.forEach(sch => {
@@ -574,13 +652,14 @@ async function exportAllSchedulesToExcel() {
               const times = getTimesArray(dayType);
               return times.indexOf(a.time) - times.indexOf(b.time);
             });
-            // Add rows
+
+            // Add rows with alternating colors and conditional styling
+            let zebraToggle = false;
             sorted.forEach(sch => {
               const course = courses.find(c => c.id === sch.courseId);
-              let roomName = "Not assigned";
+              let roomName = 'Not assigned';
               if (sch.col > 0) {
                 roomName = allColumns[sch.col - 1] || roomName;
-                // Remove letters (A, B, etc.) from room names
                 roomName = roomName.replace(/\s+[A-Z]$/, '');
               }
               const off = offerings.find(off =>
@@ -588,69 +667,66 @@ async function exportAllSchedulesToExcel() {
                 (off.section === sch.section || off.section2 === sch.section2)
               );
               const shared = sch.section === section ? sch.section2 : sch.section;
-              
-              // Move unit type to description instead of course name
-              const courseDescription = course?.description || "No description";
+
+              const courseDescription = course?.description || 'No description';
               const unitTypeDescription = `${courseDescription} (${sch.unitType})`;
-              
-              wsData.push([
-                course ? course.subject : "Unknown",
+
+              const dataRow = sheet.addRow([
+                course ? course.subject : 'Unknown',
                 unitTypeDescription,
-                off?.units || "N/A",
+                off?.units ?? null,
                 sch.time,
                 dayType,
                 roomName,
-                shared || "None"
+                shared || 'None'
               ]);
-            });
-            wsData.push([]); // spacer after each day type
-          }
-        }
-        wsData.push([]); // spacer after each year level
-      }
 
-      // Create worksheet and append
-      const worksheet = XLSX.utils.aoa_to_sheet(wsData);
-      // Set custom column widths for better readability
-      worksheet['!cols'] = [
-        {wch:25}, // Course
-        {wch:50}, // Description
-        {wch:7},  // Units
-        {wch:12}, // Time
-        {wch:7},  // Day
-        {wch:15}, // Room
-        {wch:12}  // Shared With
-      ];
-      // Freeze the first row so headers stay visible
-      worksheet['!freeze'] = { xSplit: 0, ySplit: 1 };
-      // Enable autofilter on the full data range
-      worksheet['!autofilter'] = { ref: worksheet['!ref'] };
-      // Style each header row that starts with "Course"
-      const range = XLSX.utils.decode_range(worksheet['!ref']);
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        const first = XLSX.utils.encode_cell({ c: 0, r: R });
-        const cell = worksheet[first];
-        if (cell && cell.v === 'Course') {
-          for (let C = 0; C < 7; ++C) {
-            const addr = XLSX.utils.encode_cell({ c: C, r: R });
-            if (worksheet[addr]) {
-              worksheet[addr].s = {
-                fill: { fgColor: { rgb: 'FF2E7D32' } },
-                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
-                alignment: { horizontal: 'center' }
-              };
-            }
+              dataRow.eachCell((cell, colNumber) => {
+                cell.border = borderThin;
+                cell.alignment = { vertical: 'middle' };
+                // Alternating zebra fills for data rows
+                cell.fill = zebraToggle ? zebraFillA : zebraFillB;
+
+                // Conditional styling
+                if (colNumber === 6 && roomName === 'Not assigned') { // Room column
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCDD2' } }; // light red
+                }
+                if (colNumber === 7 && shared && shared !== 'None') { // Shared With column
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } }; // light yellow
+                }
+                if (colNumber === 3 && typeof cell.value === 'number' && cell.value > 3) { // Units > 3
+                  cell.font = { bold: true };
+                }
+              });
+              zebraToggle = !zebraToggle;
+            });
+
+            // Spacer row after each day type
+            sheet.addRow(['']);
           }
         }
+
+        // Spacer after each year level
+        sheet.addRow(['']);
       }
-      XLSX.utils.book_append_sheet(workbook, worksheet, trimester);
     }
 
-    // Trigger file download
-    XLSX.writeFile(workbook, `All_Schedules_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    const filename = `All_Schedules_${new Date().toISOString().split('T')[0]}.xlsx`;
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+
+    hideLoadingOverlay();
   } catch (error) {
-    console.error("Error exporting to Excel:", error);
-    alert("Error exporting to Excel. Please try again.");
+    hideLoadingOverlay();
+    console.error('Error exporting to Excel:', error);
+    alert('Error exporting to Excel. Please try again.');
   }
 }
 

@@ -1,0 +1,264 @@
+subject,unit_category,units,year_level,degree,trimester,curriculum,description
+CC1,Lec/Lab,3,1st yr,BSIT,1st Trimester,2024-2025,Computing Fundamentals
+CC2,Lec/Lab,3,1st yr,BSIT,1st Trimester,2024-2025,Introduction to Computer Programming
+CC7,PureLec,3,1st yr,BSIT,1st Trimester,2024-2025,Human Computer Interaction
+HIST100,PureLec,3,1st yr,BSIT,1st Trimester,2024-2025,Readings in Philippine History
+MATH100,PureLec,3,1st yr,BSIT,1st Trimester,2024-2025,Mathematics in the Modern World
+ENGL100,PureLec,3,1st yr,BSIT,1st Trimester,2024-2025,Purposive Communication
+PATHFIT1,PureLec,2,1st yr,BSIT,1st Trimester,2024-2025,Movement Competency Training
+NSTP1,PureLec,3,1st yr,BSIT,1st Trimester,2024-2025,National Service Training Program 1
+CC1,Lec/Lab,3,1st yr,BSCS,1st Trimester,2024-2025,Computing Fundamentals
+CC2,Lec/Lab,3,1st yr,BSCS,1st Trimester,2024-2025,Introduction to Computer Programming
+CC7,PureLec,3,1st yr,BSCS,1st Trimester,2024-2025,Human Computer Interaction
+HIST100,PureLec,3,1st yr,BSCS,1st Trimester,2024-2025,Readings in Philippine History
+MATH100,PureLec,3,1st yr,BSCS,1st Trimester,2024-2025,Mathematics in the Modern World
+ENGL100,PureLec,3,1st yr,BSCS,1st Trimester,2024-2025,Purposive Communication
+PATHFIT1,PureLec,2,1st yr,BSCS,1st Trimester,2024-2025,Movement Competency Training
+NSTP1,PureLec,3,1st yr,BSCS,1st Trimester,2024-2025,National Service Training Program 1
+CC1,Lec/Lab,3,1st yr,BSDA,1st Trimester,2024-2025,Computing Fundamentals
+CC2,Lec/Lab,3,1st yr,BSDA,1st Trimester,2024-2025,Introduction to Computer Fundamentals
+CC7,PureLec,3,1st yr,BSDA,1st Trimester,2024-2025,Human Computer Interaction
+HIST100,PureLec,3,1st yr,BSDA,1st Trimester,2024-2025,Readings in Philippine History
+MATH100,PureLec,3,1st yr,BSDA,1st Trimester,2024-2025,Mathematics in the Modern World
+ENGL100,PureLec,3,1st yr,BSDA,1st Trimester,2024-2025,Purposive Communication
+PATHFIT1,PureLec,2,1st yr,BSDA,1st Trimester,2024-2025,Movement Competency Training
+NSTP1,PureLec,3,1st yr,BSDA,1st Trimester,2024-2025,National Service Training Program 1
+MCC1,PureLec,3,1st yr,BMMA,1st Trimester,2024-2025,Introduction to Multimedia Arts
+MCC2,Lec/Lab,3,1st yr,BMMA,1st Trimester,2024-2025,Foundations of Drawing
+CC1,Lec/Lab,3,1st yr,BMMA,1st Trimester,2024-2025,Computing Fundamentals
+CC7,PureLec,3,1st yr,BMMA,1st Trimester,2024-2025,Human Computer Interaction
+MATH100,PureLec,3,1st yr,BMMA,1st Trimester,2024-2025,Mathematics in the Modern World
+ENGL100,PureLec,3,1st yr,BMMA,1st Trimester,2024-2025,Purposive Communication
+NSTP1,PureLec,3,1st yr,BMMA,1st Trimester,2024-2025,National Service Training Program 1
+CC3,Lec/Lab,3,1st yr,BSIT,2nd Trimester,2024-2025,Object Oriented Programming
+CC4,Lec/Lab,3,1st yr,BSIT,2nd Trimester,2024-2025,Data Structures and Algorithms
+CC8,PureLec,3,1st yr,BSIT,2nd Trimester,2024-2025,Introduction to Statistical Methods
+CC21,Lec/Lab,3,1st yr,BSIT,2nd Trimester,2024-2025,Introduction to ERP
+TECHNO100,PureLec,3,1st yr,BSIT,2nd Trimester,2024-2025,Technopreneurship
+PSYCH100,PureLec,3,1st yr,BSIT,2nd Trimester,2024-2025,Understanding the Self
+PATHFIT2,PureLec,2,1st yr,BSIT,2nd Trimester,2024-2025,Exercise-based Fitness Activties
+CC3,Lec/Lab,3,1st yr,BSCS,2nd Trimester,2024-2025,Object oriented Programming
+CC4,Lec/Lab,3,1st yr,BSCS,2nd Trimester,2024-2025,Data Structures and Algorithms
+CC8,PureLec,3,1st yr,BSCS,2nd Trimester,2024-2025,Introduction to Statistical Methods
+CC11,PureLec,3,1st yr,BSCS,2nd Trimester,2024-2025,Communication in the Workplace
+CCS1,PureLec,3,1st yr,BSCS,2nd Trimester,2024-2025,Physics
+TECHNO100,PureLec,3,1st yr,BSCS,2nd Trimester,2024-2025,Technopreneurship
+PSYCH100,PureLec,3,1st yr,BSCS,2nd Trimester,2024-2025,Understanding the Self
+PATHFIT2,PureLec,2,1st yr,BSCS,2nd Trimester,2024-2025,Exercise-based Fitness Training
+CC3,Lec/Lab,3,1st yr,BSDA,2nd Trimester,2024-2025,Object Oriented Programming
+CC4,Lec/Lab,3,1st yr,BSDA,2nd Trimester,2024-2025,Data Structures and Algorithms
+CC8,PureLec,3,1st yr,BSDA,2nd Trimester,2024-2025,Introduction to Statistical Methods
+CC11,PureLec,3,1st yr,BSDA,2nd Trimester,2024-2025,Communication in the Workplace
+TECHNO100,PureLec,3,1st yr,BSDA,2nd Trimester,2024-2025,Technopreneurship
+SOCSCI100,PureLec,3,1st yr,BSDA,2nd Trimester,2024-2025,Art Appreciation
+PSYCH100,PureLec,3,1st yr,BSDA,2nd Trimester,2024-2025,Understanding the Self
+PATHFIT2,PureLec,2,1st yr,BSDA,2nd Trimester,2024-2025,Exercise-based Fitness Activities
+MCC3,PureLec,3,1st yr,BMMA,2nd Trimester,2024-2025,History of Visual Design
+MCC4,Lec/Lab,3,1st yr,BMMA,2nd Trimester,2024-2025,Advanced Drawing and Construction Techniques
+MCC5,Lec/Lab,3,1st yr,BMMA,2nd Trimester,2024-2025,Fundamentals of Design
+MCC6,PureLec,3,1st yr,BMMA,2nd Trimester,2024-2025,Writing for New Media
+CC2,Lec/Lab,3,1st yr,BMMA,2nd Trimester,2024-2025,Introduction to Computer Programming
+TECHNO100,PureLec,3,1st yr,BMMA,2nd Trimester,2024-2025,Technopreneurship
+PSYCH100,PureLec,3,1st yr,BMMA,2nd Trimester,2024-2025,Understanding the Self
+PATHFIT2,PureLec,2,1st yr,BMMA,2nd Trimester,2024-2025,Exercise-based Fitness Activties
+CC9,PureLec,3,1st yr,BSIT,2nd Trimester,2024-2025,Discrete Structures
+CC10,Lec/Lab,3,1st yr,BSIT,3rd Trimester,2024-2025,Introduction to Networks
+CC11,PureLec,3,1st yr,BSIT,3rd Trimester,2024-2025,Communication in the Workplace
+CC12,Lec/Lab,3,1st yr,BSIT,3rd Trimester,2024-2025,Statistical Design and Analysis
+CC13,PureLec,3,1st yr,BSIT,3rd Trimester,2024-2025,Systems Design and Analysis
+CC22,Lec/Lab,3,1st yr,BSIT,3rd Trimester,2024-2025,Introduction to Platform Technologies
+PATHFIT3,PureLec,2,1st yr,BSIT,3rd Trimester,2024-2025,Martial Arts
+NSTP2,PureLec,3,1st yr,BSIT,3rd Trimester,2024-2025,National Service Training Program 2
+CC9,PureLec,3,1st yr,BSCS,3rd Trimester,2024-2025,Discrete Structures
+CC10,Lec/Lab,3,1st yr,BSCS,3rd Trimester,2024-2025,Introduction to Networks
+CC12,Lec/Lab,3,1st yr,BSCS,3rd Trimester,2024-2025,Statistical Design Analysis
+CC13,PureLec,3,1st yr,BSCS,3rd Trimester,2024-2025,Systems Design and Analysis
+SOCSCI100,PureLec,3,1st yr,BSCS,3rd Trimester,2024-2025,Art Appreciation
+NSTP2,PureLec,3,1st yr,BSCS,3rd Trimester,2024-2025,National Service Training Program 2
+SOCSCI103N,PureLec,3,1st yr,BSCS,3rd Trimester,2024-2025,The Contemporary World
+PATHFIT3,PureLec,2,1st yr,BSCS,3rd Trimester,2024-2025,Martial Arts
+CC12,Lec/Lab,3,1st yr,BSDA,3rd Trimester,2024-2025,Statistical Design and Analysis
+CDA1,PureLec,3,1st yr,BSDA,3rd Trimester,2024-2025,Programming for Data Analytics 1
+SOCSCI101N,PureLec,3,1st yr,BSDA,3rd Trimester,2024-2025,Ethics
+NSTP2,PureLec,3,1st yr,BSDA,3rd Trimester,2024-2025,National Service Training Program 2
+HIST101,PureLec,3,1st yr,BSDA,3rd Trimester,2024-2025,The Life and Works if RIzal
+PATHFIT3,PureLec,2,1st yr,BSDA,3rd Trimester,2024-2025,Martial Arts
+CCS14,Lec/Lab,3,1st yr,BMMA,3rd Trimester,2024-2025,Digital Animation
+MCC7,PureLec,3,1st yr,BMMA,3rd Trimester,2024-2025,Color Theory
+MMC1,Lec/Lab,3,1st yr,BMMA,3rd Trimester,2024-2025,Digital Photography
+SCIENCE100,PureLec,3,1st yr,BMMA,3rd Trimester,2024-2025,Science; Technology and Society
+SOCSCI100,PureLec,3,1st yr,BMMA,3rd Trimester,2024-2025,Art Appreciation
+PATHFIT3,PureLec,2,1st yr,BMMA,3rd Trimester,2024-2025,Martial Arts
+NSTP2,PureLec,3,1st yr,BMMA,3rd Trimester,2024-2025,National Service Training Program 2
+CC5,Lec/Lab,3,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Information Management
+CIT1,PureLec,3,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Quantitative Analysis
+CIT24,Lec/Lab,3,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Switching; Routing; and Wireless Essentials
+CIT5,PureLec,3,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Accounting Essentials
+CIT14,Lec/Lab,3,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Web Technologies
+SOCSCI101N,PureLec,3,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Ethics
+PATHFIT4,PureLec,2,2nd yr,BSIT(Webtech),1st Trimester,2024-2025,Outdoor and Adventure Activities
+CC5,Lec/Lab,3,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Information Management
+CIT1,PureLec,3,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Quantitative Analysis
+CIT24,Lec/Lab,3,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Switching; Routing; and Wireless Essentials
+CIT5,PureLec,3,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Accounting Essentials
+CIT19,Lec/Lab,3,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Mastery in Networks
+SOCSCI101N,PureLec,3,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Ethics
+PATHFIT4,PureLec,2,2nd yr,BSIT(NetSec),1st Trimester,2024-2025,Outdoor and Adventure Activities
+CC5,Lec/Lab,3,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Information Management
+CIT1,PureLec,3,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Quantitative Analysis
+CIT24,Lec/Lab,3,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Switching; Routing; and Wireless Essentials
+CIT5,PureLec,3,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Accounting Essentials
+CIT9,PureLec,3,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Business Process Management
+SOCSCI101N,PureLec,3,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Ethics
+PATHFIT4,PureLec,2,2nd yr,BSIT(ERP),1st Trimester,2024-2025,Outdoor and Adventure Activities
+CC5,Lec/Lab,3,2nd yr,BSCS,1st Trimester,2024-2025,Information management
+CC24,PureLec,3,2nd yr,BSCS,1st Trimester,2024-2025,Probabilty Theory
+CCS2,PureLec,3,2nd yr,BSCS,1st Trimester,2024-2025,Design and Analysis or Algorithm
+CCS5,PureLec,3,2nd yr,BSCS,1st Trimester,2024-2025,Computer Architecture and organization
+CCS12,Lec/Lab,3,2nd yr,BSCS,1st Trimester,2024-2025,Graphics Design
+SOCSCI101N,PureLec,3,2nd yr,BSCS,1st Trimester,2024-2025,Ethics
+PATHFIT4,PureLec,2,2nd yr,BSCS,1st Trimester,2024-2025,Outdoor and Adventure Activities
+CC5,Lec/Lab,3,2nd yr,BSDA,1st Trimester,2024-2025,Information Management
+CDA2,PureLec,3,2nd yr,BSDA,1st Trimester,2024-2025,Relational and No SQL Databases
+CDA3,PureLec,3,2nd yr,BSDA,1st Trimester,2024-2025,Big Data Fundamentals
+CIT9,PureLec,3,2nd yr,BSDA,1st Trimester,2024-2025,Business Process Management
+CDA4,Lec/Lab,3,2nd yr,BSDA,1st Trimester,2024-2025,Programming for Data Analytics 2
+PATHFIT4,PureLec,2,2nd yr,BSDA,1st Trimester,2024-2025,Outdoor and Adventure Activities
+MMC17,PureLec,3,2nd yr,BMMA,1st Trimester,2024-2025,Theory of Games
+MMC2,Lec/Lab,3,2nd yr,BMMA,1st Trimester,2024-2025,2D Animation Techniques
+MMC3,Lec/Lab,3,2nd yr,BMMA,1st Trimester,2024-2025,3D Modeling and Scene Design
+CCS12,Lec/Lab,3,2nd yr,BMMA,1st Trimester,2024-2025,Graphics Design
+HIST100,PureLec,3,2nd yr,BMMA,1st Trimester,2024-2025,Readings in Philippines History
+SOCSCI101N,PureLec,3,2nd yr,BMMA,1st Trimester,2024-2025,Ethics
+PATHFIT4,PureLec,2,2nd yr,BMMA,1st Trimester,2024-2025,Outdoor and Adventure Activities
+CC14,Lec/Lab,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,Web Application Development
+CC19,Lec/Lab,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,Data Mining
+CC18,PureLec,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,Social and Professional issues
+CIT3,PureLec,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,IT Project Management
+CIT15,Lec/Lab,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,Multimedia Systems
+SCIENCE100,PureLec,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,Science; Technology and Society
+CORDI101,PureLec,3,2nd yr,BSIT(Webtech),2nd Trimester,2024-2025,Cordilleras: History and Socio-Cultural Heritage
+CIT14,Lec/Lab,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,Web Application Development
+CC19,Lec/Lab,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,Data mining
+CC18,PureLec,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,Social and Professional Issues
+CIT3,PureLec,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,IT Project Management
+CIT25,Lec/Lab,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,Enterprise Networking; Security; and Automation
+SCIENCE100,PureLec,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,Science; Technology and Society
+CORDI101,PureLec,3,2nd yr,BSIT(NetSec),2nd Trimester,2024-2025,Cordilleras: History and Socio-Cultural Heritage
+CC14,Lec/Lab,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,Web Application Development
+CC19,Lec/Lab,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,Data Mining
+CC18,PureLec,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,Social and Professional Issues
+CIT3,PureLec,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,IT Project Management
+CIT10,Lec/Lab,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,ERP Configuration
+SCIENCE100,PureLec,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,Science; Technology and Society
+CORDI101,PureLec,3,2nd yr,BSIT(ERP),2nd Trimester,2024-2025,Cordilleras: History and Socio-Cultural Heritage
+CC19,Lec/Lab,3,2nd yr,BSCS,2nd Trimester,2024-2025,Data Mining
+CC23,Lec/Lab,5,2nd yr,BSCS,2nd Trimester,2024-2025,Calculus
+CCS3,PureLec,3,2nd yr,BSCS,2nd Trimester,2024-2025,Automata and language Theory
+CCS8,Lec/Lab,3,2nd yr,BSCS,2nd Trimester,2024-2025,Software Engineering
+CCS13,PureLec,3,2nd yr,BSCS,2nd Trimester,2024-2025,Optimization Theory
+CORDI101,PureLec,3,2nd yr,BSCS,2nd Trimester,2024-2025,Cordilleras: History and Socio-Cultural Heritage
+CC18,PureLec,3,2nd yr,BSDA,2nd Trimester,2024-2025,Social and Professional Issues
+CC19,Lec/Lab,3,2nd yr,BSDA,2nd Trimester,2024-2025,Data Mining
+CDA5,Lec/Lab,3,2nd yr,BSDA,2nd Trimester,2024-2025,Data Warehousing Fundamentals
+CIT1,PureLec,3,2nd yr,BSDA,2nd Trimester,2024-2025,Quantitative Analysis
+CIT3,PureLec,3,2nd yr,BSDA,2nd Trimester,2024-2025,Data Mining
+FL100,PureLec,3,2nd yr,BSDA,2nd Trimester,2024-2025,Foreign Culture and language
+CORDI101,PureLec,3,2nd yr,BSDA,2nd Trimester,2024-2025,Cordilleras: History and Socio-Cultural Heritage
+MMC18,Lec/Lab,3,2nd yr,BMMA,2nd Trimester,2024-2025,Game Design
+MMC4,Lec/Lab,3,2nd yr,BMMA,2nd Trimester,2024-2025,Typography and Layout
+MMC5,Lec/Lab,3,2nd yr,BMMA,2nd Trimester,2024-2025,3D Animation Techniques
+MCC8,PureLec,3,2nd yr,BMMA,2nd Trimester,2024-2025,Research Methods
+HIST101,PureLec,3,2nd yr,BMMA,2nd Trimester,2024-2025,The Life and Works of Rizal
+CORDI101,PureLec,3,2nd yr,BMMA,2nd Trimester,2024-2025,Cordilleras: History and Socio-Cultural Heritage
+CC15,PureLec,3,2nd yr,BSIT(Webtech),3rd Trimester,2024-2025,Systems Integration and Architecture
+CC16,PureLec,3,2nd yr,BSIT(Webtech),3rd Trimester,2024-2025,IT Security
+CIT4,Lec/Lab,3,2nd yr,BSIT(Webtech),3rd Trimester,2024-2025,Introduction to Integrative Programming and Technologies
+CIT16,Lec/Lab,3,2nd yr,BSIT(Webtech),3rd Trimester,2024-2025,IT Technopreneurship
+FL100,PureLec,3,2nd yr,BSIT(Webtech),3rd Trimester,2024-2025,Foreign Culture and Language
+SOCSCI100,PureLec,3,2nd yr,BSIT(Webtech),3rd Trimester,2024-2025,Art Appreciation
+CC15,PureLec,3,2nd yr,BSIT(NetSec),3rd Trimester,2024-2025,System Integration and Architecture
+CC16,PureLec,3,2nd yr,BSIT(NetSec),3rd Trimester,2024-2025,IT Security
+CIT4,Lec/Lab,3,2nd yr,BSIT(NetSec),3rd Trimester,2024-2025,Introduction to Integrative Programming and Technologies
+CIT26,Lec/Lab,3,2nd yr,BSIT(NetSec),3rd Trimester,2024-2025,Essentials of Network management
+FL100,PureLec,3,2nd yr,BSIT(NetSec),3rd Trimester,2024-2025,Foreign Culture and Language
+SOCSCI100,PureLec,3,2nd yr,BSIT(NetSec),3rd Trimester,2024-2025,Art Appreciation
+CC15,PureLec,3,2nd yr,BSIT(ERP),3rd Trimester,2024-2025,Systems Integration and Architecture
+CC16,PureLec,3,2nd yr,BSIT(ERP),3rd Trimester,2024-2025,IT Security
+CIT4,Lec/Lab,3,2nd yr,BSIT(ERP),3rd Trimester,2024-2025,Introduction to Integrative Programming and Technologies
+CIT11,Lec/Lab,3,2nd yr,BSIT(ERP),3rd Trimester,2024-2025,ABAP Programming 1
+FL100,PureLec,3,2nd yr,BSIT(ERP),3rd Trimester,2024-2025,Foreign Culture and Language
+SOCSCI100,PureLec,3,2nd yr,BSIT(ERP),3rd Trimester,2024-2025,Art Appreciation
+CC15,PureLec,3,2nd yr,BSCS,3rd Trimester,2024-2025,Systems Integration and Architecture
+CCS4,PureLec,3,2nd yr,BSCS,3rd Trimester,2024-2025,Programming Languages
+CCS7,Lec/Lab,3,2nd yr,BSCS,3rd Trimester,2024-2025,Intelligent Systems
+CCS14,Lec/Lab,3,2nd yr,BSCS,3rd Trimester,2024-2025,Digital Animation
+FL100,PureLec,3,2nd yr,BSCS,3rd Trimester,2024-2025,Foreign Culture and Language
+SCIENCE100,PureLec,3,2nd yr,BSCS,3rd Trimester,2024-2025,Science; Technology and Society
+CC15,PureLec,3,2nd yr,BSDA,3rd Trimester,2024-2025,Systems Integration and Architecture
+CDA7,PureLec,3,2nd yr,BSDA,3rd Trimester,2024-2025,Data Visualization Fundamentals
+CDA6,Lec/Lab,3,2nd yr,BSDA,3rd Trimester,2024-2025,Data Preparation Technologies
+CDA8,Lec/Lab,3,2nd yr,BSDA,3rd Trimester,2024-2025,Data Modeling Technologies
+CIT16,PureLec,3,2nd yr,BSDA,3rd Trimester,2024-2025,IT Technopreneurship
+SCIENCE100,PureLec,3,2nd yr,BSDA,3rd Trimester,2024-2025,Science; Technology and Society
+MMC19,Lec/Lab,3,2nd yr,BMMA,3rd Trimester,2024-2025,Advanced 3D Modeling and Scene Design
+CC14,Lec/Lab,3,2nd yr,BMMA,3rd Trimester,2024-2025,Web Application Development
+MMC6,Lec/Lab,3,2nd yr,BMMA,3rd Trimester,2024-2025,Fundamentals in Film and Video Production
+FL100,PureLec,3,2nd yr,BMMA,3rd Trimester,2024-2025,Foreign Culture and Language
+SOCSCI103N,PureLec,3,2nd yr,BMMA,3rd Trimester,2024-2025,The Contemporary World
+CC6,PureLec,3,3rd yr,BSIT(Webtech),1st Trimester,2024-2025,Emerging Technologies in IT
+CC17,Lec/Lab,3,3rd yr,BSIT(Webtech),1st Trimester,2024-2025,Mobile Application Design and Development
+CIT6,PureLec,3,3rd yr,BSIT(Webtech),1st Trimester,2024-2025,Capstone Project 1
+CIT7,PureLec,3,3rd yr,BSIT(Webtech),2nd Trimester,2024-2025,Capstone Project 2
+CIT18,Lec/Lab,3,3rd yr,BSIT(Webtech),2nd Trimester,2024-2025,Mastery in Web Technology
+SOCSCI103N,PureLec,3,3rd yr,BSIT(Webtech),1st Trimester,2024-2025,The Contemporary World
+CIT8,PureLec,9,3rd yr,BSIT(Webtech),3rd Trimester,2024-2025,IT Internship
+CC6,PureLec,3,3rd yr,BSIT(NetSec),1st Trimester,2024-2025,Emerging Technologies in IT
+CC17,Lec/Lab,3,3rd yr,BSIT(NetSec),1st Trimester,2024-2025,Mobile Application Design and Development
+CIT6,PureLec,3,3rd yr,BSIT(NetSec),1st Trimester,2024-2025,Capstone Project 1
+CIT22,Lec/Lab,3,3rd yr,BSIT(NetSec),1st Trimester,2024-2025,Mastery in Networking Administration
+SOCSCI103N,PureLec,3,3rd yr,BSIT(NetSec),1st Trimester,2024-2025,The Contemporary World
+CIT7,PureLec,3,3rd yr,BSIT(NetSec),2nd Trimester,2024-2025,Capstone Project 2
+CIT23,Lec/Lab,3,3rd yr,BSIT(NetSec),2nd Trimester,2024-2025,Firewalls and Security
+HIST101,PureLec,3,3rd yr,BSIT(NetSec),2nd Trimester,2024-2025,The Life and Works of Rizal
+HIST101,PureLec,3,3rd yr,BSIT(Webtech),2nd Trimester,2024-2025,The Life and Works of Rizal
+CIT8,PureLec,9,3rd yr,BSIT(NetSec),3rd Trimester,2024-2025,IT Internship
+CC17,Lec/Lab,3,3rd yr,BSIT(ERP),1st Trimester,2024-2025,Mobile Application Design and Development
+CC6,PureLec,3,3rd yr,BSIT(ERP),1st Trimester,2024-2025,Emerging Technologies in IT
+CIT6,PureLec,3,3rd yr,BSIT(ERP),1st Trimester,2024-2025,Capstone Project 1
+CIT12,Lec/Lab,3,3rd yr,BSIT(ERP),1st Trimester,2024-2025,ABAP Programing 2
+SOCSCI103N,PureLec,3,3rd yr,BSIT(ERP),1st Trimester,2024-2025,The Contemporary World
+CIT7,PureLec,3,3rd yr,BSIT(ERP),2nd Trimester,2024-2025,Capstone Project 2
+CIT13,Lec/Lab,3,3rd yr,BSIT(ERP),2nd Trimester,2024-2025,Mastery in ERP
+CIT8,PureLec,3,3rd yr,BSIT(ERP),3rd Trimester,2024-2025,IT Internship
+CC17,Lec/Lab,3,3rd yr,BSCS,1st Trimester,2024-2025,Mobile Application Design and Development
+CC18,PureLec,3,3rd yr,BSCS,1st Trimester,2024-2025,Social and Professional Issues
+CCS6,PureLec,3,3rd yr,BSCS,1st Trimester,2024-2025,Operating System
+CCS9,PureLec,3,3rd yr,BSCS,1st Trimester,2024-2025,Thesis Writing 1
+CC16,PureLec,3,3rd yr,BSCS,1st Trimester,2024-2025,IT Security
+CCS15,Lec/Lab,3,3rd yr,BSCS,1st Trimester,2024-2025,Game Theory
+CC6,PureLec,3,3rd yr,BSCS,2nd Trimester,2024-2025,Emerging Technologies in IT
+CCS19,Lec/Lab,3,3rd yr,BSCS,2nd Trimester,2024-2025,Thesis Writing 2
+CCS16,Lec/Lab,3,3rd yr,BSCS,2nd Trimester,2024-2025,Game Console Integration
+CCS11,PureLec,3,3rd yr,BSCS,3rd Trimester,2024-2025,CS Internship
+HIST101,PureLec,3,3rd yr,BSCS,3rd Trimester,2024-2025,The Life and Works of Rizal
+HIST101,PureLec,3,3rd yr,BSIT(ERP),2nd Trimester,2024-2025,Life and Works of Rizal
+CC17,Lec/Lab,3,3rd yr,BSDA,1st Trimester,2024-2025,Mobile Application Design and Development
+CDA10,PureLec,3,1st yr,BSDA,1st Trimester,2024-2025,Data Analytics Capstone Project 1
+CC16,PureLec,3,3rd yr,BSDA,1st Trimester,2024-2025,IT Security
+CDA9,Lec/Lab,3,3rd yr,BSDA,1st Trimester,2024-2025,Machine Learning Fundamentals
+SOCSCI103N,PureLec,3,3rd yr,BSDA,1st Trimester,2024-2025,The Contemporary World
+CC6,PureLec,3,3rd yr,BSDA,2nd Trimester,2024-2025,Emerging Technologies in IT
+CC10,Lec/Lab,3,3rd yr,BSDA,2nd Trimester,2024-2025,Introduction to Networks
+CDA11,PureLec,3,3rd yr,BSDA,2nd Trimester,2024-2025,Data Analytics Capstone Project 2
+CDA12,PureLec,9,3rd yr,BSDA,3rd Trimester,2024-2025,Data Analytics Internship
+MMC7,Lec/Lab,3,3rd yr,BMMA,1st Trimester,2024-2025,Digital Sound Production
+MMC8,Lec/Lab,3,3rd yr,BMMA,1st Trimester,2024-2025,Interactive Media Design
+MMC9,Lec/Lab,3,3rd yr,BMMA,1st Trimester,2024-2025,Multimedia Publishing
+MMC10,PureLec,3,3rd yr,BMMA,1st Trimester,2024-2025,Business Ventures in Multimedia
+MMC11,PureLec,3,3rd yr,BMMA,1st Trimester,2024-2025,Multimedia Capstone Project 1
+MMC12,Lec/Lab,3,3rd yr,BMMA,2nd Trimester,2024-2025,Prost-Production Techniques
+MMC13,Lec/Lab,3,3rd yr,BMMA,2nd Trimester,2024-2025,Multimedia Seminars
+MMC14,PureLec,3,3rd yr,BMMA,2nd Trimester,2024-2025,Multimedia Capstone Project 2
+MMC15,Lec/Lab,3,3rd yr,BMMA,3rd Trimester,2024-2025,Portfolio Preparation and Exhibit Design
+MMC16,PureLec,3,3rd yr,BMMA,3rd Trimester,2024-2025,Multimedia Internship

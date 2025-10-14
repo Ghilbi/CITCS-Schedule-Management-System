@@ -420,8 +420,53 @@ class JWTExpirationMonitor {
   }
   
   async extendSession() {
-    // Redirect to login page to get a new token
-    window.location.href = 'login.html';
+    // Attempt to refresh the token without page reload
+    const currentToken = localStorage.getItem('authToken');
+    if (!currentToken) {
+      // No token available, go to login
+      window.location.href = 'login.html';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/refresh-token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (response.status === 401) {
+        // Token expired or invalid, handle as expired
+        this.handleTokenExpired();
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.token) {
+          // Store the new token and resume monitoring
+          localStorage.setItem('authToken', data.token);
+          this.hideNotification();
+          this.warningShown = false;
+          // Immediately re-check status to update countdown/UI
+          this.checkTokenStatus();
+          alert('Session extended successfully.');
+        } else {
+          alert('Unexpected response while extending session. Redirecting to login.');
+          window.location.href = 'login.html';
+        }
+      } else {
+        alert('Unable to extend session. Redirecting to login.');
+        window.location.href = 'login.html';
+      }
+    } catch (error) {
+      console.error('Failed to extend session:', error);
+      alert('Network error while extending session. Redirecting to login.');
+      window.location.href = 'login.html';
+    }
   }
   
   handleTokenExpired() {

@@ -4068,15 +4068,17 @@ section h2 {
   box-shadow: 0 2px 12px rgba(46, 125, 50, 0.08);
 }
 
-/* Number input spinner styling */
-#predictive-analytics input[type="number"]::-webkit-outer-spin-button,
-#predictive-analytics input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+/* Number input spinner styling - Cross-browser compatibility */
+#predictive-analytics input[type="number"] {
+  -moz-appearance: textfield; /* Firefox: Remove spinner arrows */
+  appearance: textfield; /* Standard property for modern browsers */
 }
 
-#predictive-analytics input[type="number"] {
-  -moz-appearance: textfield;
+#predictive-analytics input[type="number"]::-webkit-outer-spin-button,
+#predictive-analytics input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* WebKit browsers: Remove spinner arrows */
+  appearance: none; /* Standard property */
+  margin: 0;
 }
 
 /* Responsive adjustments for predictive analytics */

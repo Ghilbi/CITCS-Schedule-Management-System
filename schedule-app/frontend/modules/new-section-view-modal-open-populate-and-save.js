@@ -379,10 +379,6 @@ async function showLecLabInterface(course, offering, dayType, time, section) {
   const selectedRoomGroup = lecLabRadio ? lecLabRadio.value : "A";
   document.getElementById("separate-assignment").dataset.selectedRoomGroup = selectedRoomGroup;
   
-  // Populate room dropdowns
-  await populateRoomDropdown("lec-room");
-  await populateRoomDropdown("lab-room");
-  
   // Set default values
   document.getElementById("lec-day").value = dayType;
   document.getElementById("lab-day").value = dayType;
@@ -395,6 +391,10 @@ async function showLecLabInterface(course, offering, dayType, time, section) {
   } else {
     document.getElementById("lab-time").value = time;
   }
+  
+  // Populate room dropdowns AFTER day/time are set to ensure correct filtering
+  await populateRoomDropdown("lec-room");
+  await populateRoomDropdown("lab-room");
   
   // Ensure separate assignment UI is visible
   document.getElementById("combined-assignment").style.display = "none";

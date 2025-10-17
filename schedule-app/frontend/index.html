@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Schedule App (Room/Course CRUD)</title>
   <link rel="icon" href="/assets/citcs_logo.png" type="image/png">
   <link rel="shortcut icon" href="/assets/citcs_logo.png" type="image/png">
@@ -130,23 +131,25 @@
         </div>
       </div>
     </div>
-    <table id="table-courses">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Subject</th>
-          <th>Unit Category</th>
-          <th>Units</th>
-          <th>Year Level</th>
-          <th>Degree</th>
-          <th>Trimester</th>
-          <th>Curriculum</th>
-          <th>Description</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="table-container">
+      <table id="table-courses">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Subject</th>
+            <th>Unit Category</th>
+            <th>Units</th>
+            <th>Year Level</th>
+            <th>Degree</th>
+            <th>Trimester</th>
+            <th>Curriculum</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
 
   <section id="section-course-offering" class="hidden">

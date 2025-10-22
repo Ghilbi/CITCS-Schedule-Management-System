@@ -60,9 +60,7 @@
   if (typeof renderAnalyticsCharts === 'function') {
     await renderAnalyticsCharts();
   }
-  if (typeof renderPredictiveAnalyticsUI === 'function') {
-    renderPredictiveAnalyticsUI();
-  }
+
 })();
 
 /**************************************************************

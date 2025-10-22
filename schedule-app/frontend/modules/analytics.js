@@ -42,7 +42,6 @@ async function initializeAnalytics() {
     await loadAnalyticsData();
     renderAnalyticsStats();
     renderAnalyticsCharts();
-    renderPredictiveAnalyticsUI();
     startAnalyticsAutoRefresh();
     hideLoadingOverlay();
   } catch (error) {
@@ -188,83 +187,9 @@ async function renderAnalyticsCharts() {
 /**
  * Predictive Analytics: compute sections per course given student count and capacity
  */
-function computePredictedOfferings({ degree, yearLevel, trimester, students, capacity }) {
-  if (!students || !capacity || students <= 0 || capacity <= 0) {
-    return { courses: [], perCourseSections: 0, totalPredictedOfferings: 0, currentOfferingsTotal: 0 };
-  }
-  const perCourseSections = Math.ceil(students / capacity);
-  const activeCurriculum = window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : null;
-  const filteredCourses = (analyticsData.courses || []).filter(c => {
-    const matchesDegree = degree ? c.degree === degree : true;
-    const matchesYear = yearLevel ? c.year_level === yearLevel : true;
-    const matchesTrimester = trimester ? c.trimester === trimester : true;
-    const matchesCurriculum = activeCurriculum ? (c.curriculum || activeCurriculum) === activeCurriculum : true;
-    return matchesDegree && matchesYear && matchesTrimester && matchesCurriculum;
-  });
 
-  // Count current offerings per course
-  const offeringsByCourseId = new Map();
-  (analyticsData.courseOfferings || []).forEach(off => {
-    offeringsByCourseId.set(off.courseId, (offeringsByCourseId.get(off.courseId) || 0) + 1);
-  });
 
-  const courses = filteredCourses.map(c => {
-    const current = offeringsByCourseId.get(c.id) || 0;
-    return {
-      id: c.id,
-      subject: c.subject,
-      unitCategory: c.unit_category,
-      predictedSections: perCourseSections,
-      currentOfferings: current,
-      gap: perCourseSections - current
-    };
-  });
 
-  const currentOfferingsTotal = courses.reduce((sum, x) => sum + x.currentOfferings, 0);
-  const totalPredictedOfferings = courses.reduce((sum, x) => sum + x.predictedSections, 0);
-  return { courses, perCourseSections, totalPredictedOfferings, currentOfferingsTotal };
-}
-
-function renderPredictiveAnalyticsUI() {
-  const degreeSel = document.getElementById('predict-degree');
-  const yearSel = document.getElementById('predict-year');
-  const triSel = document.getElementById('predict-trimester');
-  const studentsInput = document.getElementById('predict-students');
-  const capacityInput = document.getElementById('predict-capacity');
-  const computeBtn = document.getElementById('btn-compute-prediction');
-  const summaryEl = document.getElementById('predictive-summary');
-  const tableBody = document.querySelector('#predictive-results-table tbody');
-
-  if (!computeBtn || !tableBody) return;
-
-  computeBtn.addEventListener('click', () => {
-    const degree = degreeSel.value;
-    const yearLevel = yearSel.value;
-    const trimester = triSel.value;
-    const students = parseInt(studentsInput.value, 10);
-    const capacity = parseInt(capacityInput.value, 10);
-
-    const result = computePredictedOfferings({ degree, yearLevel, trimester, students, capacity });
-
-    // Update summary
-    const matchedCourses = result.courses.length;
-    summaryEl.textContent = matchedCourses === 0
-      ? 'No matching courses found for the selected filters.'
-      : `Matched ${matchedCourses} courses. Predicted ${result.perCourseSections} sections per course. Total predicted offerings: ${result.totalPredictedOfferings}. Current offerings: ${result.currentOfferingsTotal}.`;
-
-    // Render table
-    tableBody.innerHTML = '';
-    result.courses.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="padding:8px; border-bottom:1px solid var(--color-border);">${item.subject}</td>
-        <td style="padding:8px; border-bottom:1px solid var(--color-border);">${item.unitCategory}</td>
-        <td style="padding:8px; border-bottom:1px solid var(--color-border); text-align:right;">${item.predictedSections}</td>
-      `;
-      tableBody.appendChild(tr);
-    });
-  });
-}
 
 /**
  * Create a simple bar chart
@@ -458,7 +383,6 @@ async function showAnalytics() {
   await loadAnalyticsData();
   await renderAnalyticsStats();
   await renderAnalyticsCharts();
-  renderPredictiveAnalyticsUI();
   hideLoadingOverlay();
   
   // Start auto-refresh
@@ -468,38 +392,7 @@ async function showAnalytics() {
 /**
  * Toggle Predictive Analytics section visibility
  */
-function togglePredictiveAnalytics() {
-  const content = document.getElementById('predictive-content');
-  const icon = document.getElementById('predictive-toggle-icon');
-  
-  if (!content || !icon) return;
-  
-  const isCollapsed = content.classList.contains('collapsed');
-  
-  if (isCollapsed) {
-    // Expand
-    content.classList.remove('collapsed');
-    content.classList.add('expanding');
-    icon.classList.remove('collapsed');
-    icon.textContent = '▼';
-    
-    // Remove expanding class after animation
-    setTimeout(() => {
-      content.classList.remove('expanding');
-    }, 400);
-  } else {
-    // Collapse
-    content.classList.add('collapsing');
-    icon.classList.add('collapsed');
-    icon.textContent = '▶';
-    
-    // Add collapsed class after animation starts
-    setTimeout(() => {
-      content.classList.add('collapsed');
-      content.classList.remove('collapsing');
-    }, 50);
-  }
-}
+
 
 // Event listeners for analytics
 document.addEventListener('DOMContentLoaded', () => {

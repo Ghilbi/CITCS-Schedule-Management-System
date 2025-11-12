@@ -427,6 +427,7 @@ document.getElementById("btn-delete-sectionview").addEventListener("click", asyn
   // Get the existing entry details before deletion
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+	const offerings = await apiGet("course_offerings");
   const existingEntry = schedules.find(sch => sch.id.toString() === id);
   
   // Save the values we need before deletion
@@ -444,19 +445,30 @@ document.getElementById("btn-delete-sectionview").addEventListener("click", asyn
     const unitType = existingEntry.unitType;
     const section2 = existingEntry.section2;
     
-    const roomViewEntry = schedules.find(sch => {
-      const course = courses.find(c => c.id === sch.courseId);
-      return sch.courseId === courseId &&
-             sch.unitType === unitType &&
-             sch.section === section &&
-             sch.section2 === section2 &&
-             sch.dayType === dayType &&
-             sch.time === time &&
-             course && 
-             course.trimester === currentSectionViewTrimester &&
-             course.year_level === currentSectionViewYearLevel &&
-             sch.col > 0; // Room View entry
-    });
+	const isInternationalView = currentSectionViewYearLevel === "International";
+	const roomViewEntry = schedules.find(sch => {
+	  const course = courses.find(c => c.id === sch.courseId);
+	  if (!(sch.courseId === courseId &&
+			sch.unitType === unitType &&
+			sch.section === section &&
+			sch.section2 === section2 &&
+			sch.dayType === dayType &&
+			sch.time === time &&
+			course &&
+			sch.col > 0)) {
+		return false;
+	  }
+	  if (isInternationalView) {
+		return offerings.some(off =>
+		  off.courseId === sch.courseId &&
+		  off.type === sch.unitType &&
+		  off.trimester === currentSectionViewTrimester &&
+		  ((section && off.section === section) || (section2 && off.section === section2))
+		);
+	  }
+	  return course.trimester === currentSectionViewTrimester &&
+			 course.year_level === currentSectionViewYearLevel;
+	});
     
     if (roomViewEntry) {
       await apiDelete("schedules", roomViewEntry.id);

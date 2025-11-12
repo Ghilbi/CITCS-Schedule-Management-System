@@ -12,13 +12,21 @@ async function openRoomViewModal(dayType, time, roomName, col) {
   const room = roomsList.find(r => r.name === baseRoomName);
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const offerings = await apiGet("course_offerings");
   const roomState = getRoomViewState();
   let existing = schedules.find(sch =>
     sch.dayType === dayType &&
     sch.time === time &&
-    sch.col === col &&
-    courses.find(c => c.id === sch.courseId)?.trimester === roomState.trimester &&
-    courses.find(c => c.id === sch.courseId)?.year_level === roomState.yearLevel
+    sch.col === col && (
+      ((sch.section && sch.section.startsWith("INTERNATIONAL ")) || (sch.section2 && sch.section2.startsWith("INTERNATIONAL ")))
+        ? offerings.some(off =>
+            off.courseId === sch.courseId &&
+            off.type === sch.unitType &&
+            off.trimester === roomState.trimester &&
+            ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+          )
+        : courses.find(c => c.id === sch.courseId)?.trimester === roomState.trimester
+    )
   );
 
   document.getElementById("roomview-dayType").value = dayType;
@@ -77,9 +85,15 @@ async function populateRoomViewCourseDropdown() {
     return sch.col === 0 && // Section View entries
            sch.dayType === dayType &&
            sch.time === time &&
-           course &&
-           course.trimester === roomState.trimester &&
-           course.year_level === roomState.yearLevel;
+           course && (
+             ((sch.section && sch.section.startsWith("INTERNATIONAL ")) || (sch.section2 && sch.section2.startsWith("INTERNATIONAL ")))
+               ? offerings.some(off =>
+                   off.courseId === sch.courseId &&
+                   off.trimester === roomState.trimester &&
+                   ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+                 )
+               : course.trimester === roomState.trimester
+           );
   });
   
   if (sectionViewSchedules.length === 0) {
@@ -143,14 +157,17 @@ async function populateRoomViewSectionDropdown() {
   const roomState = getRoomViewState();
   const sectionViewSchedules = schedules.filter(sch => {
     const course = courses.find(c => c.id === sch.courseId);
+    const isInternationalOff = selectedOffering.section && selectedOffering.section.startsWith("INTERNATIONAL ");
     return sch.col === 0 && // Section View entries
            sch.dayType === dayType &&
            sch.time === time &&
            sch.courseId === selectedOffering.courseId &&
-           sch.unitType === selectedOffering.type &&
-           course &&
-           course.trimester === roomState.trimester &&
-           course.year_level === roomState.yearLevel;
+           sch.unitType === selectedOffering.type && (
+             isInternationalOff
+               ? (selectedOffering.trimester === roomState.trimester &&
+                  ((sch.section && sch.section === selectedOffering.section) || (sch.section2 && sch.section2 === selectedOffering.section)))
+               : (course && course.trimester === roomState.trimester)
+           );
   });
   
   // Get all sections from these schedules
@@ -216,16 +233,19 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
   const roomState = getRoomViewState();
   const sectionScheduled = schedules.some(sch => {
     const course = courses.find(c => c.id === sch.courseId);
+    const isInternationalOff = selectedOffering.section && selectedOffering.section.startsWith("INTERNATIONAL ");
     return sch.col === 0 && // Section View entries
            sch.dayType === dayType &&
            sch.time === time &&
-      sch.courseId === courseId &&
+           sch.courseId === courseId &&
            sch.unitType === unitType &&
            (sch.section === section || sch.section2 === section ||
             (section2 && (sch.section === section2 || sch.section2 === section2))) &&
-           course &&
-           course.trimester === roomState.trimester &&
-           course.year_level === roomState.yearLevel;
+           course && (
+             isInternationalOff
+               ? selectedOffering.trimester === roomState.trimester
+               : course.trimester === roomState.trimester
+           );
   });
 
   if (!sectionScheduled) {
@@ -233,12 +253,7 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     return;
   }
 
-  // Check for subjects in different year levels
   const currentCourse = courses.find(c => c.id === courseId);
-  if (!currentCourse || currentCourse.year_level !== roomState.yearLevel) {
-    showConflictNotification(`Year level mismatch: This course (${currentCourse?.subject || 'Unknown'}) is for ${currentCourse?.year_level || 'unknown'} year level, but you're currently in ${roomState.yearLevel} view.`);
-    return;
-  }
 
   // Rest of the original validation code
   for (const sec of sectionsToCheck) {
@@ -248,7 +263,6 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
       (sch.section === sec || sch.section2 === sec) &&
       sch.unitType === unitType &&
         schCourse && schCourse.trimester === roomState.trimester &&
-        schCourse.year_level === roomState.yearLevel &&
         sch.col > 0 && // Only check against Room View entries
         sch.id.toString() !== existingId;
     });
@@ -264,7 +278,7 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
         : `${baseRoomName} (Unknown Group)`;
       const group = fullRoomName.endsWith(" A") ? "Group A" : fullRoomName.endsWith(" B") ? "Group B" : "Unknown Group";
       showConflictNotification(
-        `Duplicate detected (${roomState.yearLevel}): ${subjectName} - (${sec}) - ${unitType} is already scheduled in ${roomState.trimester}.\n` +
+        `Duplicate detected: ${subjectName} - (${sec}) - ${unitType} is already scheduled in ${roomState.trimester}.\n` +
         `Details: Days: ${existingSubjectSectionUnitType.dayType}, Room: ${fullRoomName}, Group: ${group}, Time: ${existingSubjectSectionUnitType.time}`
       );
       return;
@@ -273,13 +287,20 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
 
   const existingTimeRoomConflict = schedules.find(sch => {
     const schCourse = courses.find(c => c.id === sch.courseId);
-    return sch.dayType === dayType &&
-    sch.time === time &&
-    sch.col === parseInt(col, 10) &&
-      schCourse && schCourse.trimester === roomState.trimester &&
-      schCourse.year_level === roomState.yearLevel &&
-      sch.col > 0 && // Only check against Room View entries 
-      sch.id.toString() !== existingId;
+    if (!(schCourse && sch.dayType === dayType && sch.time === time && sch.col === parseInt(col, 10) && sch.col > 0 && sch.id.toString() !== existingId)) {
+      return false;
+    }
+    const schIsInternational = (sch.section && sch.section.startsWith("INTERNATIONAL ")) ||
+                               (sch.section2 && sch.section2.startsWith("INTERNATIONAL "));
+    if (schIsInternational) {
+      return offerings.some(off =>
+        off.courseId === sch.courseId &&
+        off.type === sch.unitType &&
+        off.trimester === roomState.trimester &&
+        ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+      );
+    }
+    return schCourse.trimester === roomState.trimester;
   });
 
   if (existingTimeRoomConflict) {
@@ -295,91 +316,36 @@ document.getElementById("btn-save-roomview").addEventListener("click", async () 
     }
   }
 
-  // NEW: Check if this room is occupied in any year level (not just the current one)
-  const crossYearRoomConflict = schedules.find(sch => {
-    const schCourse = courses.find(c => c.id === sch.courseId);
-    return sch.dayType === dayType &&
-      sch.time === time &&
-      sch.col === parseInt(col, 10) &&
-      schCourse && 
-      schCourse.trimester === roomState.trimester &&
-      schCourse.year_level !== roomState.yearLevel && // Different year level
-      sch.col > 0 && // Only check against Room View entries 
-      sch.id.toString() !== existingId;
-  });
-
-  if (crossYearRoomConflict) {
-    const conflictCourse = courses.find(c => c.id === crossYearRoomConflict.courseId);
-    if (conflictCourse) {
-      const colIndex = crossYearRoomConflict.col - 1;
-      const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
-      showConflictNotification(
-        `Cross-year conflict: Room ${roomName} at ${dayType} ${time} is already occupied in ${conflictCourse.year_level}.\n` +
-        `Subject: ${conflictCourse.subject}, Trimester: ${roomState.trimester}.\n` +
-        `Please choose a different room, day, or time.`
-      );
-      return;
-    }
-  }
-
-  // NEW: Check if the same subject is already assigned to any room (by subject name)
-  const currentCourseSubject = currentCourse?.subject;
-  if (currentCourseSubject) {
-    const sameSubjectAssignedInOtherYearLevel = schedules.find(sch => {
-      const schCourse = courses.find(c => c.id === sch.courseId);
-      return sch.dayType === dayType &&
-        sch.time === time &&
-        schCourse && 
-        schCourse.subject === currentCourseSubject &&
-        schCourse.trimester === roomState.trimester &&
-        schCourse.year_level !== roomState.yearLevel && // Different year level
-        sch.col > 0 && // Only check against Room View entries
-        sch.col !== parseInt(col, 10) && // Different room
-        sch.id.toString() !== existingId;
-    });
-
-    if (sameSubjectAssignedInOtherYearLevel) {
-      const conflictCourse = courses.find(c => c.id === sameSubjectAssignedInOtherYearLevel.courseId);
-      if (conflictCourse) {
-        const colIndex = sameSubjectAssignedInOtherYearLevel.col - 1;
-        const otherRoomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
-        const colIndexCurrent = parseInt(col, 10) - 1;
-        const currentRoomName = colIndexCurrent >= 0 && colIndexCurrent < allColumns.length ? allColumns[colIndexCurrent] : "Unknown Room";
-        
-        showConflictNotification(
-          `Duplicate subject assignment: ${currentCourseSubject} is already assigned to room ${otherRoomName} at ${dayType} ${time} for ${conflictCourse.year_level}.\n` +
-          `You are trying to assign it to ${currentRoomName} for ${roomState.yearLevel}.\n` +
-          `This is allowed, but please verify this is intentional.`
-        );
-        // Don't return here - just show a warning but allow it
-      }
-    }
-  }
-
-  // NEW: Check if any of the sections are already assigned to a room in any year level
+  // Check if any of the sections are already assigned to a room at this time (any year level)
   const allSections = [section, section2].filter(s => s);
   for (const sec of allSections) {
-    const sectionAssignedInOtherYearLevel = schedules.find(sch => {
+    const sectionAssignedConflict = schedules.find(sch => {
       const schCourse = courses.find(c => c.id === sch.courseId);
-      return (sch.section === sec || sch.section2 === sec) &&
-        sch.dayType === dayType &&
-        sch.time === time &&
-        schCourse && 
-        schCourse.trimester === roomState.trimester &&
-        schCourse.year_level !== roomState.yearLevel && // Different year level
-        sch.col > 0 && // Only check against Room View entries
-        sch.id.toString() !== existingId;
+      if (!(schCourse && (sch.section === sec || sch.section2 === sec) && sch.dayType === dayType && sch.time === time && sch.col > 0 && sch.id.toString() !== existingId)) {
+        return false;
+      }
+      const schIsInternational = (sch.section && sch.section.startsWith("INTERNATIONAL ")) ||
+                                 (sch.section2 && sch.section2.startsWith("INTERNATIONAL "));
+      if (schIsInternational) {
+        return offerings.some(off =>
+          off.courseId === sch.courseId &&
+          off.type === sch.unitType &&
+          off.trimester === roomState.trimester &&
+          ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+        );
+      }
+      return schCourse.trimester === roomState.trimester;
     });
 
-    if (sectionAssignedInOtherYearLevel) {
-      const conflictCourse = courses.find(c => c.id === sectionAssignedInOtherYearLevel.courseId);
+    if (sectionAssignedConflict) {
+      const conflictCourse = courses.find(c => c.id === sectionAssignedConflict.courseId);
       if (conflictCourse) {
-        const colIndex = sectionAssignedInOtherYearLevel.col - 1;
+        const colIndex = sectionAssignedConflict.col - 1;
         const roomName = colIndex >= 0 && colIndex < allColumns.length ? allColumns[colIndex] : "Unknown Room";
         
         showConflictNotification(
-          `Section conflict: Section ${sec} is already assigned to room ${roomName} at ${dayType} ${time} for ${conflictCourse.year_level}.\n` +
-          `Subject: ${conflictCourse.subject}, Type: ${sectionAssignedInOtherYearLevel.unitType}\n` +
+          `Section conflict: Section ${sec} is already assigned to room ${roomName} at ${dayType} ${time}.\n` +
+          `Subject: ${conflictCourse.subject}, Type: ${sectionAssignedConflict.unitType}\n` +
           `This is not allowed as a section cannot be in two places at once.`
         );
         return; // This is a blocking error

@@ -216,27 +216,9 @@ async function initializeScheduleSummarySection() {
   setupScheduleSummaryTrimesterTabs();
   
   const summaryContent = document.getElementById("schedule-summary-content");
-  const sectionFilter = document.getElementById("summary-section-filter");
   
   // Clear previous content
   summaryContent.innerHTML = "";
-  
-  // Get all sections for the current trimester and year level
-  const sections = await getUniqueSectionsForTrimesterAndYear(currentScheduleSummaryTrimester, currentScheduleSummaryYearLevel);
-  
-  // Populate section filter dropdown
-  sectionFilter.innerHTML = '<option value="">All Sections</option>';
-  sections.forEach(section => {
-    const option = document.createElement("option");
-    option.value = section;
-    option.textContent = section;
-    sectionFilter.appendChild(option);
-  });
-  
-  // Remove existing event listeners and add new ones
-  const newSectionFilter = sectionFilter.cloneNode(true);
-  sectionFilter.parentNode.replaceChild(newSectionFilter, sectionFilter);
-  newSectionFilter.addEventListener("change", generateScheduleSummary);
   
   // Remove existing event listeners and add new ones for export button
   const exportBtn = document.getElementById("btn-export-excel");
@@ -254,7 +236,6 @@ async function initializeScheduleSummarySection() {
 
 async function generateScheduleSummary() {
   const summaryContent = document.getElementById("schedule-summary-content");
-  const selectedSection = document.getElementById("summary-section-filter").value;
   
   // Clear previous content
   summaryContent.innerHTML = "";
@@ -266,10 +247,11 @@ async function generateScheduleSummary() {
   const columns = await getAllRoomColumns();
   const offerings = await apiGet("course_offerings");
   
-  // Get all sections or filter by selected section
-  const sections = selectedSection ? 
-    [selectedSection] : 
-    await getUniqueSectionsForTrimesterAndYear(currentScheduleSummaryTrimester, currentScheduleSummaryYearLevel);
+  // Get all sections for the current trimester and year level
+  const sections = await getUniqueSectionsForTrimesterAndYear(
+    currentScheduleSummaryTrimester,
+    currentScheduleSummaryYearLevel
+  );
   
   if (sections.length === 0) {
     summaryContent.innerHTML = '<div class="no-data-message">No sections found for the current trimester and year level.</div>';
@@ -281,13 +263,16 @@ async function generateScheduleSummary() {
     const sectionDiv = document.createElement("div");
     sectionDiv.className = "summary-section";
     
-    // Get degree for this section
+  // Get degree for this section
     let sectionDegree = "";
-    const sectionOffering = offerings.find(off => 
-      off.section === section && 
-      courses.find(c => c.id === off.courseId)?.trimester === currentScheduleSummaryTrimester && 
-      courses.find(c => c.id === off.courseId)?.year_level === currentScheduleSummaryYearLevel
-    );
+  const isInternationalSummary = currentScheduleSummaryYearLevel === "International";
+  const sectionOffering = offerings.find(off => 
+    off.section === section && 
+    (isInternationalSummary 
+      ? off.trimester === currentScheduleSummaryTrimester
+      : (courses.find(c => c.id === off.courseId)?.trimester === currentScheduleSummaryTrimester && 
+         courses.find(c => c.id === off.courseId)?.year_level === currentScheduleSummaryYearLevel))
+  );
     
     if (sectionOffering) {
       sectionDegree = sectionOffering.degree || 
@@ -318,9 +303,16 @@ async function generateScheduleSummary() {
     // Get all schedules for this section
     const sectionSchedules = schedules.filter(sch => {
       const course = courses.find(c => c.id === sch.courseId);
-      return (sch.section === section || sch.section2 === section) && 
-             course && 
-             course.trimester === currentScheduleSummaryTrimester && 
+      if (!(sch.section === section || sch.section2 === section) || !course) return false;
+      if (isInternationalSummary) {
+        // For International, follow offering-based trimester for that section
+        return offerings.some(off =>
+          off.courseId === sch.courseId &&
+          off.trimester === currentScheduleSummaryTrimester &&
+          off.section === section
+        );
+      }
+      return course.trimester === currentScheduleSummaryTrimester && 
              course.year_level === currentScheduleSummaryYearLevel;
     });
 
@@ -513,7 +505,7 @@ async function exportAllSchedulesToExcel() {
       getAllRoomColumns()
     ]);
 
-    const yearLevels = ['1st yr', '2nd yr', '3rd yr'];
+    const yearLevels = ['1st yr', '2nd yr', '3rd yr', 'International'];
     const trimesters = ['1st Trimester', '2nd Trimester', '3rd Trimester'];
 
     const workbook = new ExcelJS.Workbook();
@@ -567,20 +559,30 @@ async function exportAllSchedulesToExcel() {
         }
 
         for (const section of sections) {
-          const sectionSchedules = schedules.filter(sch => {
-            const course = courses.find(c => c.id === sch.courseId);
-            return (sch.section === section || sch.section2 === section) &&
-                   course && course.trimester === trimester && course.year_level === yearLevel;
-          });
+        const sectionSchedules = schedules.filter(sch => {
+          const course = courses.find(c => c.id === sch.courseId);
+          if (!((sch.section === section || sch.section2 === section) && course)) return false;
+          if (yearLevel === 'International') {
+            // For International, include schedules based on offering trimester and exact section
+            return offerings.some(off =>
+              off.courseId === sch.courseId &&
+              off.trimester === trimester &&
+              off.section === section
+            );
+          }
+          return course.trimester === trimester && course.year_level === yearLevel;
+        });
           if (sectionSchedules.length === 0) continue;
 
           // Determine degree for this section
           let degree = 'Unknown';
-          const offeringMatch = offerings.find(off =>
-            off.section === section &&
-            courses.find(c => c.id === off.courseId)?.trimester === trimester &&
-            courses.find(c => c.id === off.courseId)?.year_level === yearLevel
-          );
+        const offeringMatch = offerings.find(off =>
+          off.section === section &&
+          (yearLevel === 'International'
+            ? off.trimester === trimester
+            : (courses.find(c => c.id === off.courseId)?.trimester === trimester &&
+               courses.find(c => c.id === off.courseId)?.year_level === yearLevel))
+        );
           if (offeringMatch) {
             degree = offeringMatch.degree || courses.find(c => c.id === offeringMatch.courseId)?.degree || 'Unknown';
           }
@@ -812,16 +814,28 @@ document.getElementById('btn-remove-all-schedules').addEventListener('click', as
     showLoadingOverlay('Removing all scheduled subjects...');
     
     // Get all schedules and courses
-    const schedules = await apiGet('schedules');
-    const courses = await apiGet('courses');
-    
-    // Filter schedules for current trimester and year level
-    const schedulesToDelete = schedules.filter(schedule => {
-      const course = courses.find(c => c.id === schedule.courseId);
-      return course && 
-             course.trimester === trimester && 
-             course.year_level === yearLevel;
-    });
+		const schedules = await apiGet('schedules');
+		const courses = await apiGet('courses');
+		const offerings = await apiGet('course_offerings');
+		
+		// Filter schedules for current trimester and year level
+		const isInternationalView = yearLevel === 'International';
+		const schedulesToDelete = schedules.filter(schedule => {
+			const course = courses.find(c => c.id === schedule.courseId);
+			if (!course) return false;
+			
+			// For International, use offering-based trimester and section naming
+			if (isInternationalView) {
+				return offerings.some(off =>
+					off.courseId === schedule.courseId &&
+					off.trimester === trimester &&
+					off.section && off.section.startsWith('INTERNATIONAL ')
+				);
+			}
+			
+			// Standard year levels: match by course trimester and year level
+			return course.trimester === trimester && course.year_level === yearLevel;
+		});
     
     if (schedulesToDelete.length === 0) {
       throw new Error('No schedules found for the selected trimester and year level.');

@@ -23,25 +23,6 @@ function setupRoomViewTrimesterTabs() {
     });
   });
   
-  // Clone all year tabs to remove existing event listeners
-  const yearTabs = document.querySelectorAll("#section-room-view .year-level-tabs .year-tab-btn");
-  yearTabs.forEach(tab => {
-    const newTab = tab.cloneNode(true);
-    tab.parentNode.replaceChild(newTab, tab);
-  });
-  
-  // Get fresh references to year tabs
-  const freshYearTabs = document.querySelectorAll("#section-room-view .year-level-tabs .year-tab-btn");
-  freshYearTabs.forEach(tab => {
-    tab.addEventListener("click", async () => {
-      freshYearTabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      setRoomViewState(null, tab.getAttribute("data-year"));
-      await renderRoomViewTables();
-      await validateAllComplementary(); // Debounced validation
-    });
-  });
-
   // Schedule summary button is now handled in the main navigation section
 
   // Ensure only one tab is active by default
@@ -50,12 +31,6 @@ function setupRoomViewTrimesterTabs() {
   if (activeTab) {
     freshTabs.forEach(t => t.classList.remove("active"));
     activeTab.classList.add("active");
-  }
-  
-  const activeYearTab = document.querySelector(`#section-room-view .year-level-tabs .year-tab-btn[data-year="${roomState.yearLevel}"]`);
-  if (activeYearTab) {
-    freshYearTabs.forEach(t => t.classList.remove("active"));
-    activeYearTab.classList.add("active");
   }
 }
 
@@ -68,6 +43,7 @@ async function renderRoomViewTables() {
   const rooms = await apiGet("rooms");
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const offerings = await apiGet("course_offerings");
 
   // Create MWF table first, then TTHS table
   const dayTypes = ["MWF", "TTHS"];
@@ -106,9 +82,18 @@ async function renderRoomViewTables() {
     tbody.innerHTML = "";
     const filteredSchedules = schedules.filter(sch => {
       const course = courses.find(c => c.id === sch.courseId);
-      return course && 
-             course.trimester === getRoomViewState().trimester &&
-    course.year_level === getRoomViewState().yearLevel &&
+      if (!course) return false;
+      const isInternational = (sch.section && sch.section.startsWith("INTERNATIONAL ")) ||
+                              (sch.section2 && sch.section2.startsWith("INTERNATIONAL "));
+      const inSelectedTrimester = isInternational
+        ? offerings.some(off =>
+            off.courseId === sch.courseId &&
+            off.type === sch.unitType &&
+            off.trimester === getRoomViewState().trimester &&
+            ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+          )
+        : course.trimester === getRoomViewState().trimester;
+      return inSelectedTrimester &&
              sch.dayType === dayType &&
              sch.col > 0; // Only show Room View entries (col > 0)
     });

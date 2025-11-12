@@ -1,231 +1,277 @@
-# Academic Schedule Management System Documentation
+# CITCS Schedule Management System – Documentation
 
 ## Table of Contents
 - [Overview](#overview)
-- [System Architecture](#system-architecture)
-- [Authentication System](#authentication-system)
-- [Backend Functionalities](#backend-functionalities)
-  - [Database Schema](#database-schema)
-  - [API Endpoints](#api-endpoints)
-- [Frontend Functionalities](#frontend-functionalities)
-  - [Startup Animation](#startup-animation)
+- [Architecture](#architecture)
+- [Environment Variables](#environment-variables)
+- [Local Setup](#local-setup)
+- [API Reference](#api-reference)
+  - [Authentication](#authentication)
+  - [Token Utilities](#token-utilities)
+  - [Data Endpoints](#data-endpoints)
+- [Database Schema](#database-schema)
+- [Frontend Guide](#frontend-guide)
   - [Navigation](#navigation)
-  - [Course Management](#course-management)
-  - [Course Offering Management](#course-offering-management)
-  - [Section View](#section-view)
-  - [Room View](#room-view)
-  - [Schedule Management](#schedule-management)
-  - [Curriculum Management](#curriculum-management)
-  - [Export Functionality](#export-functionality)
-- [Key Features](#key-features)
-- [Constraints and Validations](#constraints-and-validations)
+  - [Course Catalog](#course-catalog)
+  - [Manage Course Offering](#manage-course-offering)
+  - [Section Management](#section-management)
+  - [Room Management](#room-management)
+  - [Schedule Summary](#schedule-summary)
+  - [Analytics](#analytics)
+  - [Export](#export)
+- [Validations and Constraints](#validations-and-constraints)
+- [Deployment Notes](#deployment-notes)
+- [Maintenance and Backup](#maintenance-and-backup)
+- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
-The Academic Schedule Management System is a secure web application designed for educational institutions to manage academic course schedules, room allocations, and timetables. It provides a comprehensive tool for planning and visualizing academic schedules across different trimesters, year levels, and curriculum years with JWT-based authentication and modern UI components.
+A secure web application for managing academic schedules across trimesters, year levels, degrees, and curricula. It supports course CRUD, course offerings, room allocation, section scheduling, conflict prevention, analytics, and export to Excel. Authentication is JWT-based and protects course write operations.
 
-## System Architecture
+## Architecture
 
-The system follows a client-server architecture with a backend built using Node.js and Express, utilizing a PostgreSQL database for data storage hosted on Neon. The frontend is a web application built with HTML, CSS, and JavaScript, providing an interactive user interface for managing schedules and is deployed using Render.
+- **Backend**: Node.js + Express (`schedule-app/backend/server.js`). Serves static frontend, exposes REST APIs, and handles JWT auth.
+- **Database**: PostgreSQL via `pg` using `DATABASE_URL`. Tables are created/altered on startup if missing.
+- **Frontend**: HTML/CSS/vanilla JavaScript in `schedule-app/frontend/` with modular JS files for features. Assets in `schedule-app/assets/`.
+- **Security**: JWT with 2-hour expiry; bcrypt password verification using an admin password hash from environment variables.
 
-- **Backend**: Handles data storage, retrieval, business logic, and authentication through RESTful API endpoints
-- **Frontend**: Provides a user-friendly interface with startup animations, responsive design, and interactive components
-- **Database**: Stores information about courses, sections, rooms, schedules, curricula, and user authentication
-- **Authentication**: JWT-based security system protecting sensitive operations
+Key Libraries
+- express, pg, jsonwebtoken, bcrypt, dotenv
+- SheetJS/ExcelJS in frontend for export
 
-## Authentication System
+## Environment Variables
 
-The application implements a comprehensive authentication system:
+Create a `.env` file in `schedule-app/backend`:
 
-### Features
-- **JWT-based Authentication**: Secure token-based authentication using JSON Web Tokens
-- **Password Hashing**: Passwords are securely hashed using bcrypt
-- **Protected Routes**: Course management operations require authentication
-- **Session Management**: Automatic token validation and session handling
+```
+PORT=3000
+NODE_ENV=development
+DATABASE_URL=postgres://user:password@host:port/dbname
 
-### Login Process
-1. Users access the login page at `/login.html`
-2. Credentials are validated against environment variables
-3. Upon successful authentication, a JWT token is issued
-4. The token is stored and used for subsequent authenticated requests
-5. Users are redirected to the main application
+# Auth
+ADMIN_USERNAME=admin
+# Bcrypt hash of your chosen admin password (NOT the plaintext password)
+ADMIN_PASSWORD_HASH=$2b$10$...your_bcrypt_hash...
+JWT_SECRET=replace_with_a_long_random_secret
+```
 
-### Security Measures
-- Course write operations (POST, PUT, DELETE) are protected
-- Other operations (rooms, schedules, course offerings) remain accessible
-- Automatic logout functionality
-- Token expiration handling
+Generate a bcrypt hash (example):
 
-## Backend Functionalities
+```
+node -e "require('bcrypt').hash(process.argv[1], 10).then(h=>console.log(h))" 'yourStrongPassword'
+```
 
-### Database Schema
+## Local Setup
 
-The system uses the following tables in the PostgreSQL database:
+1. Install Node.js (LTS) and set up a PostgreSQL instance (local or hosted).  
+2. In `schedule-app/backend`, create `.env` as above with a valid `DATABASE_URL`.  
+3. Install dependencies and start the server:
 
-- **rooms**: Contains room information with fields for `id` and `name`
-- **courses**: Holds course details with fields for `id`, `subject`, `unit_category`, `units`, `year_level`, `degree`, `trimester`, `description`, and `curriculum`
-- **schedules**: Manages schedule entries with fields for `id`, `dayType`, `time`, `col`, `roomId`, `courseId`, `color`, `unitType`, `section`, and `section2`
-- **course_offerings**: Tracks course offerings with fields for `id`, `courseId`, `section`, `type`, `units`, `trimester`, and `degree`
-- **curricula**: Manages curriculum years with fields for `id` and `year` (unique constraint on year)
+```
+cd schedule-app/backend
+npm install
+npm start
+```
 
-### API Endpoints
+4. Open `http://localhost:3000`. You will be redirected to `login.html` if not authenticated.
 
-The backend provides RESTful API endpoints for CRUD operations and authentication:
+## API Reference
 
-#### Authentication Endpoints
-- **POST /api/login**: Authenticates user credentials and returns JWT token
-  - Request body: `{ "username": "string", "password": "string" }`
-  - Response: `{ "token": "jwt_token_string" }`
+Base URL: `/api`
 
-#### Data Management Endpoints
-- **GET /api/:table**: Retrieves all items from the specified table
-  - Supported tables: `rooms`, `courses`, `schedules`, `course_offerings`, `curricula`
-- **POST /api/:table**: Adds a new item to the specified table
-  - **Note**: Course operations require authentication
-- **PUT /api/:table/:id**: Updates an existing item in the specified table
-  - **Note**: Course operations require authentication
-- **DELETE /api/:table/:id**: Deletes an item from the specified table
-  - **Note**: Course operations require authentication
+### Authentication
 
-#### Security Features
-- Authentication middleware protects course write operations
-- JWT token validation for protected routes
-- Automatic table validation to prevent SQL injection
-- Row mapping for consistent data format across different database drivers
+- POST `/api/login`  
+  Request: `{ "username": string, "password": string }`  
+  Response: `{ "token": string }` (JWT, 2h expiry)
 
-Supported tables for API operations are `rooms`, `courses`, `schedules`, and `course_offerings`. The system includes validation to ensure only valid table names are processed.
+Notes
+- Username must equal `ADMIN_USERNAME`. Password is verified against `ADMIN_PASSWORD_HASH` via bcrypt.
+- Store the token (e.g., `localStorage`) and send it as `Authorization: Bearer <token>` for protected operations.
 
-## Frontend Functionalities
+### Token Utilities
 
-### Startup Animation
+- POST `/api/refresh-token` (requires valid token)  
+  Response: `{ "token": string }` (new 2h token)
 
-The application features an engaging startup sequence:
-- **Loading Screen**: Animated logo with glowing effects and particle animations
-- **Progress Indicator**: Visual loading bar with animated dots
-- **Smooth Transition**: Fade-in effect when transitioning to the main application
-- **Responsive Design**: Adapts to different screen sizes and devices
+- GET `/api/token-status` (requires valid token)  
+  Response: `{ valid: true, expiresAt: number, expiresIn: number, warningThreshold: boolean }`
+
+All `/api` responses may include:
+- `X-Token-Expires-In`, `X-Token-Expires-At`, and `X-Token-Expiry-Warning` headers when a token is present.
+
+### Data Endpoints
+
+Generic CRUD is exposed under `/api/:table` with whitelisted tables only.
+
+Whitelisted tables
+- `rooms`, `courses`, `schedules`, `course_offerings`, `curricula`
+
+Read (public)
+- GET `/api/:table` → Returns all rows.  
+  Special casing for camelCased fields in `schedules` and `course_offerings`.
+
+Create (protected for `courses` only)
+- POST `/api/:table` with JSON body matching the schema (see Database Schema).  
+  - `courses`: requires valid JWT
+
+Update (protected for `courses` only)
+- PUT `/api/:table/:id` with JSON body.  
+  - `courses`: requires valid JWT
+
+Delete (protected for `courses` only)
+- DELETE `/api/:table/:id`  
+  - `courses`: requires valid JWT
+
+Security
+- Table names are validated against a fixed allowlist.  
+- Values are parameterized to prevent SQL injection.
+
+## Database Schema
+
+Tables are created/updated at server start if missing. Effective columns:
+
+- rooms
+  - id SERIAL PRIMARY KEY
+  - name TEXT NOT NULL
+
+- courses
+  - id SERIAL PRIMARY KEY
+  - subject TEXT NOT NULL
+  - unit_category TEXT NOT NULL
+  - units TEXT NOT NULL
+  - year_level TEXT NOT NULL
+  - degree TEXT NOT NULL
+  - trimester TEXT NOT NULL
+  - description TEXT
+  - curriculum TEXT
+
+- schedules
+  - id SERIAL PRIMARY KEY
+  - dayType TEXT NOT NULL
+  - time TEXT NOT NULL
+  - col INTEGER NOT NULL
+  - roomId INTEGER REFERENCES rooms(id)
+  - courseId INTEGER REFERENCES courses(id)
+  - color TEXT
+  - unitType TEXT
+  - section TEXT
+  - section2 TEXT
+
+- course_offerings
+  - id SERIAL PRIMARY KEY
+  - courseId INTEGER NOT NULL REFERENCES courses(id)
+  - section TEXT NOT NULL
+  - type TEXT NOT NULL
+  - units INTEGER NOT NULL
+  - trimester TEXT NOT NULL
+  - degree TEXT
+
+- curricula
+  - id SERIAL PRIMARY KEY
+  - year TEXT UNIQUE
+
+Notes
+- On startup, server ensures `public` schema and unique index on `curricula.year`.  
+- Legacy handling may drop a previous `curricula.name` if present and backfill `year` from it.
+
+## Frontend Guide
+
+The app is served statically from the backend. Main entry: `index.html`. If no token is found in `localStorage`, users are redirected to `login.html`.
 
 ### Navigation
 
-The application provides a responsive sidebar navigation system with hamburger menu toggle:
+Sidebar options include: Analytics, Course Catalog, Manage Course Offering, Section Management, Room Management, Schedule Summary, Logout. The UI is responsive and includes a startup loader animation.
 
-- **Analytics**: Overview of the system with quick access to main features
-- **Course Catalog**: Interface for adding, editing, and deleting courses (authentication required)
-- **Manage Course Offering**: Interface for managing course offerings and sections
-- **Section Management**: Displays courses organized by sections with filtering options
-- **Room Management**: Shows room allocations and schedules with CRUD operations
-- **Schedule Summary**: Provides a comprehensive view of all schedules
-- **Logout**: Secure logout functionality that clears authentication tokens
+### Course Catalog
 
-### Course Management
+Protected (requires login) for add/edit/delete.
+- Add/Edit/Delete courses with subject, unit category (PureLec or Lec/Lab), units, year level, degree, trimester, curriculum, and description.
+- Search, filter (year, degree, trimester, curriculum), sort (subject, units).
+- CSV import/export and selective deletion tools.
 
-The course management interface provides comprehensive course administration (requires authentication):
+### Manage Course Offering
 
-- **Add New Courses**: Create new course entries with details such as subject, units, year level, degree, trimester, and curriculum year
-- **Edit Existing Courses**: Modify course information with real-time validation
-- **Delete Courses**: Remove courses from the system with confirmation dialogs
-- **Advanced Search and Filter**: Find courses using search functionality and filter by:
-  - Degree programs (BSIT, BSIT variants, BSCS, BSDA, BMMA)
-  - Curriculum year (2020-2021 through 2024-2025)
-  - Year level and trimester
-- **Import/Export Functionality**: 
-  - Import course data from CSV files with validation
-  - Export current course data to CSV format
-  - Clear all courses with bulk operations
-- **Sorting Options**: Sort by subject, units, year level, and other criteria
+Create course offerings per degree/year/trimester/section.
+- Manual and bulk creation flows, auto-inheriting units/trimester from source course.
+- Supports types: `Lec`, `Lab`, `PureLec`.
+- Bulk creation by degree, year level, trimester, and multi-section letters.
 
-### Course Offering Management
+### Section Management
 
-This section manages course offerings with enhanced functionality:
+Assign offerings to time slots and rooms by trimester and year level.
+- Time-grid per day pattern (MWF, TTHS).
+- Optional dual-section assignment for shared subjects.
+- Real-time conflict checks with visual notifications.
 
-- **Create Offerings**: Set up course offerings for specific sections and trimesters
-- **Section Management**: Organize courses by sections with dynamic section creation
-- **Unit Types**: Handle different unit types (Lecture, Laboratory) with proper validation
-- **Trimester Organization**: Organize offerings by trimester periods with tabbed interface
-- **Conflict Detection**: Automatic detection and notification of scheduling conflicts
-- **Bulk Operations**: Mass creation and modification of course offerings
+### Room Management
 
-### Curriculum Management
+Add/update/delete rooms and visualize time-grid occupancy.
+- Grouped views (Room Group A/B), MWF and TTHS tables.
+- Assign offerings with Section 1 and optional Section 2.
 
-The system includes comprehensive curriculum tracking:
+### Schedule Summary
 
-- **Curriculum Years**: Manage different curriculum versions (2020-2025)
-- **Course Association**: Link courses to specific curriculum years
-- **Filtering by Curriculum**: Filter courses and offerings by curriculum year
-- **Migration Support**: Handle transitions between curriculum versions
-- **Validation**: Ensure courses are properly associated with valid curricula
+View aggregated schedules by trimester and year level, with section-based summaries.
 
-### Section View
+### Analytics
 
-The section view provides comprehensive section management:
+Key counts and distribution visuals (courses, offerings, schedules, rooms, curricula, room utilization).
 
-- **Trimester Tabs**: Navigate between different trimesters (1st, 2nd, 3rd) with dynamic content loading
-- **Year Level Filtering**: Filter courses by year level (1st Year through 4th Year)
-- **Section Display**: View courses organized by sections with enhanced visual layout
-- **Schedule Visualization**: Interactive schedule grid with drag-and-drop functionality
-- **Conflict Resolution**: Real-time conflict detection and resolution suggestions
-- **Bulk Operations**: Mass schedule creation and modification tools
+### Export
 
-### Room View
+Excel export of schedules using SheetJS/ExcelJS, plus CSV export for tabular data.
 
-The room view offers advanced room management:
+## Validations and Constraints
 
-- **Room CRUD Operations**: Create, read, update, and delete room entries
-- **Room Selection**: Choose from available rooms with search and filter capabilities
-- **Schedule Display**: Visual representation of room usage with color-coded time slots
-- **Time Slot Management**: Manage time slots with validation and conflict prevention
-- **Occupancy Tracking**: Monitor room utilization and availability
-- **Export Options**: Export room schedules in multiple formats
+Server-side
+- Table allowlist and parameterized queries protect against SQL injection.
+- Duplicate prevention:
+  - Rooms: case-insensitive name uniqueness check on create.
+  - Courses (POST): subject + curriculum + degree uniqueness (treats NULL curriculum distinctly).
+  - Courses (PUT): prevents changing into an existing subject + curriculum combination.
 
-### Schedule Management
+Client-side
+- Real-time room conflict and section overlap prevention in scheduling UI.
+- Duplicate schedule checks for subjects within a section.
+- Trimester/year-level filters gate bulk operations.
 
-Schedule management includes comprehensive scheduling tools:
+Auth
+- JWT required for write operations on `courses` only (rooms, schedules, offerings, curricula are public in current config).  
+- Tokens expire in 2 hours; headers expose expiry to aid proactive refresh.
 
-- **Interactive Schedule Grid**: Drag-and-drop interface for schedule creation
-- **Create Schedules**: Add new schedule entries with course, room, and time information
-- **Edit Schedules**: Modify existing schedule entries with real-time validation
-- **Delete Schedules**: Remove schedule entries with confirmation dialogs
-- **Conflict Detection**: Automatic detection of time, room, and instructor conflicts
-- **Color Coding**: Visual distinction between different course types and sections
-- **Responsive Design**: Mobile-friendly schedule interface
+## Deployment Notes
 
-### Export Functionality
+- Provide `DATABASE_URL`, `JWT_SECRET`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH` in environment.  
+- Ensure the process has access to serve `schedule-app/frontend` and `schedule-app/assets`.  
+- For hosted Postgres, enable SSL; the server auto-sets SSL in production (`NODE_ENV=production`).  
+- Scale guidance: terminate idle connections; prefer a connection pool compatible with your provider.
 
-The system provides comprehensive export capabilities:
+## Maintenance and Backup
 
-- **Excel Export**: Export schedule data to Excel format using SheetJS library
-- **CSV Export**: Export course and schedule data in CSV format
-- **Filtered Export**: Export specific data based on current filters and selections
-- **Multiple Views**: Export from different views (courses, schedules, rooms)
-- **Batch Export**: Export multiple datasets simultaneously
-- **Custom Formatting**: Configurable export formats to meet institutional requirements
+- Regularly back up the Postgres database (especially before bulk deletions).  
+- Export schedules to Excel as operational backups.  
+- Periodically review curricula and offerings for consistency across trimesters and years.
 
-## Key Features
+## Troubleshooting
 
-1. **Secure Authentication System**: JWT-based authentication with password hashing and protected routes
-2. **Comprehensive Course Management**: Full CRUD operations with curriculum tracking and advanced filtering
-3. **Interactive Schedule Planning**: Drag-and-drop interface with real-time conflict detection and resolution
-4. **Advanced Room Management**: Complete room lifecycle management with occupancy tracking
-5. **Curriculum Management**: Multi-year curriculum support with version tracking and migration tools
-6. **Modern User Interface**: Responsive design with startup animations, hamburger navigation, and mobile support
-7. **Export Capabilities**: Multiple export formats (Excel, CSV) with customizable options
-8. **Real-time Validation**: Live conflict detection and data validation across all operations
-9. **Bulk Operations**: Mass data import/export and batch processing capabilities
-10. **Cross-platform Compatibility**: Works across different browsers and devices
+Login/auth issues
+- Verify `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and `JWT_SECRET` in environment.
+- Recreate bcrypt hash if plaintext password changed.
+- Check token expiry; use `/api/refresh-token`.
 
-## Constraints and Validations
+Database issues
+- Verify `DATABASE_URL` connectivity and SSL settings in production.
+- Ensure the `public` schema is available.
 
-1. **Authentication Requirements**: Course management operations require valid JWT authentication
-2. **Room Conflict Prevention**: Automatic detection and prevention of room double-booking
-3. **Section Conflict Detection**: Prevents scheduling conflicts for sections and instructors
-4. **Curriculum Consistency**: Ensures courses are properly associated with valid curriculum years
-5. **Time Slot Validation**: Validates time slots within acceptable academic hours and formats
-6. **Data Integrity**: Maintains referential integrity across all database tables with foreign key constraints
-7. **Input Validation**: Comprehensive client and server-side validation for all user inputs
-8. **Trimester Consistency**: Ensures schedules align with proper trimester periods and academic calendars
-9. **Duplicate Prevention**: Prevents duplicate course offerings and schedule entries
-10. **Database Security**: SQL injection prevention through parameterized queries and table validation
+Data not saving
+- Confirm required fields and correct table target in requests.
+- For protected `courses` writes, include `Authorization: Bearer <token>`.
 
----
+Export issues
+- Ensure a modern browser (pop-ups allowed) for downloads.
+- Large exports may take time; prefer filtered exports when possible.
 
-This documentation provides a complete overview of the Academic Schedule Management System, detailing all functionalities as they exist in the current implementation. For further assistance or feature requests, please contact the system administrator.
+Performance
+- Use filters (degree/year/trimester) to limit dataset in UI.
+- Monitor database connection limits on hosted providers.

@@ -308,23 +308,27 @@ body.nav-collapsed .main-app {
 }
 
 .loading-text h1 {
-  font-size: 2.5rem;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
   font-weight: 700;
   margin: 0 0 0.5rem 0;
   color: white;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   animation: textSlideUp 1s ease-out 0.5s both;
+  text-align: center;
+  padding: 0 10px;
 }
 
 .loading-text p {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 3vw, 1.2rem);
   margin: 0 0 2rem 0;
   opacity: 0.9;
   animation: textSlideUp 1s ease-out 0.7s both;
+  text-align: center;
+  padding: 0 10px;
 }
 
 .loading-bar {
-  width: 300px;
+  width: min(300px, 80vw);
   height: 4px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
@@ -649,6 +653,31 @@ nav.collapsed {
   transform: translateY(-12px) rotate(-45deg);
 }
 
+/* Mobile hamburger adjustments */
+@media (max-width: 768px) {
+  #nav-toggle {
+    width: 40px;
+    height: 32px;
+    top: 12px;
+    left: 12px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  #nav-toggle span {
+    height: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  #nav-toggle {
+    width: 36px;
+    height: 30px;
+  }
+}
+
 /* Logo / title placeholder slots (future) */
 nav::before {
   content: "";
@@ -939,6 +968,7 @@ tbody tr:hover td { background: var(--color-hover); }
   justify-content: center;
   gap: 20px;
   margin: 10px 0 25px 0;
+  flex-wrap: wrap;
 }
 
 .button-container .add-btn,
@@ -948,6 +978,25 @@ tbody tr:hover td { background: var(--color-hover); }
 .top-button-container .add-btn {
   margin: 0;
   min-width: 150px;
+}
+
+/* Mobile button container adjustments */
+@media (max-width: 768px) {
+  .button-container {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .button-container .add-btn,
+  .button-container .delete-btn,
+  .button-container .import-btn,
+  .button-container .export-btn,
+  .top-button-container .add-btn {
+    width: 100%;
+    min-width: auto;
+    margin: 0;
+  }
 }
 
 #btn-save-sectionview, #btn-delete-sectionview,
@@ -965,6 +1014,7 @@ tbody tr:hover td { background: var(--color-hover); }
   gap: 8px;
   margin-bottom: 15px;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 /* Year Level Tabs */
@@ -973,6 +1023,40 @@ tbody tr:hover td { background: var(--color-hover); }
   justify-content: center;
   gap: 12px;
   margin: 15px 0 25px;
+  flex-wrap: wrap;
+}
+
+/* Mobile tab adjustments */
+@media (max-width: 768px) {
+  .trimester-tabs,
+  .year-level-tabs {
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  
+  .tab-btn,
+  .year-tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex: 1 1 auto;
+    min-width: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trimester-tabs,
+  .year-level-tabs {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .tab-btn,
+  .year-tab-btn {
+    width: 100%;
+    min-width: auto;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
 }
 
 .tab-btn,
@@ -1235,6 +1319,34 @@ tbody tr:hover td { background: var(--color-hover); }
   max-width: 1400px;    /* Consistent with other tables */
 }
 
+/* Mobile section view adjustments */
+@media (max-width: 768px) {
+  #section-view-container {
+    gap: 12px;
+  }
+  
+  #section-view-container .table-container {
+    width: 100%;
+    margin: 0 0 15px 0;
+  }
+  
+  .table-container h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  #section-view-container {
+    gap: 10px;
+  }
+  
+  .table-container h3 {
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+  }
+}
+
 /* Schedule table styling - more compact */
 .schedule-table {
   width: 100%;
@@ -1381,6 +1493,7 @@ tbody tr:hover td { background: var(--color-hover); }
   display: flex;
   gap: 1.5rem;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .radio-group label {
@@ -1388,6 +1501,32 @@ tbody tr:hover td { background: var(--color-hover); }
   align-items: center;
   gap: 6px;
   cursor: pointer;
+}
+
+/* Mobile radio group adjustments */
+@media (max-width: 768px) {
+  .radio-group {
+    gap: 1rem;
+  }
+  
+  .radio-group label {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .radio-group {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  
+  .radio-group label {
+    padding: 8px;
+    width: 100%;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+  }
 }
 
 /* Modals */
@@ -1716,6 +1855,45 @@ tbody tr:hover td { background: var(--color-hover); }
   margin: 0;
 }
 
+/* Mobile filter controls adjustments */
+@media (max-width: 768px) {
+  .year-radio-group {
+    gap: 10px;
+  }
+  
+  .year-radio-group label {
+    font-size: 14px;
+    padding: 6px 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    flex: 1 1 45%;
+    min-width: 120px;
+  }
+  
+  .trimester-radio-group label {
+    font-size: 14px;
+    padding: 6px 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .year-radio-group,
+  .trimester-radio-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .year-radio-group label,
+  .trimester-radio-group label {
+    width: 100%;
+    padding: 10px 12px;
+    justify-content: flex-start;
+  }
+}
+
 .save-btn {
   margin-top: 20px;
   background-color: #2e7d32; 
@@ -1825,6 +2003,26 @@ button.delete-btn {
 @keyframes slideIn {
   from { transform: translateX(30px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
+}
+
+/* Mobile conflict popup adjustments */
+@media (max-width: 768px) {
+  #conflict-popup {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: calc(100vw - 20px);
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  #conflict-popup {
+    top: 60px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
 }
 
 /* Room assignment section in Section View modal */
@@ -2031,6 +2229,47 @@ button.delete-btn {
   font-weight: 500;
 }
 
+/* Mobile summary table adjustments */
+@media (max-width: 768px) {
+  .summary-table {
+    font-size: 12px;
+  }
+  
+  .summary-table th,
+  .summary-table td {
+    padding: 8px 6px;
+  }
+  
+  .summary-table th {
+    font-size: 11px;
+  }
+  
+  .section-filter {
+    padding: 8px;
+  }
+  
+  .section-filter select {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-table {
+    font-size: 11px;
+  }
+  
+  .summary-table th,
+  .summary-table td {
+    padding: 6px 4px;
+    white-space: nowrap;
+  }
+  
+  .summary-section h4 {
+    font-size: 14px;
+  }
+}
+
 .no-data-message {
   text-align: center;
   padding: 20px;
@@ -2050,6 +2289,25 @@ button.delete-btn {
   position: sticky;
   bottom: 0;
   z-index: 100;
+}
+
+/* Mobile export container adjustments */
+@media (max-width: 768px) {
+  .export-container {
+    padding: 12px;
+  }
+  
+  #btn-export-excel {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .export-container {
+    padding: 10px;
+  }
 }
 
 #btn-export-excel {
@@ -2665,6 +2923,27 @@ button:hover {
   width: 100%;
 }
 
+/* Mobile section input adjustments */
+@media (max-width: 768px) {
+  .section-inputs {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .section-year-select, .section-letter-input {
+    width: 100%;
+  }
+  
+  .section-preview {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .section-preview strong {
+    font-size: 15px;
+  }
+}
+
 /* Style for the bulk section letters input */
 #courseOffering-section-letters {
   width: 100%;
@@ -2976,6 +3255,41 @@ nav:not(.collapsed) button {
   min-width: 60px;
 }
 
+/* Mobile manage rooms adjustments */
+@media (max-width: 768px) {
+  #modal-manage-rooms .modal-content {
+    width: 95vw;
+    max-width: 95vw;
+  }
+  
+  #table-rooms .table-edit-btn,
+  #table-rooms .table-delete-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    min-width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  #table-rooms {
+    font-size: 0.8rem;
+  }
+  
+  #table-rooms th,
+  #table-rooms td {
+    padding: 6px 4px;
+  }
+  
+  #table-rooms .table-edit-btn,
+  #table-rooms .table-delete-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    display: block;
+    width: 100%;
+    margin: 2px 0;
+  }
+}
+
 /* Action buttons container for side-by-side layout */
 .action-buttons-container {
   display: flex;
@@ -3097,7 +3411,7 @@ nav:not(.collapsed) button {
 section h2 {
   font-family: 'verdana', sans-serif;
   letter-spacing: 1px;
-  font-size: 50px;
+  font-size: clamp(24px, 5vw, 50px);
   text-transform: uppercase;
   margin-top: -20px;
   margin-bottom: 10px;
@@ -3359,11 +3673,12 @@ section h2 {
 
 .loading-message {
   color: white;
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 3vw, 1.2rem);
   font-weight: 500;
   text-align: center;
   margin-top: 15px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  padding: 0 20px;
 }
 
 @keyframes spin {
@@ -3684,10 +3999,47 @@ section h2 {
 }
 
 /* Responsive design for component assignment */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .leclab-assignment-section,
+  .room-assignment-section {
+    padding: 12px;
+    max-height: none;
+  }
+  
   .component-assignment {
     flex-direction: column;
     gap: 10px;
+  }
+  
+  .lec-assignment, .lab-assignment {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .room-assignment-section .room-group-filter {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .leclab-assignment-section h4,
+  .room-assignment-section h4 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .lec-assignment h5, .lab-assignment h5 {
+    font-size: 14px;
+  }
+  
+  .lec-assignment label, .lab-assignment label {
+    font-size: 13px;
+  }
+  
+  .lec-assignment select, .lab-assignment select {
+    font-size: 14px;
+    padding: 10px;
   }
 }
 
@@ -3917,25 +4269,37 @@ section h2 {
   .chart-row {
     grid-template-columns: 1fr;
   }
+  
+  .analytics-stats {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
   .analytics-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   
   .stat-card {
     padding: 16px;
+    flex-direction: column;
+    text-align: center;
   }
   
   .stat-icon {
     width: 50px;
     height: 50px;
     font-size: 2rem;
+    margin: 0 auto 8px;
   }
   
   .stat-content h3 {
     font-size: 1.5rem;
+  }
+  
+  .stat-content p {
+    font-size: 0.85rem;
   }
   
   .chart-container {
@@ -3946,22 +4310,57 @@ section h2 {
     flex-direction: column;
     align-items: stretch;
   }
+  
+  .chart h4 {
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
   .analytics-stats {
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
   
   .stat-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .stat-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.8rem;
+  }
+  
+  .stat-content h3 {
+    font-size: 1.3rem;
+  }
+  
+  .stat-content p {
+    font-size: 0.8rem;
+  }
+  
+  .chart-container {
+    padding: 12px;
   }
   
   .pie-chart {
     width: 150px;
     height: 150px;
+  }
+  
+  .chart h4 {
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+  }
+  
+  .chart-bar-label {
+    font-size: 0.85rem;
+  }
+  
+  .chart-bar-value {
+    font-size: 0.8rem;
   }
 }
 
@@ -4068,6 +4467,89 @@ section h2 {
   table {
     min-width: 400px;
     font-size: 0.75rem;
+  }
+}
+
+/* ===================================================================== */
+/* TOUCH-FRIENDLY MOBILE ENHANCEMENTS                                    */
+/* ===================================================================== */
+@media (max-width: 768px) {
+  /* Ensure all interactive elements meet minimum touch target size (44x44px) */
+  button,
+  .btn,
+  .tab-btn,
+  .year-tab-btn,
+  .add-btn,
+  .delete-btn,
+  .save-btn,
+  .export-btn,
+  .import-btn,
+  select,
+  input[type="text"],
+  input[type="password"],
+  input[type="number"] {
+    min-height: 44px;
+  }
+  
+  /* Improve spacing for easier touch interaction */
+  button + button,
+  .btn + .btn {
+    margin-top: 4px;
+  }
+  
+  /* Prevent text from being too small */
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* Improve horizontal scrolling on tables */
+  .table-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Better tap highlighting */
+  * {
+    -webkit-tap-highlight-color: rgba(46, 125, 50, 0.1);
+  }
+}
+
+/* ===================================================================== */
+/* LANDSCAPE ORIENTATION OPTIMIZATIONS FOR MOBILE                        */
+/* ===================================================================== */
+@media (max-width: 896px) and (orientation: landscape) {
+  /* Optimize for landscape mobile viewing */
+  section h2 {
+    font-size: clamp(20px, 4vw, 36px);
+    margin-top: -10px;
+    margin-bottom: 8px;
+  }
+  
+  .trimester-tabs,
+  .year-level-tabs {
+    margin-top: 6px;
+    margin-bottom: 10px;
+  }
+  
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .startup-logo {
+    width: 100px;
+    height: 100px;
+    padding: 15px;
+  }
+  
+  .loading-text h1 {
+    font-size: 1.8rem;
+  }
+  
+  .loading-text p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
   }
 }
 

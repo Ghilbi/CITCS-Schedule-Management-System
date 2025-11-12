@@ -62,14 +62,23 @@ async function getUniqueSectionsForTrimesterAndYear(trimester, yearLevel) {
   const courses = await apiGet("courses");
   const sections = new Set();
   
-  offerings.forEach(off => {
-    if (off.trimester === trimester) {
-      const course = courses.find(c => c.id === off.courseId);
-      if (course && course.year_level === yearLevel) {
-      sections.add(off.section);
+  // Special handling for International view: show INTERNATIONAL sections for selected trimester
+  if (yearLevel === "International") {
+    offerings.forEach(off => {
+      if (off.trimester === trimester && off.section && off.section.startsWith("INTERNATIONAL ")) {
+        sections.add(off.section);
       }
-    }
-  });
+    });
+  } else {
+    offerings.forEach(off => {
+      if (off.trimester === trimester) {
+        const course = courses.find(c => c.id === off.courseId);
+        if (course && course.year_level === yearLevel && !(off.section && off.section.startsWith("INTERNATIONAL "))) {
+          sections.add(off.section);
+        }
+      }
+    });
+  }
   
   return [...sections].sort();
 }
@@ -133,6 +142,7 @@ async function renderSectionViewTables() {
   ];
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+  const offerings = await apiGet("course_offerings");
   const allColumns = await getAllRoomColumns();
 
   const dayTypes = ["MWF", "TTHS"];
@@ -202,16 +212,28 @@ async function renderSectionViewTables() {
         td.addEventListener("click", () => openSectionViewModal(dayType, time, section));
         
         // Rest of your code for populating cells remains the same
-        const scheduleEntries = schedules.filter(sch => {
-          const course = courses.find(c => c.id === sch.courseId);
-          return course && 
-                 course.trimester === sectionState.trimester &&
-                 course.year_level === sectionState.yearLevel &&
-                 sch.dayType === dayType &&
-                 sch.time === time &&
-                 (sch.section === section || sch.section2 === section) &&
-                 sch.col === 0; // Only show Section View entries (col = 0)
-        });
+      const isInternationalView = sectionState.yearLevel === "International";
+      const scheduleEntries = schedules.filter(sch => {
+        const course = courses.find(c => c.id === sch.courseId);
+        if (!course) return false;
+        const matchesBase = sch.dayType === dayType &&
+                            sch.time === time &&
+                            (sch.section === section || sch.section2 === section) &&
+                            sch.col === 0;
+        if (!matchesBase) return false;
+        if (isInternationalView) {
+          // For International, include only if there is an offering for this course/section in the selected trimester
+          return offerings.some(off =>
+            off.courseId === sch.courseId &&
+            (off.section === sch.section || off.section === sch.section2) &&
+            off.section === section &&
+            off.trimester === sectionState.trimester
+          );
+        }
+        // Default behavior for standard year levels
+        return course.trimester === sectionState.trimester &&
+               course.year_level === sectionState.yearLevel;
+      });
         
         if (scheduleEntries.length > 0) {
           const sch = scheduleEntries[0]; // Assuming one schedule per section per time slot
@@ -273,13 +295,23 @@ async function renderSectionViewTables() {
             const complementary = sch.unitType === "Lec" ? "Lab" : "Lec";
             const compEntry = schedules.find(s => {
               const sCourse = courses.find(c => c.id === s.courseId);
-              return s.col === 0 && // Section view entry
-                     s.dayType === dayType &&
-                     s.courseId === sch.courseId &&
-                     (s.section === section || s.section2 === section) &&
-                     s.unitType === complementary &&
-                     sCourse &&
-                     sCourse.trimester === sectionState.trimester &&
+              if (!sCourse) return false;
+              const baseMatch = s.col === 0 &&
+                                s.dayType === dayType &&
+                                s.courseId === sch.courseId &&
+                                (s.section === section || s.section2 === section) &&
+                                s.unitType === complementary;
+              if (!baseMatch) return false;
+              if (isInternationalView) {
+                // For International, verify offering exists in selected trimester
+                return offerings.some(off =>
+                  off.courseId === s.courseId &&
+                  (off.section === s.section || off.section === s.section2) &&
+                  off.section === section &&
+                  off.trimester === sectionState.trimester
+                );
+              }
+              return sCourse.trimester === sectionState.trimester &&
                      sCourse.year_level === sectionState.yearLevel;
             });
             
@@ -321,6 +353,31 @@ async function renderSectionViewTables() {
 }
 
 /**************************************************************
+ * Helper: Request a safe Section View refresh
+ * Retries briefly if a render is already in progress so UI updates immediately
+ **************************************************************/
+function requestSectionViewRefresh() {
+  const sectionEl = document.getElementById('section-section-view');
+  if (!(sectionEl && !sectionEl.classList.contains('hidden'))) return;
+
+  const attempt = (retries = 3) => {
+    // If a render is not currently running, trigger it
+    if (!isRenderingSectionView) {
+      Promise.resolve(renderSectionViewTables())
+        .then(() => validateAllComplementary && validateAllComplementary())
+        .catch(err => console.error('Section View refresh failed:', err));
+      return;
+    }
+    // Otherwise, retry shortly
+    if (retries > 0) {
+      setTimeout(() => attempt(retries - 1), 150);
+    }
+  };
+
+  attempt();
+}
+
+/**************************************************************
  * NEW SECTION VIEW Modal: Open, populate, and save
  **************************************************************/
 // modalSectionView is defined in 14-new-section-view-modal-open-populate-and-save.js
@@ -339,14 +396,26 @@ async function openSectionViewModal(dayType, time, section) {
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
   const sectionState = getSectionViewState();
+  const offerings = await apiGet("course_offerings");
+  const isInternationalView = sectionState.yearLevel === "International";
   const existing = schedules.find(sch => {
     const course = courses.find(c => c.id === sch.courseId);
-    return course && course.trimester === sectionState.trimester &&
-           course && course.year_level === sectionState.yearLevel &&
-           sch.dayType === dayType &&
-           sch.time === time &&
-           (sch.section === section || sch.section2 === section) &&
-           sch.col === 0; // Only find Section View entries (col = 0)
+    if (!course) return false;
+    const base = sch.dayType === dayType &&
+                 sch.time === time &&
+                 (sch.section === section || sch.section2 === section) &&
+                 sch.col === 0;
+    if (!base) return false;
+    if (isInternationalView) {
+      // For International, ensure an offering exists for this section/course in selected trimester
+      return offerings.some(off =>
+        off.courseId === sch.courseId &&
+        off.section === section &&
+        off.trimester === sectionState.trimester
+      );
+    }
+    return course.trimester === sectionState.trimester &&
+           course.year_level === sectionState.yearLevel;
   });
   
   if (existing) {
@@ -430,13 +499,17 @@ async function populateSectionViewRoomDropdown() {
   
   // Get the existing entry if editing
   const sectionState = getSectionViewState();
+  const isInternationalView = sectionState.yearLevel === "International";
   const existingRoomViewEntry = existingId ? 
     schedules.find(sch => {
       const course = courses.find(c => c.id === sch.courseId);
-      return sch.id.toString() === existingId && 
-             sch.col === 0 && // Section View entry
-             course && 
-             course.trimester === sectionState.trimester && 
+      if (!course) return false;
+      if (sch.id.toString() !== existingId || sch.col !== 0) return false;
+      if (isInternationalView) {
+        // For International just accept; trimester/year filters are not enforced here
+        return true;
+      }
+      return course.trimester === sectionState.trimester && 
              course.year_level === sectionState.yearLevel;
     }) : null;
 
@@ -452,8 +525,7 @@ async function populateSectionViewRoomDropdown() {
              sch.section === existingRoomViewEntry.section &&
              sch.section2 === existingRoomViewEntry.section2 &&
              course && 
-             course.trimester === sectionState.trimester && 
-             course.year_level === sectionState.yearLevel &&
+             (isInternationalView || (course.trimester === sectionState.trimester && course.year_level === sectionState.yearLevel)) &&
              sch.col > 0; // Room View entry
     });
     
@@ -499,6 +571,11 @@ document.querySelectorAll('input[name="roomGroup"]').forEach(radio => {
 });
 
 async function populateSectionViewCourseOfferingDropdown(section) {
+  // Ensure we fetch fresh data so newly added offerings (e.g., International PureLec) appear instantly
+  if (typeof clearApiCache === 'function') {
+    clearApiCache('course_offerings');
+    clearApiCache('courses');
+  }
   const offerings = await apiGet("course_offerings");
   const courses = await apiGet("courses");
   const schedules = await apiGet("schedules");
@@ -511,7 +588,13 @@ async function populateSectionViewCourseOfferingDropdown(section) {
     if (sch.col === 0 && (sch.section === section || sch.section2 === section)) {
       const course = courses.find(c => c.id === sch.courseId);
       const sectionState = getSectionViewState();
-      if (course && course.trimester === sectionState.trimester && course.year_level === sectionState.yearLevel) {
+      const isInternationalView = sectionState.yearLevel === "International";
+      if (isInternationalView) {
+        // For International, disregard course year/trim; track scheduled by subject + unitType
+        if (course) {
+          scheduledSubjects.add(`${course.subject}_${sch.unitType}`);
+        }
+      } else if (course && course.trimester === sectionState.trimester && course.year_level === sectionState.yearLevel) {
         // Create a unique key for subject + unit type to allow different components (Lec/Lab)
         scheduledSubjects.add(`${course.subject}_${sch.unitType}`);
       }
@@ -520,8 +603,12 @@ async function populateSectionViewCourseOfferingDropdown(section) {
   
   // Filter offerings that match the current trimester and year level
   const sectionState = getSectionViewState();
+  const isInternationalView = sectionState.yearLevel === "International";
   const filteredOfferings = offerings.filter(off => {
     const course = courses.find(c => c.id === off.courseId);
+    if (isInternationalView) {
+      return off.section === section && off.trimester === sectionState.trimester;
+    }
     return off.section === section && 
            off.trimester === sectionState.trimester && 
            course && course.year_level === sectionState.yearLevel;
@@ -532,8 +619,12 @@ async function populateSectionViewCourseOfferingDropdown(section) {
   if (offeringsToShow.length === 0) {
     offeringsToShow = offerings.filter(off => {
       const course = courses.find(c => c.id === off.courseId);
+      if (isInternationalView) {
+        return off.trimester === sectionState.trimester && off.section && off.section.startsWith("INTERNATIONAL ");
+      }
       return off.trimester === sectionState.trimester && 
-             course && course.year_level === sectionState.yearLevel;
+             course && course.year_level === sectionState.yearLevel &&
+             !(off.section && off.section.startsWith("INTERNATIONAL "));
     });
   }
   
@@ -618,14 +709,14 @@ async function populateSectionViewSection2Dropdown(courseId, type) {
   
   // Get unique sections from all offerings in the current year and trimester
   const sectionState = getSectionViewState();
+  const isInternationalView = sectionState.yearLevel === "International";
   offerings.forEach(off => {
     const course = courses.find(c => c.id === off.courseId);
-    if (course && 
-        course.trimester === sectionState.trimester && 
-        course.year_level === sectionState.yearLevel && 
+    const matchesInternational = isInternationalView && off.trimester === sectionState.trimester && off.section && off.section.startsWith("INTERNATIONAL ");
+    const matchesStandard = !isInternationalView && course && course.trimester === sectionState.trimester && course.year_level === sectionState.yearLevel && !(off.section && off.section.startsWith("INTERNATIONAL "));
+    if ((matchesInternational || matchesStandard) && 
         off.section !== currentSection && 
         !sectionsUsed.has(off.section)) {
-      
       sectionsUsed.add(off.section);
       allSections.push(off.section);
     }

@@ -184,6 +184,7 @@ async function populateRoomDropdown(elementId) {
   if (elementId === "lec-room" || elementId === "lab-room") {
     const schedules = await apiGet("schedules");
     const courses = await apiGet("courses");
+    const offerings = await apiGet("course_offerings");
     
     // Get the current assignment details
     const lecDay = document.getElementById("lec-day").value;
@@ -202,25 +203,47 @@ async function populateRoomDropdown(elementId) {
       // Find existing Lec room assignment
       const lecRoomEntry = schedules.find(sch => {
         const course = courses.find(c => c.id === sch.courseId);
-        return sch.courseId == courseId &&
+        if (!(sch.courseId == courseId &&
                sch.unitType === "Lec" &&
                (sch.section === section || sch.section2 === section) &&
                course &&
-               course.trimester === currentSectionViewTrimester &&
-               course.year_level === currentSectionViewYearLevel &&
-               sch.col > 0; // Room View entry
+               sch.col > 0)) { // Room View entry
+          return false;
+        }
+        const isInternational = (sch.section && sch.section.startsWith("INTERNATIONAL ")) ||
+                                (sch.section2 && sch.section2.startsWith("INTERNATIONAL "));
+        if (isInternational) {
+          return offerings.some(off =>
+            off.courseId === sch.courseId &&
+            off.type === sch.unitType &&
+            off.trimester === currentSectionViewTrimester &&
+            ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+          );
+        }
+        return course.trimester === currentSectionViewTrimester;
       });
       
       // Find existing Lab room assignment
       const labRoomEntry = schedules.find(sch => {
         const course = courses.find(c => c.id === sch.courseId);
-        return sch.courseId == courseId &&
+        if (!(sch.courseId == courseId &&
                sch.unitType === "Lab" &&
                (sch.section === section || sch.section2 === section) &&
                course &&
-               course.trimester === currentSectionViewTrimester &&
-               course.year_level === currentSectionViewYearLevel &&
-               sch.col > 0; // Room View entry
+               sch.col > 0)) { // Room View entry
+          return false;
+        }
+        const isInternational = (sch.section && sch.section.startsWith("INTERNATIONAL ")) ||
+                                (sch.section2 && sch.section2.startsWith("INTERNATIONAL "));
+        if (isInternational) {
+          return offerings.some(off =>
+            off.courseId === sch.courseId &&
+            off.type === sch.unitType &&
+            off.trimester === currentSectionViewTrimester &&
+            ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+          );
+        }
+        return course.trimester === currentSectionViewTrimester;
       });
       
       existingLecRoomCol = lecRoomEntry ? lecRoomEntry.col : null;
@@ -233,11 +256,23 @@ async function populateRoomDropdown(elementId) {
     
     const occupiedCols = schedules.filter(sch => {
       const course = courses.find(c => c.id === sch.courseId);
-      return sch.dayType === targetDay &&
+      if (!(sch.dayType === targetDay &&
              sch.time === targetTime &&
-             sch.col > 0 && // Room View entries only
-             course && 
-             course.trimester === currentSectionViewTrimester; // Check all year levels in current trimester
+             sch.col > 0 &&
+             course)) {
+        return false;
+      }
+      const isInternational = (sch.section && sch.section.startsWith("INTERNATIONAL ")) ||
+                              (sch.section2 && sch.section2.startsWith("INTERNATIONAL "));
+      if (isInternational) {
+        return offerings.some(off =>
+          off.courseId === sch.courseId &&
+          off.type === sch.unitType &&
+          off.trimester === currentSectionViewTrimester &&
+          ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+        );
+      }
+      return course.trimester === currentSectionViewTrimester;
     }).map(sch => sch.col);
     
     // Filter rooms based on the selected group and availability
@@ -526,6 +561,7 @@ document.getElementById("btn-delete-sectionview").addEventListener("click", asyn
   // Get the existing entry details before deletion
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
+	const offerings = await apiGet("course_offerings");
   const existingEntry = schedules.find(sch => sch.id.toString() === id);
   
   // Save the values we need before deletion
@@ -543,19 +579,30 @@ document.getElementById("btn-delete-sectionview").addEventListener("click", asyn
     const unitType = existingEntry.unitType;
     const section2 = existingEntry.section2;
     
-    const roomViewEntry = schedules.find(sch => {
-      const course = courses.find(c => c.id === sch.courseId);
-      return sch.courseId === courseId &&
-             sch.unitType === unitType &&
-             sch.section === section &&
-             sch.section2 === section2 &&
-             sch.dayType === dayType &&
-             sch.time === time &&
-             course && 
-             course.trimester === currentSectionViewTrimester &&
-             course.year_level === currentSectionViewYearLevel &&
-             sch.col > 0; // Room View entry
-    });
+	const isInternationalView = currentSectionViewYearLevel === "International";
+	const roomViewEntry = schedules.find(sch => {
+	  const course = courses.find(c => c.id === sch.courseId);
+	  if (!(sch.courseId === courseId &&
+			sch.unitType === unitType &&
+			sch.section === section &&
+			sch.section2 === section2 &&
+			sch.dayType === dayType &&
+			sch.time === time &&
+			course &&
+			sch.col > 0)) {
+		return false;
+	  }
+	  if (isInternationalView) {
+		return offerings.some(off =>
+		  off.courseId === sch.courseId &&
+		  off.type === sch.unitType &&
+		  off.trimester === currentSectionViewTrimester &&
+		  ((section && off.section === section) || (section2 && off.section === section2))
+		);
+	  }
+	  return course.trimester === currentSectionViewTrimester &&
+			 course.year_level === currentSectionViewYearLevel;
+	});
     
     if (roomViewEntry) {
       await apiDelete("schedules", roomViewEntry.id);

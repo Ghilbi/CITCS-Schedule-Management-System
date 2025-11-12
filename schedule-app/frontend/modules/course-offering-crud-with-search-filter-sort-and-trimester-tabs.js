@@ -221,10 +221,12 @@ async function updateBulkSectionCodePreview() {
 }
 
 // Add event listeners to update the section code preview when year or letter changes
-courseOfferingYearSelect.addEventListener('change', function() {
-  updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
+courseOfferingYearSelect.addEventListener('change', async function() {
+  await updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
+  // Refresh course dropdown to filter out already added courses for this section
+  await populateCourseOfferingCourses().catch(error => console.error("Error populating courses:", error));
 });
-courseOfferingSectionLetter.addEventListener('input', function() {
+courseOfferingSectionLetter.addEventListener('input', async function() {
   // Only allow alphabetical characters (A-Z, a-z)
   const value = this.value;
   const alphabeticalOnly = value.replace(/[^A-Za-z]/g, '');
@@ -238,7 +240,9 @@ courseOfferingSectionLetter.addEventListener('input', function() {
     clearValidationFeedback(this);
   }
   
-  updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
+  await updateSectionCodePreview().catch(error => console.error("Error checking for duplicates:", error));
+  // Refresh course dropdown to filter out already added courses for this section
+  await populateCourseOfferingCourses().catch(error => console.error("Error populating courses:", error));
 });
 
 // Add event listener for the section letters in bulk mode
@@ -299,15 +303,36 @@ async function populateCourseOfferingCourses() {
   
   // Get the selected trimester filter value from manual add section
   const trimesterFilter = document.querySelector('input[name="manualTrimester"]:checked').value;
+  const internationalSelected = courseOfferingYearSelect.value === "INTERNATIONAL";
   
   // Filter by trimester if selected
-  if (trimesterFilter) {
+  if (trimesterFilter && !internationalSelected) {
     coursesList = coursesList.filter(c => c.trimester === trimesterFilter);
   }
   
   // Filter by degree if selected
-  if (degreeFilter) {
+  if (degreeFilter && !internationalSelected) {
     coursesList = coursesList.filter(c => c.degree === degreeFilter);
+  }
+  
+  // Get the current section to filter out already added courses
+  const yearValue = courseOfferingYearSelect.value;
+  const sectionLetter = courseOfferingSectionLetter.value.trim().toUpperCase();
+  
+  // If both year and section letter are selected, filter out already added courses
+  if (yearValue && sectionLetter) {
+    const currentSection = yearValue === "INTERNATIONAL" ? `INTERNATIONAL ${sectionLetter}` : `${yearValue}${sectionLetter}`;
+    const existingOfferings = await apiGet("course_offerings");
+    
+    // Get course IDs that already have offerings for this section
+    const existingCourseIds = new Set(
+      existingOfferings
+        .filter(off => off.section === currentSection)
+        .map(off => off.courseId)
+    );
+    
+    // Filter out courses that already have offerings for this section
+    coursesList = coursesList.filter(c => !existingCourseIds.has(c.id));
   }
   
   // Build the HTML string once before setting innerHTML
@@ -649,6 +674,25 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
     
     // Hide loading overlay
     hideLoadingOverlay();
+    
+    // Clear caches so Section View sees the latest offerings immediately
+    clearApiCache('course_offerings');
+    clearApiCache('courses');
+    
+    // If Section View is visible, refresh it to reflect new offerings (including International)
+    try {
+      const sectionEl = document.getElementById('section-section-view');
+      if (sectionEl && !sectionEl.classList.contains('hidden')) {
+        if (typeof requestSectionViewRefresh === 'function') {
+          requestSectionViewRefresh();
+        } else {
+          await renderSectionViewTables();
+          await validateAllComplementary(); // Debounced validation
+        }
+      }
+    } catch (e) {
+      console.error('Section View refresh after bulk add failed:', e);
+    }
   } catch (error) {
     console.error("Error adding all courses:", error);
     hideLoadingOverlay();
@@ -800,7 +844,13 @@ courseOfferingCourseSelect.addEventListener("change", async function() {
       courseOfferingUnitsInput.value = "2";
     }
   }
-  courseOfferingTrimesterInput.value = trimester || "";
+  const isInternationalYear = courseOfferingYearSelect.value === "INTERNATIONAL";
+  if (isInternationalYear) {
+    const manualTrim = document.querySelector('input[name="manualTrimester"]:checked').value;
+    courseOfferingTrimesterInput.value = manualTrim || "";
+  } else {
+    courseOfferingTrimesterInput.value = trimester || "";
+  }
 });
 
 document.querySelectorAll('input[name="courseOfferingType"]').forEach(radio => {
@@ -861,10 +911,7 @@ async function renderCourseOfferingTable() {
   let filteredOfferings = offerings;
 
   if (currentTrimesterFilter !== "all") {
-    filteredOfferings = filteredOfferings.filter(off => {
-      const course = coursesList.find(c => c.id == off.courseId);
-      return course && course.trimester === currentTrimesterFilter;
-    });
+    filteredOfferings = filteredOfferings.filter(off => off.trimester === currentTrimesterFilter);
   }
 
   if (searchTerm) {
@@ -1042,7 +1089,7 @@ async function renderCourseOfferingTable() {
       sectionOfferings.forEach(off => {
         const course = coursesList.find(c => c.id == off.courseId);
         const courseDisplay = course ? course.subject : off.courseId;
-        const trimester = course ? course.trimester : off.trimester;
+        const trimester = off ? off.trimester : (course ? course.trimester : "");
         const degree = off.degree || (course ? course.degree : "");
         
         const tr = document.createElement('tr');
@@ -1124,11 +1171,20 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   const section = courseOfferingSectionInput.value.trim();
   const selectedOption = courseOfferingCourseSelect.options[courseOfferingCourseSelect.selectedIndex];
   const unitCategory = selectedOption ? selectedOption.getAttribute("data-unit-category") : "";
-  const trimester = selectedOption ? selectedOption.getAttribute("data-trimester") : "";
+  let trimester = selectedOption ? selectedOption.getAttribute("data-trimester") : "";
   const degree = document.getElementById("courseOffering-selected-degree").value;
   const checkedRadio = document.querySelector('input[name="courseOfferingType"]:checked');
   const type = checkedRadio ? checkedRadio.value : "";
   let units = courseOfferingUnitsInput.value;
+  const isInternationalYear = courseOfferingYearSelect.value === "INTERNATIONAL";
+  if (isInternationalYear) {
+    const manualTrim = document.querySelector('input[name="manualTrimester"]:checked').value;
+    if (!manualTrim) {
+      alert("Please select a trimester for International sections.");
+      return;
+    }
+    trimester = manualTrim;
+  }
   
   if (!courseId || !section || !type) {
     alert("Please fill out all fields.");
@@ -1207,6 +1263,20 @@ btnSaveCourseOffering.addEventListener("click", async () => {
   clearApiCache('course_offerings');
   await renderCourseOfferingTable();
   await forceValidateAllComplementary();
+  // If Section View is visible, refresh it to reflect offering changes (including International)
+  try {
+    const sectionEl = document.getElementById('section-section-view');
+    if (sectionEl && !sectionEl.classList.contains('hidden')) {
+      if (typeof requestSectionViewRefresh === 'function') {
+        requestSectionViewRefresh();
+      } else {
+        await renderSectionViewTables();
+        await validateAllComplementary(); // Debounced validation
+      }
+    }
+  } catch (e) {
+    console.error('Section View refresh after offering save failed:', e);
+  }
 });
 
 window.editCourseOffering = async function(id) {
@@ -1336,6 +1406,20 @@ window.deleteCourseOffering = async function(id) {
   clearApiCache('course_offerings');
   await renderCourseOfferingTable();
   await forceValidateAllComplementary();
+  // Refresh Section View if visible to reflect deletion
+  try {
+    const sectionEl = document.getElementById('section-section-view');
+    if (sectionEl && !sectionEl.classList.contains('hidden')) {
+      if (typeof requestSectionViewRefresh === 'function') {
+        requestSectionViewRefresh();
+      } else {
+        await renderSectionViewTables();
+        await validateAllComplementary(); // Debounced validation
+      }
+    }
+  } catch (e) {
+    console.error('Section View refresh after offering delete failed:', e);
+  }
 };
 
 window.deleteSection = async function(section, categoryKey) {
@@ -1376,6 +1460,21 @@ window.deleteSection = async function(section, categoryKey) {
     await renderCourseOfferingTable();
     await validateAllComplementary(); // Debounced validation
     
+    // Refresh Section View if visible to reflect section deletion
+    try {
+      const sectionEl = document.getElementById('section-section-view');
+      if (sectionEl && !sectionEl.classList.contains('hidden')) {
+        if (typeof requestSectionViewRefresh === 'function') {
+          requestSectionViewRefresh();
+        } else {
+          await renderSectionViewTables();
+          await validateAllComplementary(); // Debounced validation
+        }
+      }
+    } catch (e) {
+      console.error('Section View refresh after section delete failed:', e);
+    }
+    
     alert(`Section "${section}" and all its contents have been deleted successfully.`);
   } catch (error) {
     console.error('Error deleting section:', error);
@@ -1400,6 +1499,29 @@ if (window.ActiveCurriculumManager) {
     await populateCourseOfferingCourses();
     // Refresh the course offering table
     await renderCourseOfferingTable();
+  });
+}
+
+// Collapsible filter functionality for Course Offerings
+const offeringFilterToggleBtn = document.getElementById("offering-filter-toggle-btn");
+const offeringFilterSection = document.getElementById("offering-filter-section");
+
+if (offeringFilterToggleBtn && offeringFilterSection) {
+  offeringFilterToggleBtn.addEventListener("click", () => {
+    offeringFilterSection.classList.toggle("collapsed");
+    offeringFilterToggleBtn.classList.toggle("active");
+    
+    // Update the text and arrow
+    const filterText = offeringFilterToggleBtn.querySelector(".filter-text");
+    const filterArrow = offeringFilterToggleBtn.querySelector(".filter-arrow");
+    
+    if (offeringFilterSection.classList.contains("collapsed")) {
+      if (filterText) filterText.textContent = "Show Filters";
+      if (filterArrow) filterArrow.textContent = "▼";
+    } else {
+      if (filterText) filterText.textContent = "Hide Filters";
+      if (filterArrow) filterArrow.textContent = "▲";
+    }
   });
 }
 

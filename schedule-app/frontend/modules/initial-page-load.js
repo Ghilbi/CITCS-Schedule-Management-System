@@ -161,27 +161,9 @@ async function initializeScheduleSummarySection() {
   setupScheduleSummaryTrimesterTabs();
   
   const summaryContent = document.getElementById("schedule-summary-content");
-  const sectionFilter = document.getElementById("summary-section-filter");
   
   // Clear previous content
   summaryContent.innerHTML = "";
-  
-  // Get all sections for the current trimester and year level
-  const sections = await getUniqueSectionsForTrimesterAndYear(currentScheduleSummaryTrimester, currentScheduleSummaryYearLevel);
-  
-  // Populate section filter dropdown
-  sectionFilter.innerHTML = '<option value="">All Sections</option>';
-  sections.forEach(section => {
-    const option = document.createElement("option");
-    option.value = section;
-    option.textContent = section;
-    sectionFilter.appendChild(option);
-  });
-  
-  // Remove existing event listeners and add new ones
-  const newSectionFilter = sectionFilter.cloneNode(true);
-  sectionFilter.parentNode.replaceChild(newSectionFilter, sectionFilter);
-  newSectionFilter.addEventListener("change", generateScheduleSummary);
   
   // Remove existing event listeners and add new ones for export button
   const exportBtn = document.getElementById("btn-export-excel");
@@ -199,7 +181,6 @@ async function initializeScheduleSummarySection() {
 
 async function generateScheduleSummary() {
   const summaryContent = document.getElementById("schedule-summary-content");
-  const selectedSection = document.getElementById("summary-section-filter").value;
   
   // Clear previous content
   summaryContent.innerHTML = "";
@@ -211,10 +192,11 @@ async function generateScheduleSummary() {
   const columns = await getAllRoomColumns();
   const offerings = await apiGet("course_offerings");
   
-  // Get all sections or filter by selected section
-  const sections = selectedSection ? 
-    [selectedSection] : 
-    await getUniqueSectionsForTrimesterAndYear(currentScheduleSummaryTrimester, currentScheduleSummaryYearLevel);
+  // Get all sections for the current trimester and year level
+  const sections = await getUniqueSectionsForTrimesterAndYear(
+    currentScheduleSummaryTrimester,
+    currentScheduleSummaryYearLevel
+  );
   
   if (sections.length === 0) {
     summaryContent.innerHTML = '<div class="no-data-message">No sections found for the current trimester and year level.</div>';
@@ -442,7 +424,7 @@ async function exportAllSchedulesToExcel() {
     const courses = await apiGet("courses");
     const offerings = await apiGet("course_offerings");
     const allColumns = await getAllRoomColumns();
-    const yearLevels = ["1st yr", "2nd yr", "3rd yr"];
+    const yearLevels = ["1st yr", "2nd yr", "3rd yr", "International"];
     const trimesters = ["1st Trimester", "2nd Trimester", "3rd Trimester"];
 
     // Create a new Excel workbook
@@ -466,8 +448,16 @@ async function exportAllSchedulesToExcel() {
           // Filter section schedules
           const sectionSchedules = schedules.filter(sch => {
             const course = courses.find(c => c.id === sch.courseId);
-            return (sch.section === section || sch.section2 === section) &&
-                   course && course.trimester === trimester && course.year_level === yearLevel;
+            if (!((sch.section === section || sch.section2 === section) && course)) return false;
+            if (yearLevel === "International") {
+              // For International, follow offering-based trimester for that section
+              return offerings.some(off =>
+                off.courseId === sch.courseId &&
+                off.trimester === trimester &&
+                off.section === section
+              );
+            }
+            return course.trimester === trimester && course.year_level === yearLevel;
           });
           if (sectionSchedules.length === 0) continue;
 
@@ -475,8 +465,10 @@ async function exportAllSchedulesToExcel() {
           let degree = "Unknown";
           const offeringMatch = offerings.find(off =>
             off.section === section &&
-            courses.find(c => c.id === off.courseId)?.trimester === trimester &&
-            courses.find(c => c.id === off.courseId)?.year_level === yearLevel
+            (yearLevel === "International"
+              ? off.trimester === trimester
+              : (courses.find(c => c.id === off.courseId)?.trimester === trimester &&
+                 courses.find(c => c.id === off.courseId)?.year_level === yearLevel))
           );
           if (offeringMatch) {
             degree = offeringMatch.degree || courses.find(c => c.id === offeringMatch.courseId)?.degree || "Unknown";

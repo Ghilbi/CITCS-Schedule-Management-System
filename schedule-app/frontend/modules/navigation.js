@@ -155,8 +155,7 @@ document.getElementById("btn-section-view").addEventListener("click", async () =
   document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
   document.getElementById("btn-section-view").classList.add("active");
   
-  // Initialize section view state
-  setSectionViewState("1st Trimester", "1st yr");
+  // Do not reset the user's current trimester/year selection; keep existing state
   setupSectionViewTrimesterTabs();
   await renderSectionViewTables();
   await validateAllComplementary(); // Debounced validation

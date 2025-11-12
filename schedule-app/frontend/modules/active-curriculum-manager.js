@@ -188,7 +188,7 @@ function createActiveCurriculumIndicator() {
   
   // Show indicator and update text
   indicator.style.display = 'block';
-  indicator.textContent = `Active: ${getActiveCurriculum()}`;
+  indicator.textContent = `Active Curriculum: ${getActiveCurriculum()}`;
   indicator.title = 'Click to change active curriculum';
 }
 

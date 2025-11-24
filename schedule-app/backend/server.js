@@ -25,7 +25,6 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
-console.log('→ DATABASE_URL:', process.env.DATABASE_URL);
 pool.connect(async (err, client, release) => {
   if (err) {
     console.error("Error connecting to Postgres database", err);
@@ -58,24 +57,7 @@ async function createTables() {
     trimester TEXT NOT NULL,
     description TEXT,
     curriculum TEXT
-  )`)
-  
-  // Add curriculum column to existing courses table if it doesn't exist
-  try {
-    await pool.query(`ALTER TABLE courses ADD COLUMN IF NOT EXISTS curriculum TEXT`);
-    // Update existing courses without curriculum to have the most recent curriculum year
-    await pool.query(`
-      UPDATE courses 
-      SET curriculum = (
-        SELECT year FROM curricula 
-        ORDER BY year DESC 
-        LIMIT 1
-      ) 
-      WHERE curriculum IS NULL AND EXISTS (SELECT 1 FROM curricula)
-    `);
-  } catch (err) {
-    console.log('Curriculum column already exists or error adding it:', err.message);
-  };
+  )`);
   await pool.query(`CREATE TABLE IF NOT EXISTS schedules (
     id SERIAL PRIMARY KEY,
     dayType TEXT NOT NULL,
@@ -100,25 +82,44 @@ async function createTables() {
     degree TEXT,
     FOREIGN KEY(courseId) REFERENCES courses(id)
   )`);
+  await ensureCurriculaSchema();
+  await ensureCourseCurriculumColumn();
+}
+createTables().catch(err => console.error("Error creating tables", err));
+
+async function ensureCourseCurriculumColumn() {
+  try {
+    await pool.query(`ALTER TABLE courses ADD COLUMN IF NOT EXISTS curriculum TEXT`);
+    await pool.query(`
+      UPDATE courses 
+      SET curriculum = (
+        SELECT year FROM curricula 
+        ORDER BY year DESC 
+        LIMIT 1
+      ) 
+      WHERE curriculum IS NULL AND EXISTS (SELECT 1 FROM curricula)
+    `);
+  } catch (err) {
+    console.log('Curriculum column already exists or error adding it:', err.message);
+  }
+}
+
+async function ensureCurriculaSchema() {
   await pool.query(`CREATE TABLE IF NOT EXISTS curricula (
     id SERIAL PRIMARY KEY
   )`);
-  // Ensure 'year' column exists and unique for curricula (handles pre-existing table without column)
   try {
     await pool.query(`ALTER TABLE curricula ADD COLUMN IF NOT EXISTS year TEXT`);
-    // Handle legacy schemas where a NOT NULL name column exists
     try {
       await pool.query(`ALTER TABLE curricula ALTER COLUMN name DROP NOT NULL`);
     } catch (e) {
       // ignore if name column doesn't exist
     }
-    // Backfill year from legacy name column if present
     try {
       await pool.query(`UPDATE curricula SET year = name WHERE year IS NULL AND name IS NOT NULL`);
     } catch (e) {
       // ignore if name column doesn't exist
     }
-    // Drop legacy 'name' column if it exists to avoid future conflicts
     try {
       await pool.query(`ALTER TABLE curricula DROP COLUMN IF EXISTS name`);
     } catch (e) {
@@ -129,7 +130,6 @@ async function createTables() {
     console.log('Ensuring curricula.year column/index:', err.message);
   }
 }
-createTables().catch(err => console.error("Error creating tables", err));
 
 // Only allow valid table names
 const validTables = ['rooms', 'courses', 'schedules', 'course_offerings', 'curricula'];
@@ -233,10 +233,6 @@ app.post('/api/login', async (req, res) => {
   if (username !== process.env.ADMIN_USERNAME) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  console.log(
-    '[LOGIN] env ADMIN_USERNAME =', process.env.ADMIN_USERNAME,
-    '| env ADMIN_PASSWORD_HASH length =', process.env.ADMIN_PASSWORD_HASH?.length
-  );
   try {
     const match = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });

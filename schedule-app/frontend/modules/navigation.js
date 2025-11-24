@@ -52,13 +52,16 @@ function showSection(section) {
     renderCourseOfferingTable();
   } else if (section === "analytics") {
     // Initialize analytics data when showing analytics section
-    if (typeof loadAnalyticsData === 'function' && typeof renderAnalyticsStats === 'function' && typeof renderAnalyticsCharts === 'function') {
+    if (typeof loadAnalyticsData === 'function' &&
+        typeof calculateAnalyticsStats === 'function' &&
+        typeof renderAnalyticsStats === 'function' &&
+        typeof renderAnalyticsCharts === 'function') {
       setTimeout(async () => {
         try {
           await loadAnalyticsData();
-          await renderAnalyticsStats();
-          await renderAnalyticsCharts();
-
+          const analyticsStats = await calculateAnalyticsStats();
+          renderAnalyticsStats(analyticsStats);
+          renderAnalyticsCharts(analyticsStats);
         } catch (error) {
           console.error('Error loading analytics:', error);
         }

@@ -53,12 +53,15 @@
   
   // Show Analytics by default (authentication handled at HTML level)
   showSection('analytics');
-  await loadAnalyticsData();
-  if (typeof renderAnalyticsStats === 'function') {
-    await renderAnalyticsStats();
-  }
-  if (typeof renderAnalyticsCharts === 'function') {
-    await renderAnalyticsCharts();
+  if (typeof loadAnalyticsData === 'function' && typeof calculateAnalyticsStats === 'function') {
+    await loadAnalyticsData();
+    const analyticsStats = await calculateAnalyticsStats();
+    if (typeof renderAnalyticsStats === 'function') {
+      renderAnalyticsStats(analyticsStats);
+    }
+    if (typeof renderAnalyticsCharts === 'function') {
+      renderAnalyticsCharts(analyticsStats);
+    }
   }
 
 })();

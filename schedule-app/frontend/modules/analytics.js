@@ -40,8 +40,9 @@ async function initializeAnalytics() {
   try {
     showLoadingOverlay('Loading analytics data...');
     await loadAnalyticsData();
-    renderAnalyticsStats();
-    renderAnalyticsCharts();
+    const stats = await calculateAnalyticsStats();
+    renderAnalyticsStats(stats);
+    renderAnalyticsCharts(stats);
     startAnalyticsAutoRefresh();
     hideLoadingOverlay();
   } catch (error) {
@@ -154,9 +155,7 @@ async function calculateAnalyticsStats() {
 /**
  * Render analytics statistics cards
  */
-async function renderAnalyticsStats() {
-  const stats = await calculateAnalyticsStats();
-  
+function renderAnalyticsStats(stats) {
   // Update stat cards
   document.getElementById('stat-total-courses').textContent = stats.totalCourses;
   document.getElementById('stat-total-offerings').textContent = stats.totalCourseOfferings;
@@ -173,9 +172,7 @@ async function renderAnalyticsStats() {
 /**
  * Render analytics charts
  */
-async function renderAnalyticsCharts() {
-  const stats = await calculateAnalyticsStats();
-  
+function renderAnalyticsCharts(stats) {
   // Render all charts
   renderDegreeDistributionChart(stats.degreeDistribution);
   renderTrimesterDistributionChart(stats.trimesterDistribution);
@@ -326,8 +323,9 @@ function startAnalyticsAutoRefresh() {
   analyticsRefreshInterval = setInterval(async () => {
     try {
       await loadAnalyticsData();
-      renderAnalyticsStats();
-      renderAnalyticsCharts();
+      const stats = await calculateAnalyticsStats();
+      renderAnalyticsStats(stats);
+      renderAnalyticsCharts(stats);
       console.log('Analytics data refreshed automatically');
     } catch (error) {
       console.error('Error during auto-refresh:', error);
@@ -352,8 +350,9 @@ async function refreshAnalytics() {
   try {
     showLoadingOverlay('Refreshing analytics...');
     await loadAnalyticsData();
-    await renderAnalyticsStats();
-    await renderAnalyticsCharts();
+    const stats = await calculateAnalyticsStats();
+    renderAnalyticsStats(stats);
+    renderAnalyticsCharts(stats);
     hideLoadingOverlay();
     console.log('Analytics refreshed successfully');
   } catch (error) {
@@ -381,8 +380,9 @@ async function showAnalytics() {
   // Load and render analytics data
   showLoadingOverlay('Loading analytics...');
   await loadAnalyticsData();
-  await renderAnalyticsStats();
-  await renderAnalyticsCharts();
+  const stats = await calculateAnalyticsStats();
+  renderAnalyticsStats(stats);
+  renderAnalyticsCharts(stats);
   hideLoadingOverlay();
   
   // Start auto-refresh

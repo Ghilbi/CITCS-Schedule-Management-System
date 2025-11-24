@@ -61,7 +61,7 @@
     <button id="btn-section-view">Section Management</button>
     <button id="btn-room-view">Room Management</button>
     <button id="btn-schedule-summary">Schedule Summary</button>
-    <button id="btn-logout" onclick="logout()" class="delete-btn" style="margin-top: auto;">Logout</button>
+    <button id="btn-logout" onclick="logout()" class="delete-btn mt-auto">Logout</button>
   </nav>
 
   <section id="section-courses" class="hidden">
@@ -74,7 +74,7 @@
       <button id="btn-export-csv" class="export-btn">Export CSV</button>
       <button id="btn-clear-courses" class="delete-btn">Manage Course Deletion</button>
     </div>
-    <input type="file" id="csv-file-input" accept=".csv" style="display: none;" />
+    <input type="file" id="csv-file-input" accept=".csv" class="hidden" />
     <!-- Search Bar - Always Visible -->
     <div class="search-container">
       <input type="text" id="course-search" placeholder="Search courses..." />
@@ -403,7 +403,7 @@
         <option value="2020-2021">2020-2021</option>
       </select>
       <div class="curriculum-manage-container">
-        <button id="btn-manage-curriculum" class="action-edit-btn" style="margin-top: 5px; font-size: 12px; padding: 4px 8px;">Manage Curricula</button>
+        <button id="btn-manage-curriculum" class="action-edit-btn btn-compact">Manage Curricula</button>
       </div>
       <label for="course-description">Description:</label>
       <textarea id="course-description" rows="4" placeholder="Enter course description"></textarea>
@@ -470,18 +470,18 @@
       </select>
       
       <!-- Enhanced LecLab Assignment Section - Simplified UI -->
-      <div id="leclab-assignment-section" class="leclab-assignment-section" style="display: none;">
+      <div id="leclab-assignment-section" class="leclab-assignment-section hidden">
         <h4>Lecture/Lab Assignment</h4>
         
         <!-- Assignment Mode Selection - Only separate assignment -->
-        <div class="assignment-mode-selection" style="display: none;">
+        <div class="assignment-mode-selection hidden">
           <div class="radio-group">
             <label><input type="radio" name="assignmentMode" value="separate" checked> Assign to different time slots</label>
           </div>
         </div>
         
         <!-- Combined Assignment (hidden) -->
-        <div id="combined-assignment" class="assignment-option" style="display: none;">
+        <div id="combined-assignment" class="assignment-option hidden">
           <p class="info-text">Both Lecture and Lab components will be assigned to the current time slot.</p>
         </div>
         
@@ -535,7 +535,7 @@
         </div>
       </div>
       
-      <div class="room-assignment-section" style="display: none;">
+      <div class="room-assignment-section hidden">
         <h4>Room Assignment</h4>
         <div class="room-group-filter">
           <div class="radio-group room-group-radio">
@@ -550,7 +550,7 @@
       </div>
       
       <button id="btn-save-sectionview" class="save-btn">Save</button>
-      <button id="btn-delete-sectionview" class="delete-btn" style="display: none;">Delete</button>
+      <button id="btn-delete-sectionview" class="delete-btn hidden">Delete</button>
     </div>
   </div>
 
@@ -576,15 +576,15 @@
         <option value="">-- Select Section --</option>
       </select>
       <button id="btn-save-roomview" class="save-btn">Save</button>
-      <button id="btn-delete-roomview" class="delete-btn" style="display: none;">Delete</button>
+      <button id="btn-delete-roomview" class="delete-btn hidden">Delete</button>
     </div>
   </div>
 
   <div class="modal hidden" id="modal-manage-rooms">
-    <div class="modal-content" style="width: 500px;">
+    <div class="modal-content modal-content-wide">
       <span class="close-button" data-close-modal="modal-manage-rooms">×</span>
       <h3>Manage Rooms</h3>
-      <button id="btn-add-room" class="add-btn" style="margin-bottom: 20px;">Add New Room</button>
+      <button id="btn-add-room" class="add-btn mb-20">Add New Room</button>
       <table id="table-rooms">
         <thead>
           <tr>
@@ -700,9 +700,9 @@
         </div>
         <label>Type:</label>
         <div class="radio-group" id="courseOffering-type-group">
-          <label id="label-lec" style="display:none;"><input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" /> Lec</label>
-          <label id="label-lab" style="display:none;"><input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" /> Lab</label>
-          <label id="label-purelec" style="display:none;"><input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" /> PureLec</label>
+          <label id="label-lec" class="hidden"><input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" /> Lec</label>
+          <label id="label-lab" class="hidden"><input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" /> Lab</label>
+          <label id="label-purelec" class="hidden"><input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" /> PureLec</label>
         </div>
         <label for="courseOffering-units">Units:</label>
         <input type="text" id="courseOffering-units" readonly />
@@ -712,7 +712,7 @@
         <input type="hidden" id="courseOffering-selected-degree" />
       </div>
       
-      <div id="bulk-add-section" class="modal-tab-content" style="display: none;">
+      <div id="bulk-add-section" class="modal-tab-content hidden">
         <div class="bulk-intro">
           <h4 class="bulk-section-title">🚀 Bulk Course Addition</h4>
           <p class="bulk-description">Quickly add all courses for an entire degree program and year level. This feature automatically creates course offerings for multiple sections at once, saving you time when setting up schedules.</p>

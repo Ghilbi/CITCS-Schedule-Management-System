@@ -83,23 +83,7 @@ async function apiPost(table, data) {
       headers: addAuthHeader({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data)
     });
-    
-    // Check for token expiration
-    if (response.status === 401) {
-      const errorData = await response.json();
-      if (errorData.expired) {
-        handleTokenExpiration();
-        throw new Error('Session expired');
-      }
-    }
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API error (${response.status}) for POST to ${table}:`, errorText);
-      throw new Error(`API request failed: ${response.status} ${errorText}`);
-    }
-    
-    return response.json();
+    return await handleAuthorizedResponse(response);
   } catch (error) {
     console.error(`Failed to POST to ${table}:`, error, data);
     throw error;
@@ -119,17 +103,7 @@ async function apiPut(table, id, data) {
     headers: addAuthHeader({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data)
   });
-  
-  // Check for token expiration
-  if (response.status === 401) {
-    const errorData = await response.json();
-    if (errorData.expired) {
-      handleTokenExpiration();
-      throw new Error('Session expired');
-    }
-  }
-  
-  return response.json();
+  return handleAuthorizedResponse(response);
 }
 
 // Clear cache on POST/PUT/DELETE to keep data consistent
@@ -144,17 +118,7 @@ async function apiDelete(table, id) {
     method: 'DELETE',
     headers: addAuthHeader()
   });
-  
-  // Check for token expiration
-  if (response.status === 401) {
-    const errorData = await response.json();
-    if (errorData.expired) {
-      handleTokenExpiration();
-      throw new Error('Session expired');
-    }
-  }
-  
-  return response.json();
+  return handleAuthorizedResponse(response);
 }
 
 // Handle token expiration across the application
@@ -178,6 +142,29 @@ apiDelete = async (table, id) => {
   clearApiCache(table);
   return originalApiDelete(table, id);
 };
+
+async function handleAuthorizedResponse(response) {
+  if (response.status === 401) {
+    let errorData = {};
+    try {
+      errorData = await response.json();
+    } catch (parseError) {
+      // ignore parse errors so we can still handle expiration fallback
+    }
+    if (errorData.expired) {
+      handleTokenExpiration();
+      throw new Error('Session expired');
+    }
+    throw new Error(errorData.error || 'Unauthorized request');
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API request failed: ${response.status} ${errorText}`);
+  }
+
+  return response.json();
+}
 
 /**************************************************************
  * Global variables for Room View columns

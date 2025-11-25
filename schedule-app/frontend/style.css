@@ -519,34 +519,6 @@ body.nav-collapsed .main-app {
   75% { transform: translate(10px, 20px) rotate(270deg); }
 }
 
-/* Y2K Grid Background Animation */
-@keyframes gridMove {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 50px 50px;
-  }
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(46, 125, 50, 0.12) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(46, 125, 50, 0.12) 2px, transparent 2px),
-    linear-gradient(45deg, rgba(46, 125, 50, 0.08) 2px, transparent 3px);
-  background-size: 30px 30px, 30px 30px, 60px 60px;
-  pointer-events: none;
-  z-index: -1;
-  animation: gridMove 20s linear infinite;
-  opacity: 0.9;
-}
-
 /* Headings */
 h1, h2, h3 {
   font-weight: 600;

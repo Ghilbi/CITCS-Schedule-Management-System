@@ -1,0 +1,244 @@
+<section id="section-course-offering" class="hidden">
+  <h2>Manage Course Offering</h2>
+  <div class="button-container">
+    <button id="btn-add-courseOffering" class="add-btn">Add New Course Offering</button>
+    <button id="btn-clear-courseOffering" class="delete-btn">Clear All Offerings</button>
+  </div>
+  <div class="trimester-tabs">
+    <button class="tab-btn active" data-trimester="1st Trimester">1st Trimester</button>
+    <button class="tab-btn" data-trimester="2nd Trimester">2nd Trimester</button>
+    <button class="tab-btn" data-trimester="3rd Trimester">3rd Trimester</button>
+  </div>
+  
+  <!-- Search Bar - Always Visible -->
+  <div class="search-container">
+    <input type="text" id="offering-search" placeholder="Search offerings..." />
+  </div>
+  
+  <!-- Collapsible Filters Container -->
+  <div class="filters-container">
+    <button id="offering-filter-toggle-btn" class="filter-toggle-btn">
+      <span class="filter-icon">🔍</span>
+      <span class="filter-text">Show Filters</span>
+      <span class="filter-arrow">▼</span>
+    </button>
+    <div id="offering-filter-section" class="filter-section collapsed">
+      <div class="filter-row">
+        <select id="offering-filter-type">
+          <option value="">Filter by Type</option>
+          <option value="Lec">Lec</option>
+          <option value="Lab">Lab</option>
+          <option value="PureLec">PureLec</option>
+        </select>
+        <select id="offering-sort">
+          <option value="">Sort by</option>
+          <option value="course-asc">Course (A-Z)</option>
+          <option value="course-desc">Course (Z-A)</option>
+          <option value="section-asc">Section (A-Z)</option>
+          <option value="section-desc">Section (Z-A)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <table id="table-courseOffering">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Course ID</th>
+        <th>Section</th>
+        <th>Type</th>
+        <th>Units</th>
+        <th>Trimester</th>
+        <th>Degree</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<div class="modal hidden" id="modal-course-offering">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-course-offering">×</span>
+    <h3 id="modal-course-offering-title">Add/Edit Course Offering</h3>
+    
+    <!-- Enhanced introduction section -->
+    <div class="modal-intro">
+      <p class="modal-description">Choose how you want to add course offerings to your schedule:</p>
+    </div>
+    
+    <div class="modal-tabs enhanced-tabs">
+      <button class="modal-tab-btn active" data-tab="manual">
+        <span class="tab-icon">📝</span>
+        <span class="tab-title">Manual Add</span>
+        <span class="tab-subtitle">Add individual course offerings</span>
+      </button>
+      <button class="modal-tab-btn" data-tab="bulk">
+        <span class="tab-icon">📚</span>
+        <span class="tab-title">Bulk Add</span>
+        <span class="tab-subtitle">Add multiple courses at once</span>
+      </button>
+    </div>
+    
+    <div id="manual-add-section" class="modal-tab-content">
+      <div class="manual-intro">
+        <h4 class="manual-section-title">✏️ Manual Course Addition</h4>
+        <p class="manual-description">Add individual course offerings with precise control over each section. Perfect for specific course scheduling and detailed customization.</p>
+      </div>
+      
+      <div class="manual-form-section">
+        <label for="courseOffering-degree" class="enhanced-label">
+          <span class="label-icon">🎓</span>
+          Filter by Degree:
+        </label>
+        <select id="courseOffering-degree">
+          <option value="">All Degrees</option>
+          <option value="BSIT">BSIT - Bachelor of Science in Information Technology</option>
+          <option value="BSIT(Webtech)">BSIT(Webtech) - Web Technology Specialization</option>
+          <option value="BSIT(NetSec)">BSIT(NetSec) - Network Security Specialization</option>
+          <option value="BSIT(ERP)">BSIT(ERP) - Enterprise Resource Planning Specialization</option>
+          <option value="BSCS">BSCS - Bachelor of Science in Computer Science</option>
+          <option value="BSDA">BSDA - Bachelor of Science in Data Analytics</option>
+          <option value="BMMA">BMMA - Bachelor of Multimedia Arts</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="enhanced-label">
+          <span class="label-icon">📅</span>
+          Filter by Trimester:
+        </label>
+        <div class="radio-group trimester-radio-group">
+          <label for="manual-trim-all"><input type="radio" id="manual-trim-all" name="manualTrimester" value="" checked>All Trimesters</label>
+          <label for="manual-trim-1"><input type="radio" id="manual-trim-1" name="manualTrimester" value="1st Trimester">1st Trimester</label>
+          <label for="manual-trim-2"><input type="radio" id="manual-trim-2" name="manualTrimester" value="2nd Trimester">2nd Trimester</label>
+          <label for="manual-trim-3"><input type="radio" id="manual-trim-3" name="manualTrimester" value="3rd Trimester">3rd Trimester</label>
+        </div>
+      </div>
+      <div class="section-input-group">
+        <label>Section:</label>
+        <div class="section-inputs">
+          <div class="section-year-select">
+            <label for="courseOffering-year">Year:</label>
+            <select id="courseOffering-year">
+              <option value="1">First Year (1)</option>
+              <option value="2">Second Year (2)</option>
+              <option value="3">Third Year (3)</option>
+              <option value="INTERNATIONAL">INTERNATIONAL</option>
+            </select>
+          </div>
+          <div class="section-letter-input">
+            <label for="courseOffering-section-letter">Letter:</label>
+            <input type="text" id="courseOffering-section-letter" placeholder="e.g., A" maxlength="1" />
+          </div>
+        </div>
+        <div class="section-preview">
+          <span>Section code: </span><strong id="section-code-preview">1A</strong>
+        </div>
+        <input type="hidden" id="courseOffering-section" />
+      </div>
+      <div class="course-selection-section">
+        <label for="courseOffering-course" class="enhanced-label">
+          <span class="label-icon">📖</span>
+          Select Course:
+        </label>
+        <select id="courseOffering-course">
+          <option value="">-- Select Course --</option>
+        </select>
+      </div>
+      <label>Type:</label>
+      <div class="radio-group" id="courseOffering-type-group">
+        <label id="label-lec" class="hidden"><input type="radio" id="courseOffering-lec" name="courseOfferingType" value="Lec" /> Lec</label>
+        <label id="label-lab" class="hidden"><input type="radio" id="courseOffering-lab" name="courseOfferingType" value="Lab" /> Lab</label>
+        <label id="label-purelec" class="hidden"><input type="radio" id="courseOffering-purelec" name="courseOfferingType" value="PureLec" /> PureLec</label>
+      </div>
+      <label for="courseOffering-units">Units:</label>
+      <input type="text" id="courseOffering-units" readonly />
+      <label for="courseOffering-trimester">Trimester:</label>
+      <input type="text" id="courseOffering-trimester" readonly />
+      <input type="hidden" id="courseOffering-id" />
+      <input type="hidden" id="courseOffering-selected-degree" />
+    </div>
+    
+    <div id="bulk-add-section" class="modal-tab-content hidden">
+      <div class="bulk-intro">
+        <h4 class="bulk-section-title">🚀 Bulk Course Addition</h4>
+        <p class="bulk-description">Quickly add all courses for an entire degree program and year level. This feature automatically creates course offerings for multiple sections at once, saving you time when setting up schedules.</p>
+      </div>
+      
+      <div class="bulk-form-section">
+        <label for="courseOffering-degree-bulk" class="enhanced-label">
+          <span class="label-icon">🎓</span>
+          Select Degree Program:
+        </label>
+        <select id="courseOffering-degree-bulk" class="bulk-degree-select">
+          <option value="">Choose a degree program to get started</option>
+          <option value="BSIT">BSIT - Bachelor of Science in Information Technology</option>
+          <option value="BSIT(Webtech)">BSIT(Webtech) - Web Technology Specialization</option>
+          <option value="BSIT(NetSec)">BSIT(NetSec) - Network Security Specialization</option>
+          <option value="BSIT(ERP)">BSIT(ERP) - Enterprise Resource Planning Specialization</option>
+          <option value="BSCS">BSCS - Bachelor of Science in Computer Science</option>
+          <option value="BSDA">BSDA - Bachelor of Science in Data Analytics</option>
+          <option value="BMMA">BMMA - Bachelor of Multimedia Arts</option>
+        </select>
+      </div>
+      <div class="filter-controls enhanced-filters">
+        <div class="filter-group">
+          <label class="enhanced-label">
+            <span class="label-icon">📊</span>
+            Target Year Level:
+          </label>
+          <div class="radio-group year-radio-group">
+            <label for="year-1st-bulk"><input type="radio" id="year-1st-bulk" name="bulkAddYearLevel" value="1st yr" checked> 1st Year</label>
+            <label for="year-2nd-bulk"><input type="radio" id="year-2nd-bulk" name="bulkAddYearLevel" value="2nd yr"> 2nd Year</label>
+            <label for="year-3rd-bulk"><input type="radio" id="year-3rd-bulk" name="bulkAddYearLevel" value="3rd yr"> 3rd Year</label>
+          </div>
+          <p class="filter-help-text">Select which year level courses to add</p>
+        </div>
+        <div class="filter-group">
+          <label class="enhanced-label">
+            <span class="label-icon">📅</span>
+            Academic Trimester:
+          </label>
+          <div class="radio-group trimester-radio-group">
+            <label for="trim-1"><input type="radio" id="trim-1" name="bulkAddTrimester" value="1st Trimester" checked>1st Trimester</label>
+            <label for="trim-2"><input type="radio" id="trim-2" name="bulkAddTrimester" value="2nd Trimester">2nd Trimester</label>
+            <label for="trim-3"><input type="radio" id="trim-3" name="bulkAddTrimester" value="3rd Trimester">3rd Trimester</label>
+          </div>
+          <p class="filter-help-text">Choose the trimester for course scheduling</p>
+        </div>
+      </div>
+      <div class="bulk-section-input-group enhanced-section-input">
+        <label class="enhanced-label">
+          <span class="label-icon">🏷️</span>
+          Section Configuration:
+        </label>
+        <div class="section-letter-input bulk-letters">
+          <label for="courseOffering-section-letters" class="sub-label">Section Letters (ranges or comma-separated):</label>
+          <input type="text" id="courseOffering-section-letters" placeholder="e.g., A-D or A,B,C" value="A">
+          <div class="input-help">
+            <p class="info-text">💡 <strong>Examples:</strong></p>
+            <ul class="example-list">
+              <li><code>A</code> - Creates section 1A</li>
+              <li><code>A,B,C</code> - Creates sections 1A, 1B, 1C</li>
+              <li><code>A-D</code> - Creates sections 1A, 1B, 1C, 1D</li>
+            </ul>
+          </div>
+        </div>
+        <div class="section-preview bulk-preview enhanced-preview">
+          <span class="preview-label">📋 Generated section codes: </span><strong id="bulk-section-code-preview">1A</strong>
+          <p class="info-text">The year prefix will be automatically added based on your Year Level selection above</p>
+        </div>
+        <input type="hidden" id="courseOffering-multiple-sections" value="1A">
+      </div>
+      <div class="bulk-action-section">
+        <button id="btn-add-all-courses" class="action-btn enhanced-action-btn">
+          <span class="btn-icon">⚡</span>
+          Add All Courses for Selected Degree
+          <span class="btn-subtitle">This will create course offerings for all courses in the selected degree, year level, and trimester</span>
+        </button>
+      </div>
+    </div>
+    
+    <button id="btn-save-courseOffering" class="save-btn">Save</button>
+  </div>
+</div>

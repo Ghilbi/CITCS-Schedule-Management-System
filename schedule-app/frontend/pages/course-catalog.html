@@ -1,0 +1,273 @@
+<section id="section-courses" class="hidden">
+  <h2>Course Catalog</h2>
+  <div class="top-button-container">
+    <button id="btn-add-course" class="add-btn">Add New Course</button>
+  </div>
+  <div class="button-container">
+    <button id="btn-import-csv" class="import-btn">Import CSV</button>
+    <button id="btn-export-csv" class="export-btn">Export CSV</button>
+    <button id="btn-clear-courses" class="delete-btn">Manage Course Deletion</button>
+  </div>
+  <input type="file" id="csv-file-input" accept=".csv" class="hidden" />
+  <!-- Search Bar - Always Visible -->
+  <div class="search-container">
+    <input type="text" id="course-search" placeholder="Search courses..." />
+  </div>
+  
+  <!-- Collapsible Filters Container - Left Aligned -->
+  <div class="filters-container">
+    <button id="filter-toggle-btn" class="filter-toggle-btn">
+      <span class="filter-icon">🔍</span>
+      <span class="filter-text">Show Filters</span>
+      <span class="filter-arrow">▼</span>
+    </button>
+    <div id="filter-section" class="filter-section collapsed">
+      <div class="filter-row">
+        <select id="course-filter-year-level">
+          <option value="">Filter by Year Level</option>
+          <option value="1st yr">1st Year</option>
+          <option value="2nd yr">2nd Year</option>
+          <option value="3rd yr">3rd Year</option>
+        </select>
+        <select id="course-filter-degree">
+          <option value="">Filter by Degree</option>
+          <option value="BSIT">BSIT</option>
+          <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+          <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+          <option value="BSIT(ERP)">BSIT(ERP)</option>
+          <option value="BSCS">BSCS</option>
+          <option value="BSDA">BSDA</option>
+          <option value="BMMA">BMMA</option>
+        </select>
+        <select id="course-filter-trimester">
+          <option value="">Filter by Trimester</option>
+          <option value="1st Trimester">1st Trimester</option>
+          <option value="2nd Trimester">2nd Trimester</option>
+          <option value="3rd Trimester">3rd Trimester</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <select id="course-filter-curriculum">
+          <option value="">Filter by Curriculum</option>
+          <option value="2024-2025">2024-2025</option>
+          <option value="2023-2024">2023-2024</option>
+          <option value="2022-2023">2022-2023</option>
+          <option value="2021-2022">2021-2022</option>
+          <option value="2020-2021">2020-2021</option>
+        </select>
+        <select id="course-sort">
+          <option value="">Sort by</option>
+          <option value="subject-asc">Subject (A-Z)</option>
+          <option value="subject-desc">Subject (Z-A)</option>
+          <option value="units-asc">Units (Low-High)</option>
+          <option value="units-desc">Units (High-Low)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="table-container">
+    <table id="table-courses">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Subject</th>
+          <th>Unit Category</th>
+          <th>Units</th>
+          <th>Year Level</th>
+          <th>Degree</th>
+          <th>Trimester</th>
+          <th>Curriculum</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<div class="modal hidden" id="modal-course">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-course">×</span>
+    <h3 id="modal-course-title">Add/Edit Course</h3>
+    <label for="course-subject">Subject:</label>
+    <input type="text" id="course-subject" />
+    <label>Unit Category:</label>
+    <div class="radio-group">
+      <label for="purelec"><input type="radio" id="purelec" name="unitCategory" value="PureLec" checked /> PureLec</label>
+      <label for="leclab"><input type="radio" id="leclab" name="unitCategory" value="Lec/Lab" /> Lec/Lab</label>
+    </div>
+    <label for="course-units">Units:</label>
+    <input type="text" id="course-units" />
+    <label>Year Level:</label>
+    <div class="radio-group">
+      <label for="year-1st"><input type="radio" id="year-1st" name="yearLevel" value="1st yr" checked /> 1st yr</label>
+      <label for="year-2nd"><input type="radio" id="year-2nd" name="yearLevel" value="2nd yr" /> 2nd yr</label>
+      <label for="year-3rd"><input type="radio" id="year-3rd" name="yearLevel" value="3rd yr" /> 3rd yr</label>
+    </div>
+    <label for="course-degree">Degree:</label>
+    <select id="course-degree">
+      <option value="BSIT">BSIT</option>
+      <option value="BSIT(Webtech)">BSIT(Webtech)</option>
+      <option value="BSIT(NetSec)">BSIT(NetSec)</option>
+      <option value="BSIT(ERP)">BSIT(ERP)</option>
+      <option value="BSCS">BSCS</option>
+      <option value="BSDA">BSDA</option>
+      <option value="BMMA">BMMA</option>
+    </select>
+    <label for="course-trimester">Trimester:</label>
+    <select id="course-trimester">
+      <option value="1st Trimester">1st Trimester</option>
+      <option value="2nd Trimester">2nd Trimester</option>
+      <option value="3rd Trimester">3rd Trimester</option>
+    </select>
+    <label for="course-curriculum">Curriculum:</label>
+    <select id="course-curriculum">
+      <option value="2024-2025">2024-2025</option>
+      <option value="2023-2024">2023-2024</option>
+      <option value="2022-2023">2022-2023</option>
+      <option value="2021-2022">2021-2022</option>
+      <option value="2020-2021">2020-2021</option>
+    </select>
+    <div class="curriculum-manage-container">
+      <button id="btn-manage-curriculum" class="action-edit-btn btn-compact">Manage Curricula</button>
+    </div>
+    <label for="course-description">Description:</label>
+    <textarea id="course-description" rows="4" placeholder="Enter course description"></textarea>
+    <input type="hidden" id="course-id" />
+    <button id="btn-save-course" class="save-btn">Save</button>
+  </div>
+</div>
+
+<!-- Curriculum Management Modal -->
+<div class="modal hidden" id="modal-curriculum-management">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-curriculum-management">×</span>
+    <h3>Manage Curricula</h3>
+    <div class="curriculum-controls">
+      <button id="btn-add-curriculum" class="add-btn">Add New Curriculum</button>
+    </div>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Curriculum Year</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="curriculum-table-body">
+          <!-- Curriculum rows will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Curriculum Modal -->
+<div class="modal hidden" id="modal-add-edit-curriculum">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-add-edit-curriculum">×</span>
+    <h3 id="modal-curriculum-title">Add Curriculum</h3>
+    <label for="curriculum-year">Curriculum Year:</label>
+    <input type="text" id="curriculum-year" placeholder="e.g., 2025-2026" />
+    <input type="hidden" id="curriculum-id" />
+    <div class="modal-buttons">
+      <button id="btn-save-curriculum" class="save-btn">Save</button>
+      <button id="btn-cancel-curriculum" class="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Selective Course Deletion Modal -->
+<div class="modal hidden" id="modal-selective-deletion">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-selective-deletion">×</span>
+    <h3 id="modal-selective-deletion-title">Course Deletion Manager</h3>
+    <p class="modal-description">Choose what you want to delete. This action cannot be undone.</p>
+    
+    <div class="deletion-options">
+      <div class="deletion-option" data-deletion-type="all">
+        <div class="option-icon">🗑️</div>
+        <div class="option-content">
+          <h4>Delete All Courses</h4>
+          <p>Remove all courses, course offerings, and schedules from the system</p>
+        </div>
+      </div>
+      
+      <div class="deletion-option" data-deletion-type="year-level">
+        <div class="option-icon">📚</div>
+        <div class="option-content">
+          <h4>Delete by Year Level</h4>
+          <p>Remove all courses for a specific year level</p>
+        </div>
+      </div>
+      
+      <div class="deletion-option" data-deletion-type="trimester">
+        <div class="option-icon">📅</div>
+        <div class="option-content">
+          <h4>Delete by Trimester</h4>
+          <p>Remove all courses for a specific trimester</p>
+        </div>
+      </div>
+      
+      <div class="deletion-option" data-deletion-type="degree">
+        <div class="option-icon">🎓</div>
+        <div class="option-content">
+          <h4>Delete by Degree</h4>
+          <p>Remove all courses for a specific degree program</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Filter Selection Section (initially hidden) -->
+    <div id="deletion-filters" class="deletion-filters hidden">
+      <div class="filter-section">
+        <label for="deletion-year-level">Year Level:</label>
+        <select id="deletion-year-level" class="deletion-filter">
+          <option value="">Select Year Level</option>
+          <option value="1st yr">1st Year</option>
+          <option value="2nd yr">2nd Year</option>
+          <option value="3rd yr">3rd Year</option>
+          <option value="4th yr">4th Year</option>
+        </select>
+      </div>
+      
+      <div class="filter-section">
+        <label for="deletion-trimester">Trimester:</label>
+        <select id="deletion-trimester" class="deletion-filter">
+          <option value="">Select Trimester</option>
+          <option value="1st Trimester">1st Trimester</option>
+          <option value="2nd Trimester">2nd Trimester</option>
+          <option value="3rd Trimester">3rd Trimester</option>
+        </select>
+      </div>
+      
+      <div class="filter-section">
+        <label for="deletion-degree">Degree:</label>
+        <select id="deletion-degree" class="deletion-filter">
+          <option value="">Select Degree</option>
+          <option value="BSIT">BSIT - Bachelor of Science in Information Technology</option>
+          <option value="BSIT(Webtech)">BSIT(Webtech) - Web Technology Specialization</option>
+          <option value="BSIT(NetSec)">BSIT(NetSec) - Network Security Specialization</option>
+          <option value="BSIT(ERP)">BSIT(ERP) - Enterprise Resource Planning Specialization</option>
+          <option value="BSCS">BSCS - Bachelor of Science in Computer Science</option>
+          <option value="BSDA">BSDA - Bachelor of Science in Data Analytics</option>
+          <option value="BMMA">BMMA - Bachelor of Multimedia Arts</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="deletion-summary hidden" id="deletion-summary">
+      <h4>Deletion Summary</h4>
+      <p id="deletion-summary-text"></p>
+      <div class="warning-message">
+        <strong>⚠️ Warning:</strong> This action cannot be undone. All related course offerings and schedules will also be deleted.
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button id="btn-cancel-deletion" class="cancel-btn">Cancel</button>
+      <button id="btn-confirm-deletion" class="delete-btn" disabled>Confirm Deletion</button>
+    </div>
+  </div>
+</div>

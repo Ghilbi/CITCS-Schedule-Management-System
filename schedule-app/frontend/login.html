@@ -2,74 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Schedule Management System</title>
   <link rel="icon" href="/assets/citcs_logo.png" type="image/png">
   <link rel="shortcut icon" href="/assets/citcs_logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/assets/citcs_logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="login.css" />
 </head>
 <body class="login-page">
-  <!-- Enhanced Animated Background -->
-  <div class="animated-bg"></div>
-  <div class="geometric-pattern"></div>
-  
-  <!-- Floating Shapes -->
-  <div class="bg-animation">
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-    <div class="floating-shape"></div>
-  </div>
-  
-  <!-- Enhanced Pulse Background -->
-  <div class="pulse-bg"></div>
-  
-  <!-- Particle Effects -->
-  <div class="particles">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-  </div>
-
   <div class="login-container">
     <div class="logo-container">
       <img src="/assets/citcs_logo.png" alt="CITCS Logo" class="logo">
-      <h1 class="login-title">Schedule Management System</h1>
-      <p class="login-subtitle">Please sign in to continue</p>
+      <h1 class="login-title">Welcome back!</h1>
     </div>
 
     <form id="login-form">
       <div id="error-message" class="error-message"></div>
       
       <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" autocomplete="username" required>
+        <input type="text" id="username" name="username" placeholder="Username" autocomplete="username" required>
       </div>
 
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
       </div>
 
       <button type="submit" id="login-button" class="login-button">
         <span class="loading-spinner"></span>
-        <span class="button-text">Sign In</span>
+        <span class="button-text">Log In</span>
       </button>
     </form>
+
+    <div class="login-footer">
+      By continuing, you agree to <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. Need help?
+    </div>
   </div>
 
   <script>

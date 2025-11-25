@@ -1,0 +1,123 @@
+<section id="section-section-view" class="hidden">
+  <h2>Section Management</h2>
+  <div class="trimester-tabs">
+    <button class="tab-btn active" data-trimester="1st Trimester">1st Trimester</button>
+    <button class="tab-btn" data-trimester="2nd Trimester">2nd Trimester</button>
+    <button class="tab-btn" data-trimester="3rd Trimester">3rd Trimester</button>
+  </div>
+  <div class="year-level-tabs">
+    <button class="year-tab-btn active" data-year="1st yr">1st Year</button>
+    <button class="year-tab-btn" data-year="2nd yr">2nd Year</button>
+    <button class="year-tab-btn" data-year="3rd yr">3rd Year</button>
+    <button class="year-tab-btn" data-year="International">International</button>
+  </div>
+  <div id="section-view-container">
+    <button id="btn-remove-all-schedules" class="remove-all-btn-small">
+      <span class="btn-icon">🗑️</span>
+      <span class="btn-text">Clear All</span>
+    </button>
+  </div>
+</section>
+
+<!-- Section Management Modal -->
+<div class="modal hidden" id="modal-sectionview">
+  <div class="modal-content">
+    <span class="close-button" data-close-modal="modal-sectionview">×</span>
+    <h3 id="modal-sectionview-title">Assign Course Offering to Section</h3>
+    <input type="hidden" id="sectionview-id" />
+    <input type="hidden" id="sectionview-dayType" />
+    <input type="hidden" id="sectionview-time" />
+    <input type="hidden" id="sectionview-section" />
+    <label for="sectionview-courseOffering">Course Offering:</label>
+    <select id="sectionview-courseOffering">
+      <option value="">-- Select Course Offering --</option>
+    </select>
+    <label for="sectionview-section2">Section 2 (If Needed):</label>
+    <select id="sectionview-section2">
+      <option value="">-- Select Section --</option>
+    </select>
+    
+    <!-- Enhanced LecLab Assignment Section - Simplified UI -->
+    <div id="leclab-assignment-section" class="leclab-assignment-section hidden">
+      <h4>Lecture/Lab Assignment</h4>
+      
+      <!-- Assignment Mode Selection - Only separate assignment -->
+      <div class="assignment-mode-selection hidden">
+        <div class="radio-group">
+          <label><input type="radio" name="assignmentMode" value="separate" checked> Assign to different time slots</label>
+        </div>
+      </div>
+      
+      <!-- Combined Assignment (hidden) -->
+      <div id="combined-assignment" class="assignment-option hidden">
+        <p class="info-text">Both Lecture and Lab components will be assigned to the current time slot.</p>
+      </div>
+      
+      <!-- Separate Assignment (default) -->
+      <div id="separate-assignment" class="assignment-option">
+        <!-- Room Group Selection for Lec/Lab Assignment -->
+        <div class="room-group-filter">
+          <div class="radio-group room-group-radio">
+            <label for="leclab-room-group-a"><input type="radio" id="leclab-room-group-a" name="leclab-roomGroup" value="A" checked> Group A</label>
+            <label for="leclab-room-group-b"><input type="radio" id="leclab-room-group-b" name="leclab-roomGroup" value="B"> Group B</label>
+          </div>
+        </div>
+        
+        <div class="component-assignment">
+          <div class="lec-assignment">
+            <h5>Lecture Component</h5>
+            <label for="lec-day">Day:</label>
+            <select id="lec-day">
+              <option value="MWF">MWF</option>
+              <option value="TTHS">TTHS</option>
+            </select>
+            <label for="lec-time">Time:</label>
+            <select id="lec-time">
+              <!-- Populated dynamically -->
+            </select>
+            <label for="lec-room">Room:</label>
+            <select id="lec-room">
+              <option value="">-- Select Room --</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          
+          <div class="lab-assignment">
+            <h5>Lab Component</h5>
+            <label for="lab-day">Day:</label>
+            <select id="lab-day">
+              <option value="MWF">MWF</option>
+              <option value="TTHS">TTHS</option>
+            </select>
+            <label for="lab-time">Time:</label>
+            <select id="lab-time">
+              <!-- Populated dynamically -->
+            </select>
+            <label for="lab-room">Room:</label>
+            <select id="lab-room">
+              <option value="">-- Select Room --</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="room-assignment-section hidden">
+      <h4>Room Assignment</h4>
+      <div class="room-group-filter">
+        <div class="radio-group room-group-radio">
+          <label for="room-group-a"><input type="radio" id="room-group-a" name="roomGroup" value="A" checked> Group A</label>
+          <label for="room-group-b"><input type="radio" id="room-group-b" name="roomGroup" value="B"> Group B</label>
+        </div>
+      </div>
+      <label for="sectionview-room">Select Room:</label>
+      <select id="sectionview-room">
+        <option value="">-- Select Room --</option>
+      </select>
+    </div>
+    
+    <button id="btn-save-sectionview" class="save-btn">Save</button>
+    <button id="btn-delete-sectionview" class="delete-btn hidden">Delete</button>
+  </div>
+</div>

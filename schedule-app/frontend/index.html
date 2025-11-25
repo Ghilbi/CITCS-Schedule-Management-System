@@ -49,23 +49,20 @@
 
   <!-- Main Application Content -->
   <div id="main-app" class="main-app">
-    <!-- Sidebar toggle button (hamburger) -->
-    <button id="nav-toggle" aria-label="Toggle navigation">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="app-container">
+      <nav>
+        <button id="btn-analytics">Analytics</button>
+        <button id="btn-courses">Course Catalog</button>
+        <button id="btn-course-offering">Manage Course Offering</button>
+        <button id="btn-section-view">Section Management</button>
+        <button id="btn-room-view">Room Management</button>
+        <button id="btn-schedule-summary">Schedule Summary</button>
+        <button id="btn-logout" onclick="logout()" class="delete-btn mt-auto">Logout</button>
+      </nav>
 
-    <nav>
-      <button id="btn-analytics">Analytics</button>
-      <button id="btn-courses">Course Catalog</button>
-      <button id="btn-course-offering">Manage Course Offering</button>
-      <button id="btn-section-view">Section Management</button>
-      <button id="btn-room-view">Room Management</button>
-      <button id="btn-schedule-summary">Schedule Summary</button>
-      <button id="btn-logout" onclick="logout()" class="delete-btn mt-auto">Logout</button>
-    </nav>
-
-    <!-- Dynamically injected sections -->
-    <div id="page-sections"></div>
+      <!-- Dynamically injected sections -->
+      <div id="page-sections"></div>
+    </div>
 
     <div id="conflict-popup" class="hidden"></div>
 

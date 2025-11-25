@@ -8,7 +8,7 @@
   --color-secondary: #ffffff;
   
   /* ===== BACKGROUND COLORS ===== */
-  --color-bg: #f4f7fa;
+  --color-bg: #ffffff;
   --color-card-bg: #ffffff;
   --color-overlay: rgba(0, 0, 0, 0.5);
   --color-overlay-light: rgba(0, 0, 0, 0.6);
@@ -178,8 +178,6 @@ body {
   font-family: 'Poppins', 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   margin: 0;
   background-color: var(--color-bg);
-  /* Subtle green gradient background */
-  background-image: linear-gradient(180deg, var(--color-primary-light) 0%, var(--color-bg) 100%);
   color: var(--color-text);
   line-height: 1.7;
   font-weight: 400;
@@ -220,14 +218,13 @@ h6 { font-size: 1rem; font-weight: 500; }
 
 /* Main app container - initially hidden */
 .main-app {
-  margin-left: var(--sidebar-width);
-  transition: margin-left 0.3s ease;
+  margin-left: 0;
   opacity: 0;
   visibility: hidden;
   animation: siteFade 0.8s ease-out forwards;
   animation-delay: 0.5s;
   min-height: 100vh;
-  min-width: 320px; /* Minimum width to prevent cramping */
+  min-width: 320px;
   padding: 20px;
   box-sizing: border-box;
 }
@@ -237,8 +234,11 @@ h6 { font-size: 1rem; font-weight: 500; }
   visibility: visible;
 }
 
-body.nav-collapsed .main-app {
-  margin-left: 0;
+.app-container {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 0;
 }
 
 /* Mobile responsive adjustments */
@@ -533,83 +533,49 @@ h3 { font-size: 1.5rem; }
 
 /* Navigation */
 nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-md);
+  border-right: 1px solid var(--color-border);
+  width: 250px;
+  min-width: 250px;
+  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh;
-  width: var(--sidebar-width);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 72px 14px 20px;
-  gap: 12px;
-  background: linear-gradient(180deg, var(--color-primary-light) 0%, rgba(255,255,255,0.9) 150px);
-  backdrop-filter: saturate(180%) blur(14px);
-  border-right: 1px solid var(--color-border);
-  border-bottom: none;
-  transition: transform 0.3s ease;
-  z-index: 1000;
-  box-shadow: var(--shadow-md);
   overflow-y: auto;
-  overflow-x: hidden;
+  z-index: 1000;
 }
 
-/* Collapse state */
-nav.collapsed {
-  transform: translateX(-100%);
+#page-sections {
+  flex: 1;
+  min-width: 0;
+  margin-left: 250px;
+  padding: 20px;
 }
 
-/* Mobile navigation overlay */
+/* Mobile navigation */
 @media (max-width: 768px) {
   nav {
-    transform: translateX(-100%);
-    z-index: 1100;
-    width: min(var(--sidebar-width), 80vw);
+    width: 200px;
+    min-width: 200px;
   }
   
-  nav.open {
-    transform: translateX(0);
-  }
-  
-  /* Mobile overlay */
-  body.nav-open::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1050;
-    animation: fadeIn 0.3s ease;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  #page-sections {
+    margin-left: 200px;
+    padding: 10px;
   }
 }
 
-/* Hamburger styles */
+/* Hamburger button removed - navigation is now inline */
 #nav-toggle {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  width: 34px;
-  height: 28px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  z-index: 1100;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 0;
+  display: none;
 }
 #nav-toggle span {
-  display: block;
-  height: 3px;
+  display: none;
   width: 100%;
   background-color: var(--color-text);
   border-radius: 2px;
@@ -664,41 +630,35 @@ nav::before {
   padding-left: 2px;
 }
 
-/* Modern button cards */
+/* Modern navigation buttons */
 nav button {
   background-color: transparent;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   color: #1e5f21;
   font-weight: 500;
   letter-spacing: 0.02em;
   box-shadow: none;
   transition: background-color 0.25s, box-shadow 0.25s, transform 0.25s;
   outline: none;
-  font-family: 'verdana', sans-serif;
-  letter-spacing: 1px;
-  font-size: 1.05rem;
+  font-family: 'Poppins', 'Nunito', sans-serif;
+  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+  padding: 12px 16px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
 }
 nav button:hover {
   background-color: var(--color-primary-light);
-  transform: translateX(8px);
-  box-shadow: none;
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
 }
 nav button.active {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-dark);
+  background-color: var(--color-primary);
+  color: white;
   font-weight: 600;
-  border: none;
-  box-shadow: 0 1px 3px rgba(46, 125, 50, 0.2);
-}
-
-/* Adjust nav buttons for vertical layout */
-nav button {
-  width: 100%;
-  text-align: left;
-  padding: 12px 16px;
-  font-size: 1rem;
-  border-radius: 8px;
+  box-shadow: var(--shadow-primary);
 }
 
 /* When collapsed off-canvas, no effect on buttons (they're hidden) */
@@ -708,16 +668,11 @@ nav button {
   body.nav-collapsed { margin-left: 0; }
 }
 
-/* Page Sections as Cards */
+/* Page Sections - No container styling */
 section {
-  border-left: 4px solid var(--color-primary);
-  background: var(--color-card-bg);
   margin: var(--gap) auto;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
   max-width: min(1400px, 96%);
   min-width: 300px; /* Minimum width to prevent cramping */
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
 }
 
 /* Add hardware acceleration for smoother transitions */
@@ -870,7 +825,6 @@ tbody tr:hover td { background: var(--color-hover); }
   section {
     margin: 8px;
     padding: 12px;
-    border-radius: 8px;
   }
   
   /* Better button spacing */
@@ -893,8 +847,19 @@ tbody tr:hover td { background: var(--color-hover); }
     padding: 8px;
   }
   
+  nav {
+    width: 180px;
+    min-width: 180px;
+    padding: 10px;
+  }
+  
+  #page-sections {
+    margin-left: 180px;
+    padding: 5px;
+  }
+  
   nav button {
-    padding: 10px 12px;
+    padding: 8px 10px;
     font-size: 0.85rem;
   }
   
@@ -1266,13 +1231,11 @@ tbody tr:hover td { background: var(--color-hover); }
 .table-container {
   width: 95%;
   max-width: 1400px;
-  margin: 25px auto;
   overflow-x: auto;
   position: relative;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-  padding: 5px;
 }
 
 /* Side-by-side tables layout for room view */
@@ -3070,8 +3033,7 @@ select option:disabled {
 /* Responsive fluid type-scale */
 html {
   font-size: clamp(15px, 0.75vw + 0.6rem, 18px);
-  /* Ensure the gradient spans full viewport height */
-  background: linear-gradient(180deg, var(--color-primary-light) 0%, var(--color-bg) 100%);
+  background: var(--color-bg);
   min-height: 100%;
 }
 
@@ -3089,8 +3051,8 @@ h1, h2, h3 {
 
 /* Sections: more breathing room on large screens */
 section {
-  padding: clamp(1rem, 2.5vw, 2rem);
   max-width: min(1400px, 96%);
+  /* No container styling - content sits on main background */
 }
 
 /* Inputs & selects: subtle elevation + focus ring */
@@ -3405,7 +3367,7 @@ section h2 {
   letter-spacing: 1px;
   font-size: clamp(24px, 5vw, 50px);
   text-transform: uppercase;
-  margin-top: -20px;
+  margin-top: -5px;
   margin-bottom: 10px;
 }
 
@@ -3483,7 +3445,6 @@ section h2 {
 /* ===================================================================== */
 
 .offering-categorizer {
-  margin: 15px 0;
   border-radius: 8px;
   overflow: hidden;
 }

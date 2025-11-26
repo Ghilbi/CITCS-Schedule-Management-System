@@ -1,35 +1,39 @@
 <section id="section-courses" class="hidden">
-  <h2>Course Catalog</h2>
-  <div class="top-button-container">
-    <button id="btn-add-course" class="add-btn">Add New Course</button>
+  <div class="page-header">
+    <h2>Course Catalog</h2>
+    <div id="active-curriculum-indicator" class="subtle-curriculum-btn"></div>
   </div>
-  <div class="button-container">
-    <button id="btn-import-csv" class="import-btn">Import CSV</button>
-    <button id="btn-export-csv" class="export-btn">Export CSV</button>
-    <button id="btn-clear-courses" class="delete-btn">Manage Course Deletion</button>
+  <div class="button-row-container">
+    <div class="button-group-left">
+      <button id="btn-import-csv" class="import-btn">Import CSV</button>
+      <button id="btn-export-csv" class="export-btn">Export CSV</button>
+    </div>
+    <div class="button-group-right">
+      <button id="btn-add-course" class="btn-primary-action">+ Add Course</button>
+      <button id="btn-clear-courses" class="icon-btn icon-btn-delete" title="Manage Course Deletion"><i class="dripicons-trash"></i></button>
+    </div>
   </div>
   <input type="file" id="csv-file-input" accept=".csv" class="hidden" />
-  <!-- Search Bar - Always Visible -->
-  <div class="search-container">
-    <input type="text" id="course-search" placeholder="Search courses..." />
-  </div>
   
   <!-- Collapsible Filters Container - Left Aligned -->
   <div class="filters-container">
-    <button id="filter-toggle-btn" class="filter-toggle-btn">
-      <span class="filter-icon">🔍</span>
-      <span class="filter-text">Show Filters</span>
+    <button id="filter-toggle-btn" class="filter-toggle-btn filter-icon-only" title="Toggle Filters">
+      <span class="filter-icon"><i class="dripicons-search"></i></span>
       <span class="filter-arrow">▼</span>
     </button>
     <div id="filter-section" class="filter-section collapsed">
+      <!-- Search Bar -->
+      <div class="search-container search-in-filters">
+        <input type="text" id="course-search" placeholder="Search courses..." />
+      </div>
       <div class="filter-row">
-        <select id="course-filter-year-level">
+        <select id="course-filter-year-level" class="compact-select">
           <option value="">Filter by Year Level</option>
           <option value="1st yr">1st Year</option>
           <option value="2nd yr">2nd Year</option>
           <option value="3rd yr">3rd Year</option>
         </select>
-        <select id="course-filter-degree">
+        <select id="course-filter-degree" class="compact-select">
           <option value="">Filter by Degree</option>
           <option value="BSIT">BSIT</option>
           <option value="BSIT(Webtech)">BSIT(Webtech)</option>
@@ -39,7 +43,7 @@
           <option value="BSDA">BSDA</option>
           <option value="BMMA">BMMA</option>
         </select>
-        <select id="course-filter-trimester">
+        <select id="course-filter-trimester" class="compact-select">
           <option value="">Filter by Trimester</option>
           <option value="1st Trimester">1st Trimester</option>
           <option value="2nd Trimester">2nd Trimester</option>
@@ -47,7 +51,7 @@
         </select>
       </div>
       <div class="filter-row">
-        <select id="course-filter-curriculum">
+        <select id="course-filter-curriculum" class="compact-select">
           <option value="">Filter by Curriculum</option>
           <option value="2024-2025">2024-2025</option>
           <option value="2023-2024">2023-2024</option>
@@ -55,7 +59,7 @@
           <option value="2021-2022">2021-2022</option>
           <option value="2020-2021">2020-2021</option>
         </select>
-        <select id="course-sort">
+        <select id="course-sort" class="compact-select">
           <option value="">Sort by</option>
           <option value="subject-asc">Subject (A-Z)</option>
           <option value="subject-desc">Subject (Z-A)</option>
@@ -187,7 +191,7 @@
     
     <div class="deletion-options">
       <div class="deletion-option" data-deletion-type="all">
-        <div class="option-icon">🗑️</div>
+        <div class="option-icon"><i class="dripicons-trash"></i></div>
         <div class="option-content">
           <h4>Delete All Courses</h4>
           <p>Remove all courses, course offerings, and schedules from the system</p>
@@ -195,7 +199,7 @@
       </div>
       
       <div class="deletion-option" data-deletion-type="year-level">
-        <div class="option-icon">📚</div>
+        <div class="option-icon"><i class="dripicons-stack"></i></div>
         <div class="option-content">
           <h4>Delete by Year Level</h4>
           <p>Remove all courses for a specific year level</p>
@@ -203,7 +207,7 @@
       </div>
       
       <div class="deletion-option" data-deletion-type="trimester">
-        <div class="option-icon">📅</div>
+        <div class="option-icon"><i class="dripicons-calendar"></i></div>
         <div class="option-content">
           <h4>Delete by Trimester</h4>
           <p>Remove all courses for a specific trimester</p>
@@ -211,7 +215,7 @@
       </div>
       
       <div class="deletion-option" data-deletion-type="degree">
-        <div class="option-icon">🎓</div>
+        <div class="option-icon"><i class="dripicons-graduation"></i></div>
         <div class="option-content">
           <h4>Delete by Degree</h4>
           <p>Remove all courses for a specific degree program</p>
@@ -261,7 +265,7 @@
       <h4>Deletion Summary</h4>
       <p id="deletion-summary-text"></p>
       <div class="warning-message">
-        <strong>⚠️ Warning:</strong> This action cannot be undone. All related course offerings and schedules will also be deleted.
+        <strong><i class="dripicons-warning"></i> Warning:</strong> This action cannot be undone. All related course offerings and schedules will also be deleted.
       </div>
     </div>
     

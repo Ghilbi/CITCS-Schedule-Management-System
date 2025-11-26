@@ -5,6 +5,13 @@ function initStartupAnimation() {
   const loader = document.getElementById('startup-loader');
   const mainApp = document.getElementById('main-app');
   
+  if (!loader || !mainApp) {
+    console.warn('Startup animation skipped: required elements not found.');
+    document.body.classList.add('app-loaded');
+    document.body.style.overflow = 'auto';
+    return;
+  }
+  
   // Ensure the loader is visible initially
   loader.style.display = 'flex';
   
@@ -39,6 +46,12 @@ function isFirstVisit() {
 function skipStartupAnimation() {
   const loader = document.getElementById('startup-loader');
   const mainApp = document.getElementById('main-app');
+  
+  if (!loader || !mainApp) {
+    document.body.classList.add('app-loaded');
+    document.body.style.overflow = 'auto';
+    return;
+  }
   
   loader.style.display = 'none';
   document.body.classList.add('app-loaded');

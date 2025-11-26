@@ -2,13 +2,6 @@
  * INITIAL PAGE LOAD
  **************************************************************/
 (async function initialLoad() {
-  // Check if this is the first visit and show startup animation
-  if (isFirstVisit()) {
-    initStartupAnimation();
-  } else {
-    skipStartupAnimation();
-  }
-  
   // Initial loading for all tables
   await renderCoursesTable();
   await renderCourseOfferingTable();

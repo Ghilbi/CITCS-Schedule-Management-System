@@ -151,44 +151,29 @@ function createActiveCurriculumIndicator() {
     return;
   }
 
-  // Create indicator element if it doesn't exist
-  let indicator = document.getElementById('active-curriculum-indicator');
+  // Get indicator element from page header
+  const indicator = document.getElementById('active-curriculum-indicator');
   if (!indicator) {
-    indicator = document.createElement('div');
-    indicator.id = 'active-curriculum-indicator';
-    indicator.style.cssText = `
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #2563eb;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      z-index: 1000;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    `;
-    
-    // Add hover effect
-    indicator.addEventListener('mouseenter', () => {
-      indicator.style.backgroundColor = '#1d4ed8';
-    });
-    indicator.addEventListener('mouseleave', () => {
-      indicator.style.backgroundColor = '#2563eb';
-    });
-    
-    // Add click handler to show curriculum selector
+    return;
+  }
+  
+  // Remove any inline styles that might have been added
+  indicator.removeAttribute('style');
+  
+  // Ensure class is set
+  if (!indicator.classList.contains('subtle-curriculum-btn')) {
+    indicator.classList.add('subtle-curriculum-btn');
+  }
+  
+  // Add click handler to show curriculum selector if not already added
+  if (!indicator.hasAttribute('data-listener-added')) {
     indicator.addEventListener('click', showActiveCurriculumSelector);
-    
-    document.body.appendChild(indicator);
+    indicator.setAttribute('data-listener-added', 'true');
   }
   
   // Show indicator and update text
-  indicator.style.display = 'block';
-  indicator.textContent = `Active Curriculum: ${getActiveCurriculum()}`;
+  indicator.style.display = 'flex';
+  indicator.textContent = `${getActiveCurriculum()}`;
   indicator.title = 'Click to change active curriculum';
 }
 

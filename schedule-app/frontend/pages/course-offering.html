@@ -1,8 +1,10 @@
 <section id="section-course-offering" class="hidden">
-  <h2>Manage Course Offering</h2>
-  <div class="button-container">
-    <button id="btn-add-courseOffering" class="add-btn">Add New Course Offering</button>
-    <button id="btn-clear-courseOffering" class="delete-btn">Clear All Offerings</button>
+  <div class="page-header">
+    <h2>Course Offerings</h2>
+    <div class="header-actions">
+      <button id="btn-add-courseOffering" class="btn-primary-action">+ Add Offering</button>
+      <button id="btn-clear-courseOffering" class="icon-btn icon-btn-delete" title="Clear All"><i class="dripicons-trash"></i></button>
+    </div>
   </div>
   <div class="trimester-tabs">
     <button class="tab-btn active" data-trimester="1st Trimester">1st Trimester</button>
@@ -17,20 +19,19 @@
   
   <!-- Collapsible Filters Container -->
   <div class="filters-container">
-    <button id="offering-filter-toggle-btn" class="filter-toggle-btn">
-      <span class="filter-icon">🔍</span>
-      <span class="filter-text">Show Filters</span>
+    <button id="offering-filter-toggle-btn" class="filter-toggle-btn filter-icon-only" title="Toggle Filters">
+      <span class="filter-icon"><i class="dripicons-search"></i></span>
       <span class="filter-arrow">▼</span>
     </button>
     <div id="offering-filter-section" class="filter-section collapsed">
       <div class="filter-row">
-        <select id="offering-filter-type">
+        <select id="offering-filter-type" class="compact-select">
           <option value="">Filter by Type</option>
           <option value="Lec">Lec</option>
           <option value="Lab">Lab</option>
           <option value="PureLec">PureLec</option>
         </select>
-        <select id="offering-sort">
+        <select id="offering-sort" class="compact-select">
           <option value="">Sort by</option>
           <option value="course-asc">Course (A-Z)</option>
           <option value="course-desc">Course (Z-A)</option>
@@ -69,12 +70,12 @@
     
     <div class="modal-tabs enhanced-tabs">
       <button class="modal-tab-btn active" data-tab="manual">
-        <span class="tab-icon">📝</span>
+        <span class="tab-icon"><i class="dripicons-document-edit"></i></span>
         <span class="tab-title">Manual Add</span>
         <span class="tab-subtitle">Add individual course offerings</span>
       </button>
       <button class="modal-tab-btn" data-tab="bulk">
-        <span class="tab-icon">📚</span>
+        <span class="tab-icon"><i class="dripicons-stack"></i></span>
         <span class="tab-title">Bulk Add</span>
         <span class="tab-subtitle">Add multiple courses at once</span>
       </button>
@@ -82,13 +83,13 @@
     
     <div id="manual-add-section" class="modal-tab-content">
       <div class="manual-intro">
-        <h4 class="manual-section-title">✏️ Manual Course Addition</h4>
+        <h4 class="manual-section-title"><i class="dripicons-document-edit"></i> Manual Course Addition</h4>
         <p class="manual-description">Add individual course offerings with precise control over each section. Perfect for specific course scheduling and detailed customization.</p>
       </div>
       
       <div class="manual-form-section">
         <label for="courseOffering-degree" class="enhanced-label">
-          <span class="label-icon">🎓</span>
+          <span class="label-icon"><i class="dripicons-graduation"></i></span>
           Filter by Degree:
         </label>
         <select id="courseOffering-degree">
@@ -104,7 +105,7 @@
       </div>
       <div class="filter-group">
         <label class="enhanced-label">
-          <span class="label-icon">📅</span>
+          <span class="label-icon"><i class="dripicons-calendar"></i></span>
           Filter by Trimester:
         </label>
         <div class="radio-group trimester-radio-group">
@@ -138,7 +139,7 @@
       </div>
       <div class="course-selection-section">
         <label for="courseOffering-course" class="enhanced-label">
-          <span class="label-icon">📖</span>
+          <span class="label-icon"><i class="dripicons-book"></i></span>
           Select Course:
         </label>
         <select id="courseOffering-course">
@@ -161,13 +162,13 @@
     
     <div id="bulk-add-section" class="modal-tab-content hidden">
       <div class="bulk-intro">
-        <h4 class="bulk-section-title">🚀 Bulk Course Addition</h4>
+        <h4 class="bulk-section-title"><i class="dripicons-rocket"></i> Bulk Course Addition</h4>
         <p class="bulk-description">Quickly add all courses for an entire degree program and year level. This feature automatically creates course offerings for multiple sections at once, saving you time when setting up schedules.</p>
       </div>
       
       <div class="bulk-form-section">
         <label for="courseOffering-degree-bulk" class="enhanced-label">
-          <span class="label-icon">🎓</span>
+          <span class="label-icon"><i class="dripicons-graduation"></i></span>
           Select Degree Program:
         </label>
         <select id="courseOffering-degree-bulk" class="bulk-degree-select">
@@ -184,7 +185,7 @@
       <div class="filter-controls enhanced-filters">
         <div class="filter-group">
           <label class="enhanced-label">
-            <span class="label-icon">📊</span>
+            <span class="label-icon"><i class="dripicons-graph-bar"></i></span>
             Target Year Level:
           </label>
           <div class="radio-group year-radio-group">
@@ -196,7 +197,7 @@
         </div>
         <div class="filter-group">
           <label class="enhanced-label">
-            <span class="label-icon">📅</span>
+            <span class="label-icon"><i class="dripicons-calendar"></i></span>
             Academic Trimester:
           </label>
           <div class="radio-group trimester-radio-group">
@@ -209,14 +210,14 @@
       </div>
       <div class="bulk-section-input-group enhanced-section-input">
         <label class="enhanced-label">
-          <span class="label-icon">🏷️</span>
+          <span class="label-icon"><i class="dripicons-tag"></i></span>
           Section Configuration:
         </label>
         <div class="section-letter-input bulk-letters">
           <label for="courseOffering-section-letters" class="sub-label">Section Letters (ranges or comma-separated):</label>
           <input type="text" id="courseOffering-section-letters" placeholder="e.g., A-D or A,B,C" value="A">
           <div class="input-help">
-            <p class="info-text">💡 <strong>Examples:</strong></p>
+            <p class="info-text"><i class="dripicons-lightbulb"></i> <strong>Examples:</strong></p>
             <ul class="example-list">
               <li><code>A</code> - Creates section 1A</li>
               <li><code>A,B,C</code> - Creates sections 1A, 1B, 1C</li>
@@ -225,14 +226,14 @@
           </div>
         </div>
         <div class="section-preview bulk-preview enhanced-preview">
-          <span class="preview-label">📋 Generated section codes: </span><strong id="bulk-section-code-preview">1A</strong>
+          <span class="preview-label"><i class="dripicons-document"></i> Generated section codes: </span><strong id="bulk-section-code-preview">1A</strong>
           <p class="info-text">The year prefix will be automatically added based on your Year Level selection above</p>
         </div>
         <input type="hidden" id="courseOffering-multiple-sections" value="1A">
       </div>
       <div class="bulk-action-section">
         <button id="btn-add-all-courses" class="action-btn enhanced-action-btn">
-          <span class="btn-icon">⚡</span>
+          <span class="btn-icon"><i class="dripicons-flash"></i></span>
           Add All Courses for Selected Degree
           <span class="btn-subtitle">This will create course offerings for all courses in the selected degree, year level, and trimester</span>
         </button>

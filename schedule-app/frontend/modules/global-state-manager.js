@@ -1,9 +1,5 @@
-/**************************************************************
- * GLOBAL STATE MANAGER
- * Centralized management of application state variables
- **************************************************************/
+// Global State Manager - manages application state variables
 
-// Current view state variables - single source of truth
 let currentRoomViewTrimester = "1st Trimester";
 let currentRoomViewYearLevel = "1st yr";
 let currentSectionViewTrimester = "1st Trimester";
@@ -11,7 +7,6 @@ let currentSectionViewYearLevel = "1st yr";
 let currentScheduleSummaryTrimester = "1st Trimester";
 let currentScheduleSummaryYearLevel = "1st yr";
 
-// State management functions
 function setRoomViewState(trimester, yearLevel) {
   if (trimester) currentRoomViewTrimester = trimester;
   if (yearLevel) currentRoomViewYearLevel = yearLevel;
@@ -27,7 +22,6 @@ function setScheduleSummaryState(trimester, yearLevel) {
   if (yearLevel) currentScheduleSummaryYearLevel = yearLevel;
 }
 
-// Getter functions for safe access
 function getRoomViewState() {
   return {
     trimester: currentRoomViewTrimester,
@@ -49,9 +43,7 @@ function getScheduleSummaryState() {
   };
 }
 
-// Initialize state on load
 function initializeGlobalState() {
-  // Ensure default values are set
   if (!currentRoomViewTrimester) currentRoomViewTrimester = "1st Trimester";
   if (!currentRoomViewYearLevel) currentRoomViewYearLevel = "1st yr";
   if (!currentSectionViewTrimester) currentSectionViewTrimester = "1st Trimester";
@@ -60,5 +52,4 @@ function initializeGlobalState() {
   if (!currentScheduleSummaryYearLevel) currentScheduleSummaryYearLevel = "1st yr";
 }
 
-// Call initialization
 initializeGlobalState();

@@ -42,7 +42,6 @@
   </div>
 
   <script>
-    // Check if already logged in
     const authToken = localStorage.getItem('authToken');
     if (authToken) {
       window.location.href = 'index.html';
@@ -114,7 +113,6 @@
       }
     });
 
-    // Allow Enter key to submit form
     document.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && !loginButton.disabled) {
         loginForm.dispatchEvent(new Event('submit'));

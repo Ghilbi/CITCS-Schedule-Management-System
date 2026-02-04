@@ -1,7 +1,6 @@
-/**************************************************************
- * API wrapper functions for backend calls
- **************************************************************/
-// Utility: debounce to limit frequent calls on inputs
+// API wrapper functions for backend calls
+
+// Debounce utility
 function debounce(func, delay = 300) {
   let timer;
   return (...args) => {
@@ -10,7 +9,7 @@ function debounce(func, delay = 300) {
   };
 }
 
-// Parse section input supporting both ranges (A-D) and comma-separated values (A,B,C)
+// Parse section input (supports ranges like A-D and comma-separated like A,B,C)
 function parseSectionInput(input) {
   if (!input || !input.trim()) {
     return [];
@@ -20,7 +19,6 @@ function parseSectionInput(input) {
   const parts = input.split(',').map(part => part.trim()).filter(part => part);
   
   for (const part of parts) {
-    // Check if it's a range (e.g., A-D, a-d)
     const rangeMatch = part.match(/^([a-zA-Z])\s*-\s*([a-zA-Z])$/);
     if (rangeMatch) {
       const start = rangeMatch[1].toUpperCase();
@@ -29,21 +27,17 @@ function parseSectionInput(input) {
       const endCode = end.charCodeAt(0);
       
       if (startCode <= endCode) {
-        // Generate range from start to end
         for (let i = startCode; i <= endCode; i++) {
           sections.push(String.fromCharCode(i));
         }
       } else {
-        // Invalid range, treat as individual letters
         sections.push(start, end);
       }
     } else {
-      // Single letter or invalid format, add as-is (converted to uppercase)
       sections.push(part.toUpperCase());
     }
   }
   
-  // Remove duplicates and return
   return [...new Set(sections)];
 }
 
@@ -58,7 +52,7 @@ async function apiGet(table, forceRefresh = false) {
   return response.json();
 }
 
-// Performance: cache GET calls to avoid redundant network requests
+// Cache GET calls
 const apiCache = {};
 const originalApiGet = apiGet;
 apiGet = async (table, forceRefresh = false) => {
@@ -71,7 +65,6 @@ const clearApiCache = (table) => {
   if (table) {
     delete apiCache[table];
   } else {
-    // Clear all cache if no table specified
     Object.keys(apiCache).forEach(key => delete apiCache[key]);
   }
 };
@@ -90,7 +83,7 @@ async function apiPost(table, data) {
   }
 }
 
-// Clear cache on POST/PUT/DELETE to keep data consistent
+// Clear cache on POST/PUT/DELETE
 const originalApiPost = apiPost;
 apiPost = async (table, data) => {
   clearApiCache(table);
@@ -106,7 +99,6 @@ async function apiPut(table, id, data) {
   return handleAuthorizedResponse(response);
 }
 
-// Clear cache on POST/PUT/DELETE to keep data consistent
 const originalApiPut = apiPut;
 apiPut = async (table, id, data) => {
   clearApiCache(table);
@@ -121,22 +113,18 @@ async function apiDelete(table, id) {
   return handleAuthorizedResponse(response);
 }
 
-// Handle token expiration across the application
+// Handle token expiration
 function handleTokenExpiration() {
-  // Clear the token
   localStorage.removeItem('authToken');
   
-  // Notify JWT monitor if available
   if (window.jwtMonitor) {
     window.jwtMonitor.handleTokenExpired();
   } else {
-    // Fallback if JWT monitor is not available
     alert('Your session has expired. You will be redirected to the login page.');
     window.location.href = 'login.html';
   }
 }
 
-// Clear cache on POST/PUT/DELETE to keep data consistent
 const originalApiDelete = apiDelete;
 apiDelete = async (table, id) => {
   clearApiCache(table);
@@ -149,7 +137,7 @@ async function handleAuthorizedResponse(response) {
     try {
       errorData = await response.json();
     } catch (parseError) {
-      // ignore parse errors so we can still handle expiration fallback
+      // Ignore parse errors
     }
     if (errorData.expired) {
       handleTokenExpiration();
@@ -166,11 +154,7 @@ async function handleAuthorizedResponse(response) {
   return response.json();
 }
 
-/**************************************************************
- * Global variables for Room View columns
- **************************************************************/
-// predefinedRooms is defined in 03-global-variables-for-room-view-columns.js
-
+// Get all room columns
 async function getAllRoomColumns() {
   const rooms = await apiGet("rooms");
   const roomNames = rooms.map(room => room.name);

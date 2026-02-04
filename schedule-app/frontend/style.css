@@ -1,31 +1,25 @@
-/* Use Inter font */
 :root {
-  /* ===== PRIMARY COLOR PALETTE ===== */
   --color-primary: #2e7d32;
   --color-primary-dark: #1b5e20;
   --color-primary-light: #e8f5e9;
   --color-primary-xlight: #f1f9f2;
   --color-secondary: #ffffff;
   
-  /* ===== BACKGROUND COLORS ===== */
   --color-bg: #ffffff;
   --color-card-bg: #ffffff;
   --color-overlay: rgba(0, 0, 0, 0.5);
   --color-overlay-light: rgba(0, 0, 0, 0.6);
   
-  /* ===== TEXT COLORS ===== */
   --color-text: #303030;
   --color-text-light: #3c4043;
   --color-text-dark: #1e5f21;
   --color-muted: #5f6368;
   --color-muted-light: #666;
   
-  /* ===== BORDER COLORS ===== */
   --color-border: #e0e0e0;
   --color-border-light: #e8eaed;
   --color-border-lighter: #f8f9fa;
   
-  /* ===== STATUS COLORS ===== */
   --color-error: #ea4335;
   --color-error-dark: #d33426;
   --color-error-light: #fef7f6;
@@ -46,7 +40,6 @@
   --color-info-dark: #1565c0;
   --color-info-light: #f3f8ff;
   
-  /* ===== CHART COLORS ===== */
   --color-chart-1: #4f46e5;
   --color-chart-2: #06b6d4;
   --color-chart-3: #10b981;
@@ -55,7 +48,6 @@
   --color-chart-6: #8b5cf6;
   --color-chart-7: #ec4899;
   
-  /* ===== ACCENT COLORS ===== */
   --color-blue: #2563eb;
   --color-blue-dark: #1d4ed8;
   --color-blue-light: #e9f1fb;
@@ -78,23 +70,19 @@
   --color-lime: #8bc34a;
   --color-lime-light: rgba(139, 195, 74, 0.15);
   
-  /* ===== HOVER STATES ===== */
   --color-hover: rgba(46, 125, 50, 0.1);
   --color-hover-strong: rgba(46, 125, 50, 0.15);
   --color-hover-light: rgba(46, 125, 50, 0.08);
   
-  /* ===== ROOM/SCHEDULE SPECIFIC ===== */
   --color-room-error: #ff6666;
   --color-room-warning: #fff3cd;
   --color-schedule-default: #e9f1fb;
   
-  /* ===== DESIGN TOKENS ===== */
   --border-radius: 8px;
   --gap: 16px;
   --transition: 0.3s;
   --sidebar-width: 200px;
   
-  /* ===== SHADOW PRESETS ===== */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
@@ -103,10 +91,7 @@
   --shadow-success: 0 2px 5px rgba(56, 142, 60, 0.2);
   --shadow-info: 0 2px 5px rgba(25, 118, 210, 0.2);
   
-  /* ===== SEMANTIC COLOR ALIASES ===== */
-  /* These provide meaningful names for specific use cases */
   
-  /* Button Colors */
   --btn-primary-bg: var(--color-primary);
   --btn-primary-hover: var(--color-primary-dark);
   --btn-primary-text: var(--color-secondary);
@@ -120,26 +105,22 @@
   --btn-info-hover: var(--color-info-dark);
   --btn-info-text: var(--color-secondary);
   
-  /* Form Colors */
   --input-border: var(--color-border);
   --input-border-focus: var(--color-primary);
   --input-bg: var(--color-secondary);
   --input-text: var(--color-text);
   --input-placeholder: var(--color-muted);
   
-  /* Table Colors */
   --table-header-bg: var(--color-secondary);
   --table-header-text: var(--color-muted);
   --table-row-even: #fafafa;
   --table-row-hover: var(--color-hover);
   --table-border: var(--color-border);
   
-  /* Modal Colors */
   --modal-overlay: var(--color-overlay);
   --modal-bg: var(--color-card-bg);
   --modal-border: var(--color-border);
   
-  /* Alert Colors */
   --alert-error-bg: var(--color-error-bg);
   --alert-error-text: var(--color-error-text);
   --alert-error-border: var(--color-error);
@@ -153,20 +134,17 @@
   --alert-info-text: var(--color-info);
   --alert-info-border: var(--color-info);
   
-  /* Schedule/Room Specific */
   --schedule-cell-bg: var(--color-schedule-default);
   --schedule-conflict-border: var(--color-room-error);
   --schedule-conflict-text: var(--color-room-error);
   --schedule-warning-bg: var(--color-room-warning);
   
-  /* Navigation Colors */
   --nav-bg: var(--color-primary);
   --nav-text: var(--color-secondary);
   --nav-hover: var(--color-primary-dark);
   --sidebar-bg: var(--color-card-bg);
   --sidebar-border: var(--color-border);
   
-  /* Chart Theme */
   --chart-primary: var(--color-chart-1);
   --chart-secondary: var(--color-chart-2);
   --chart-accent: var(--color-chart-3);
@@ -188,13 +166,11 @@ body {
   padding-top: 0;
   overflow-x: auto;
   overflow-y: auto;
-  /* Smooth scrolling for better UX */
   scroll-behavior: smooth;
   /* Enable momentum scrolling on iOS */
   -webkit-overflow-scrolling: touch;
 }
 
-/* Softer heading styles */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Poppins', 'Nunito', 'Inter', sans-serif;
   font-weight: 500;
@@ -211,7 +187,6 @@ h4 { font-size: 1.25rem; font-weight: 500; }
 h5 { font-size: 1.125rem; font-weight: 500; }
 h6 { font-size: 1rem; font-weight: 500; }
 
-/* Main app container */
 .main-app {
   margin-left: 0;
   opacity: 1;
@@ -229,7 +204,6 @@ h6 { font-size: 1rem; font-weight: 500; }
   padding: 0;
 }
 
-/* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .main-app {
     margin-left: 0;
@@ -237,7 +211,6 @@ h6 { font-size: 1rem; font-weight: 500; }
   }
 }
 
-/* Headings */
 h1, h2, h3 {
   font-weight: 600;
   color: var(--color-primary);
@@ -249,7 +222,6 @@ h1 { font-size: 1.75rem; }
 h2 { font-size: 1.5rem; }
 h3 { font-size: 1.25rem; }
 
-/* Page Header - Compact Layout */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -266,7 +238,6 @@ h3 { font-size: 1.25rem; }
   color: var(--color-primary);
 }
 
-/* Subtle Active Curriculum Button */
 .subtle-curriculum-btn {
   display: flex;
   align-items: center;
@@ -298,7 +269,6 @@ h3 { font-size: 1.25rem; }
   align-items: center;
 }
 
-/* Compact Action Buttons */
 .btn-primary-action {
   padding: 8px 16px;
   background: var(--color-primary);
@@ -357,7 +327,6 @@ h3 { font-size: 1.25rem; }
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Navigation */
 nav {
   display: flex;
   flex-direction: column;
@@ -383,7 +352,6 @@ nav {
   padding: 16px;
 }
 
-/* Mobile navigation */
 @media (max-width: 768px) {
   nav {
     width: 200px;
@@ -396,7 +364,6 @@ nav {
   }
 }
 
-/* Hamburger button removed - navigation is now inline */
 #nav-toggle {
   display: none;
 }
@@ -417,7 +384,6 @@ nav {
   transform: translateY(-12px) rotate(-45deg);
 }
 
-/* Mobile hamburger adjustments */
 @media (max-width: 768px) {
   #nav-toggle {
     width: 40px;
@@ -442,7 +408,6 @@ nav {
   }
 }
 
-/* Logo / title placeholder slots (future) */
 nav::before {
   content: "";
   display: block;
@@ -456,7 +421,6 @@ nav::before {
   padding-left: 2px;
 }
 
-/* Modern navigation buttons */
 nav button {
   background-color: transparent;
   border: none;
@@ -494,7 +458,6 @@ nav button.active {
   body.nav-collapsed { margin-left: 0; }
 }
 
-/* Page Sections - Compact styling */
 section {
   margin: 12px auto;
   max-width: min(1400px, 98%);
@@ -509,7 +472,6 @@ section:not(.hidden) {
   transform: translateZ(0);
 }
 
-/* Tables inside cards */
 table {
   width: 100%;
   min-width: 600px;
@@ -520,7 +482,6 @@ table {
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-/* Table container for responsive scrolling */
 .table-responsive {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -528,14 +489,12 @@ table {
   width: 100%;
 }
 
-/* Table container general styling */
 .table-container {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
 }
 
-/* Mobile table improvements */
 @media (max-width: 768px) {
   table {
     font-size: 0.8rem;
@@ -554,7 +513,6 @@ table {
     margin-right: 4px;
   }
   
-  /* Stack action buttons vertically on very small screens */
   @media (max-width: 480px) {
     .table-edit-btn,
     .table-delete-btn {
@@ -578,7 +536,6 @@ tbody td { font-size: 0.875rem; color: var(--color-text); }
 
 tbody tr:hover td { background: var(--color-hover); }
 
-/* Button base and modifiers */
 .btn {
   display: inline-block;
   padding: 8px 16px;
@@ -605,7 +562,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Explicit definitions for table action buttons */
 .table-edit-btn,
 .table-delete-btn {
   display: inline-block;
@@ -642,19 +598,16 @@ tbody tr:hover td { background: var(--color-hover); }
   transform: translateY(-1px);
 }
 
-/* Responsive tweaks */
 @media (max-width: 768px) {
   nav { gap: 4px; }
   nav button { padding: 8px 12px; font-size: 0.9rem; }
   table, section { padding: 8px; }
   
-  /* Improve section spacing on mobile */
   section {
     margin: 8px;
     padding: 10px;
   }
   
-  /* Page header responsive */
   .page-header {
     flex-direction: column;
     gap: 10px;
@@ -679,7 +632,6 @@ tbody tr:hover td { background: var(--color-hover); }
     padding: 10px;
   }
   
-  /* Better button spacing */
   .add-btn {
     width: 100%;
     margin: 10px 0;
@@ -688,7 +640,6 @@ tbody tr:hover td { background: var(--color-hover); }
   }
 }
 
-/* Additional mobile breakpoint for very small screens */
 @media (max-width: 480px) {
   .main-app {
     padding: 5px;
@@ -731,12 +682,10 @@ tbody tr:hover td { background: var(--color-hover); }
   h3 { font-size: 1.1rem; }
 }
 
-/* Hide sections by default */
 .hidden {
   display: none;
 }
 
-/* Utility helpers */
 .mt-auto {
   margin-top: 20px !important;
 }
@@ -756,7 +705,6 @@ tbody tr:hover td { background: var(--color-hover); }
   max-width: 95vw;
 }
 
-/* "Add" buttons */
 .add-btn {
   margin: 12px auto;
   display: block;
@@ -777,14 +725,12 @@ tbody tr:hover td { background: var(--color-hover); }
   transform: translateY(-1px);
 }
 
-/* Top button container for primary action */
 .top-button-container {
   display: flex;
   justify-content: center;
   margin: 12px 0 12px 0;
 }
 
-/* Button container for action buttons */
 .button-container {
   display: flex;
   justify-content: center;
@@ -793,13 +739,11 @@ tbody tr:hover td { background: var(--color-hover); }
   flex-wrap: wrap;
 }
 
-/* Left-aligned button container variant */
 .button-container-left {
   justify-content: flex-start;
   margin-left: 16px;
 }
 
-/* Button row container with left and right groups */
 .button-row-container {
   display: flex;
   justify-content: space-between;
@@ -834,7 +778,6 @@ tbody tr:hover td { background: var(--color-hover); }
   font-size: 0.8125rem;
 }
 
-/* Icon-only buttons */
 .icon-btn {
   display: flex;
   align-items: center;
@@ -877,7 +820,6 @@ tbody tr:hover td { background: var(--color-hover); }
   font-size: 0.8125rem;
 }
 
-/* Mobile button container adjustments */
 @media (max-width: 768px) {
   .button-container {
     flex-direction: column;
@@ -922,7 +864,6 @@ tbody tr:hover td { background: var(--color-hover); }
   display: block;
 }
 
-/* Trimester tabs and Year level tabs */
 .trimester-tabs,
 .year-level-tabs {
   display: flex;
@@ -933,7 +874,6 @@ tbody tr:hover td { background: var(--color-hover); }
   flex-wrap: wrap;
 }
 
-/* Year Level Tabs */
 .year-level-tabs {
   display: flex;
   justify-content: center;
@@ -942,7 +882,6 @@ tbody tr:hover td { background: var(--color-hover); }
   flex-wrap: wrap;
 }
 
-/* Mobile tab adjustments */
 @media (max-width: 768px) {
   .trimester-tabs,
   .year-level-tabs {
@@ -1003,7 +942,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: 0 3px 6px rgba(46, 125, 50, 0.3);
 }
 
-/* Search Container - Always Visible */
 .search-container {
   display: flex;
   justify-content: center;
@@ -1012,7 +950,6 @@ tbody tr:hover td { background: var(--color-hover); }
   padding: 0 12px;
 }
 
-/* Search bar inside filters */
 .search-in-filters {
   justify-content: flex-start;
   margin: 0 0 12px 0;
@@ -1041,7 +978,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
 }
 
-/* Add Course Button Container - Right Aligned */
 .add-course-container {
   display: flex;
   justify-content: flex-end;
@@ -1052,14 +988,12 @@ tbody tr:hover td { background: var(--color-hover); }
   margin: 0;
 }
 
-/* Filters Container - Left Aligned Collapsible */
 .filters-container {
   margin: 12px 0 12px 16px;
   max-width: 900px;
   align-self: flex-start;
 }
 
-/* Filter Toggle Button */
 .filter-toggle-btn {
   display: flex;
   align-items: center;
@@ -1076,7 +1010,6 @@ tbody tr:hover td { background: var(--color-hover); }
   min-width: 150px;
 }
 
-/* Icon-only variant for filter button */
 .filter-icon-only {
   min-width: 40px;
   width: 40px;
@@ -1128,7 +1061,6 @@ tbody tr:hover td { background: var(--color-hover); }
   transform: rotate(180deg);
 }
 
-/* Filter Section */
 .filter-section {
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1149,7 +1081,6 @@ tbody tr:hover td { background: var(--color-hover); }
   border: none;
 }
 
-/* Filter Rows */
 .filter-row {
   display: flex;
   gap: 16px;
@@ -1179,7 +1110,6 @@ tbody tr:hover td { background: var(--color-hover); }
   cursor: pointer;
 }
 
-/* Compact select variant */
 .compact-select {
   min-width: 160px !important;
   width: 180px !important;
@@ -1198,7 +1128,6 @@ tbody tr:hover td { background: var(--color-hover); }
   border-color: var(--color-primary-light);
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .search-container {
     padding: 0 15px;
@@ -1243,9 +1172,6 @@ tbody tr:hover td { background: var(--color-hover); }
   }
 }
 
-
-
-/* Schedule table container */
 .table-container {
   width: 96%;
   max-width: 1400px;
@@ -1257,7 +1183,6 @@ tbody tr:hover td { background: var(--color-hover); }
   margin-bottom: 12px;
 }
 
-/* Side-by-side tables layout for room view */
 #section-room-view .table-container {
   width: 98%;
   max-width: 1800px;
@@ -1280,7 +1205,6 @@ tbody tr:hover td { background: var(--color-hover); }
   text-align: center;
 }
 
-/* ----- Section View layout tweaks ----- */
 #section-view-container {
   display: flex;
   flex-direction: column;
@@ -1294,7 +1218,6 @@ tbody tr:hover td { background: var(--color-hover); }
   max-width: 1400px;
 }
 
-/* Mobile section view adjustments */
 @media (max-width: 768px) {
   #section-view-container {
     gap: 12px;
@@ -1322,7 +1245,6 @@ tbody tr:hover td { background: var(--color-hover); }
   }
 }
 
-/* Schedule table styling - more compact */
 .schedule-table {
   width: 100%;
   border-collapse: collapse;
@@ -1340,7 +1262,6 @@ tbody tr:hover td { background: var(--color-hover); }
   font-size: 0.8125rem;
 }
 
-/* Specific sizing for room view tables */
 #section-room-view .schedule-table th,
 #section-room-view .schedule-table td {
   padding: 4px 3px;
@@ -1361,7 +1282,6 @@ tbody tr:hover td { background: var(--color-hover); }
   min-width: 150px;
 }
 
-/* Smaller min-width for room view cells */
 #section-room-view .schedule-table td.clickable-cell {
   min-width: 110px;
 }
@@ -1371,7 +1291,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: inset 0 0 0 1px #2e7d32;
 }
 
-/* Fixed time column - more compact */
 .schedule-table th:first-child,
 .schedule-table td:first-child {
   position: sticky;
@@ -1397,26 +1316,22 @@ tbody tr:hover td { background: var(--color-hover); }
   z-index: 6;
 }
 
-/* More compact time column for room view */
 #section-room-view .schedule-table th:first-child,
 #section-room-view .schedule-table td:first-child {
   width: 100px;
   min-width: 100px;
 }
 
-/* Room columns - more compact */
 .schedule-table th:not(:first-child),
 .schedule-table td:not(:first-child) {
   min-width: 140px;
 }
 
-/* Smaller min-width for room columns in room view */
 #section-room-view .schedule-table th:not(:first-child),
 #section-room-view .schedule-table td:not(:first-child) {
   min-width: 110px;
 }
 
-/* Room label in Section View cells - more compact */
 .room-label {
   display: inline-block;
   font-size: 0.8em;
@@ -1433,7 +1348,6 @@ tbody tr:hover td { background: var(--color-hover); }
   font-weight: 500;
 }
 
-/* Header input fields for room view */
 .schedule-table th input.extra-column-input {
   width: 100%;
   padding: 6px;
@@ -1453,17 +1367,13 @@ tbody tr:hover td { background: var(--color-hover); }
   font-size: 0.8em;
 }
 
-/* Add separation between room pairs */
 .schedule-table th:nth-child(2n+3),
 .schedule-table td:nth-child(2n+3) {
   border-right: 3px solid #8181810a;
   box-shadow: 2px 0 0 #e8eaed;
 }
 
-/* Container for action buttons */
 
-
-/* Radio group styling for the Course modal */
 .radio-group {
   display: flex;
   gap: 1rem;
@@ -1479,7 +1389,6 @@ tbody tr:hover td { background: var(--color-hover); }
   font-size: 0.8125rem;
 }
 
-/* Mobile radio group adjustments */
 @media (max-width: 768px) {
   .radio-group {
     gap: 1rem;
@@ -1505,7 +1414,6 @@ tbody tr:hover td { background: var(--color-hover); }
   }
 }
 
-/* Modals */
 .modal {
   position: fixed;
   top: 0; left: 0;
@@ -1536,13 +1444,11 @@ tbody tr:hover td { background: var(--color-hover); }
   overflow-y: auto;
 }
 
-/* Wide modal variant - also compact */
 .modal-content-wide {
   width: 800px;
   max-width: 95vw;
 }
 
-/* Responsive Modal Design */
 @media (max-width: 768px) {
   .modal-content {
     width: 95vw;
@@ -1634,7 +1540,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: none;
 }
 
-/* Responsive Form Elements */
 @media (max-width: 768px) {
   .modal-content select, 
   .modal-content input[type="text"], 
@@ -1698,7 +1603,6 @@ tbody tr:hover td { background: var(--color-hover); }
   }
 }
 
-/* Full-width inputs */
 .modal-content input[type="text"],
 .modal-content input[type="password"],
 .modal-content select {
@@ -1722,7 +1626,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 3px rgba(46, 125, 50, 0.15);
 }
 
-/* Textarea styling */
 .modal-content textarea {
   width: 100%;
   padding: 7px 10px;
@@ -1744,7 +1647,6 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 3px rgba(46, 125, 50, 0.15);
 }
 
-/* Description column in tables */
 #table-courses td:nth-child(8) {
   max-width: 250px;
   white-space: nowrap;
@@ -1763,7 +1665,6 @@ tbody tr:hover td { background: var(--color-hover); }
   padding: 8px 12px;
 }
 
-/* Action button for modals */
 .action-btn {
   display: inline-block;
   background-color: #2e7d32;
@@ -1780,7 +1681,6 @@ tbody tr:hover td { background: var(--color-hover); }
   background-color: #1b5e20;
 }
 
-/* Bulk add section for multiple sections */
 .bulk-add-section {
   margin: 15px 0;
   padding: 15px;
@@ -1837,7 +1737,6 @@ tbody tr:hover td { background: var(--color-hover); }
   margin: 0;
 }
 
-/* Mobile filter controls adjustments */
 @media (max-width: 768px) {
   .year-radio-group {
     gap: 10px;
@@ -1894,7 +1793,6 @@ tbody tr:hover td { background: var(--color-hover); }
   background-color: #1b5e20;
 }
 
-/* Inline modal actions for save and delete buttons side by side */
 .modal-actions-inline {
   display: flex;
   gap: 10px;
@@ -1932,21 +1830,18 @@ tbody tr:hover td { background: var(--color-hover); }
   box-shadow: 0 2px 5px rgba(234, 67, 53, 0.2);
 }
 
-/* Delete button outside of modal */
 button.delete-btn {
   width: auto;
   margin: 0;
   padding: 10px 20px;
 }
 
-/* Compact logout button in nav */
 nav #btn-logout {
   padding: 6px 10px;
   font-size: 0.8125rem;
   margin-top: 20px;
 }
 
-/* Import button */
 .import-btn {
   background-color: transparent;
   color: #1976d2;
@@ -1966,7 +1861,6 @@ nav #btn-logout {
   box-shadow: 0 2px 5px rgba(25, 118, 210, 0.2);
 }
 
-/* Export button */
 .export-btn {
   background-color: transparent;
   color: #388e3c;
@@ -1986,7 +1880,6 @@ nav #btn-logout {
   box-shadow: 0 2px 5px rgba(56, 142, 60, 0.2);
 }
 
-/* Conflict notification popup */
 #conflict-popup {
   position: fixed;
   top: 20px;
@@ -2009,7 +1902,6 @@ nav #btn-logout {
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Mobile conflict popup adjustments */
 @media (max-width: 768px) {
   #conflict-popup {
     top: 10px;
@@ -2029,7 +1921,6 @@ nav #btn-logout {
   }
 }
 
-/* Room assignment section in Section View modal */
 .room-assignment-section {
   display: flex;
   flex-wrap: wrap;
@@ -2079,7 +1970,7 @@ nav #btn-logout {
   border-bottom: 2px solid var(--color-primary-light);
   padding-bottom: 8px;
   display: inline-block;
-  width: 100%; /* Full width in the flex container */
+  width: 100%; 
 }
 
 .room-group-filter {
@@ -2108,7 +1999,6 @@ nav #btn-logout {
   font-style: italic;
 }
 
-/* Schedule Summary Styles */
 .section-filter {
   margin: 15px 0;
   padding: 10px;
@@ -2153,7 +2043,6 @@ nav #btn-logout {
   vertical-align: middle;
 }
 
-/* Description cell styling */
 .description-cell {
   max-width: none;
   white-space: normal;
@@ -2164,49 +2053,47 @@ nav #btn-logout {
   line-height: 1.4;
 }
 
-/* Increased modal width to accommodate longer descriptions */
 #modal-schedule-summary .modal-content {
   width: 85%;
   max-width: 1200px;
 }
 
-/* Adjust column widths to fit better with full descriptions */
-.summary-table th:nth-child(1), /* Course */
+.summary-table th:nth-child(1),
 .summary-table td:nth-child(1) {
   width: 18%;
 }
 
-.summary-table th:nth-child(2), /* Description */
+.summary-table th:nth-child(2),
 .summary-table td:nth-child(2) {
   width: 30%;
   text-align: left;
   padding: 10px 15px;
 }
 
-.summary-table th:nth-child(3), /* Units */
+.summary-table th:nth-child(3),
 .summary-table td:nth-child(3) {
   width: 6%;
   text-align: center;
 }
 
-.summary-table th:nth-child(4), /* Time */
+.summary-table th:nth-child(4),
 .summary-table td:nth-child(4) {
   width: 13%;
 }
 
-.summary-table th:nth-child(5), /* Day */
+.summary-table th:nth-child(5),
 .summary-table td:nth-child(5) {
   width: 6%;
   text-align: center;
 }
 
-.summary-table th:nth-child(6), /* Room */
+.summary-table th:nth-child(6),
 .summary-table td:nth-child(6) {
   width: 12%;
   text-align: center;
 }
 
-.summary-table th:nth-child(7), /* Shared With */
+.summary-table th:nth-child(7),
 .summary-table td:nth-child(7) {
   width: 10%;
   text-align: center;
@@ -2233,7 +2120,6 @@ nav #btn-logout {
   font-weight: 500;
 }
 
-/* Mobile summary table adjustments */
 @media (max-width: 768px) {
   .summary-table {
     font-size: 12px;
@@ -2283,7 +2169,6 @@ nav #btn-logout {
   border-radius: 5px;
 }
 
-/* Export button container */
 .export-container {
   text-align: center;
   margin: 0;
@@ -2295,7 +2180,6 @@ nav #btn-logout {
   z-index: 100;
 }
 
-/* Mobile export container adjustments */
 @media (max-width: 768px) {
   .export-container {
     padding: 12px;
@@ -2329,7 +2213,6 @@ nav #btn-logout {
   background-color: #1b5e20;
 }
 
-/* Fade-in animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2341,7 +2224,6 @@ nav #btn-logout {
   transform: translateZ(0);
 }
 
-/* Hover animation for all buttons */
 button {
   transition: transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
@@ -2349,12 +2231,10 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* update any remaining Roboto to softer fonts */
 .some-section {
   font-family: 'Poppins', 'Nunito', 'Inter', sans-serif;
 }
 
-/* Enhanced Modal Introduction */
 .modal-intro {
   margin-bottom: 20px;
   text-align: center;
@@ -2368,7 +2248,6 @@ button:hover {
   background-color: #f8f9fa;
 }
 
-/* Responsive Modal Introduction */
 @media (max-width: 768px) {
   .modal-intro {
     margin-bottom: 15px;
@@ -2395,7 +2274,6 @@ button:hover {
   }
 }
 
-/* Enhanced Modal tabs for course offering */
 .modal-tabs.enhanced-tabs {
   display: flex;
   margin-bottom: 25px;
@@ -2422,7 +2300,6 @@ button:hover {
   overflow: hidden;
 }
 
-/* Responsive Tab Design */
 @media (max-width: 768px) {
   .modal-tabs.enhanced-tabs {
     flex-direction: column;
@@ -2524,7 +2401,6 @@ button:hover {
   padding: 5px 0;
 }
 
-/* Enhanced Bulk Add Section */
 .bulk-intro {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   padding: 20px;
@@ -2551,7 +2427,6 @@ button:hover {
   margin-bottom: 20px;
 }
 
-/* Responsive Bulk Add Section */
 @media (max-width: 768px) {
   .bulk-intro {
     padding: 15px;
@@ -2593,7 +2468,6 @@ button:hover {
   }
 }
 
-/* Enhanced Labels */
 .enhanced-label {
   display: flex;
   align-items: center;
@@ -2616,7 +2490,6 @@ button:hover {
   display: block;
 }
 
-/* Style for the bulk degree select */
 .bulk-degree-select {
   margin-bottom: 15px;
   width: 100%;
@@ -2635,7 +2508,6 @@ button:hover {
   box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
-/* Enhanced Filter Controls */
 .enhanced-filters {
   background-color: #f8f9fa;
   padding: 20px;
@@ -2651,7 +2523,6 @@ button:hover {
   font-style: italic;
 }
 
-/* Enhanced Section Input */
 .enhanced-section-input {
   background-color: #f8f9fa;
   padding: 20px;
@@ -2688,7 +2559,6 @@ button:hover {
   color: #d73a49;
 }
 
-/* Enhanced Preview */
 .enhanced-preview {
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
   border: 1px solid #c8e6c9;
@@ -2701,7 +2571,6 @@ button:hover {
   color: #2e7d32;
 }
 
-/* Enhanced Action Button */
 .bulk-action-section {
   margin-top: 25px;
   text-align: center;
@@ -2725,7 +2594,6 @@ button:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Responsive Action Buttons */
 @media (max-width: 768px) {
   .enhanced-action-btn {
     padding: 14px 20px;
@@ -2786,7 +2654,6 @@ button:hover {
   margin-top: 2px;
 }
 
-/* Enhanced Manual Add Section */
 .manual-intro {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
   padding: 20px;
@@ -2795,7 +2662,6 @@ button:hover {
   border: 1px solid #ffcc02;
 }
 
-/* Responsive Manual Add Section */
 @media (max-width: 768px) {
   .manual-intro {
     padding: 15px;
@@ -2865,7 +2731,6 @@ button:hover {
   box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
-/* Improve bulk add section styling */
 #bulk-add-section {
   padding: 15px 0;
   border-radius: 8px;
@@ -2876,7 +2741,6 @@ button:hover {
   width: 100%;
 }
 
-/* Section input styling */
 .section-input-group, .bulk-section-input-group {
   margin-bottom: 15px;
 }
@@ -2912,7 +2776,6 @@ button:hover {
   margin-bottom: 10px;
 }
 
-/* Make the labels inside the section inputs smaller */
 .section-year-select label, .section-letter-input label {
   font-size: 13px;
   color: #555;
@@ -2920,12 +2783,10 @@ button:hover {
   display: block;
 }
 
-/* Make the select and input fields inside section inputs take up full width */
 .section-year-select select, .section-letter-input input {
   width: 100%;
 }
 
-/* Mobile section input adjustments */
 @media (max-width: 768px) {
   .section-inputs {
     flex-direction: column;
@@ -2946,24 +2807,20 @@ button:hover {
   }
 }
 
-/* Style for the bulk section letters input */
 #courseOffering-section-letters {
   width: 100%;
 }
 
-/* Styling for disabled options in select dropdowns */
 select option:disabled {
   color: #bbb;
   font-style: italic;
   background-color: #f5f5f5;
 }
 
-/* Extra styling for the year dropdown */
 #courseOffering-year option:disabled::after {
   content: " (not available)";
 }
 
-/* Animation for adding and removing subjects in Section View */
 @keyframes addSubject {
   from { 
     opacity: 0;
@@ -3003,7 +2860,6 @@ select option:disabled {
   transform: translateZ(0);
 }
 
-/* Apply animations to specific section view elements */
 #section-view-container .schedule-table td.clickable-cell.subject-add {
   animation-duration: 0.6s;
 }
@@ -3012,7 +2868,6 @@ select option:disabled {
   animation-duration: 0.5s;
 }
 
-/* Enhanced hover effects for Section View cells with subjects */
 #section-view-container .schedule-table td.clickable-cell:not(:empty) {
   transition: all 0.3s ease;
 }
@@ -3034,11 +2889,6 @@ select option:disabled {
   animation: fadeIn 0.3s ease;
 }
 
-/* ===================================================================== */
-/* 🆕 Modern UI Enhancements — keep palette, improve aesthetics (2025-06) */
-/* ===================================================================== */
-
-/* Sticky table headers for better data navigation */
 .table-container thead th {
   position: sticky;
   top: 0;
@@ -3047,7 +2897,6 @@ select option:disabled {
   box-shadow: inset 0 -1px 0 var(--color-border);
 }
 
-/* Modern, minimal scrollbars (WebKit only – graceful fallback otherwise) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -3063,46 +2912,33 @@ select option:disabled {
   background-color: var(--color-primary-dark);
 }
 
-/* Reduce hover scale effect on touch devices */
 @media (hover: none) {
   button:hover {
     transform: none;
   }
 }
 
-/* ===================================================================== */
-
-/* ===================================================================== */
-/* 2025 REDESIGN LAYER — Responsive type-scale, softer shapes, micro-UX */
-/* (Overrides only. Does NOT alter palette or break DOM/JS bindings.)     */
-/* ===================================================================== */
-
-/* Responsive fluid type-scale */
 html {
   font-size: clamp(15px, 0.75vw + 0.6rem, 18px);
   background: var(--color-bg);
   min-height: 100%;
 }
 
-/* Global smoother font weight rendering */
 body {
   font-variation-settings: "wght" 400;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Headings: tighter tracking & subtle glow */
 h1, h2, h3 {
   letter-spacing: 0.02em;
   text-shadow: 0 1px 1px rgba(0,0,0,0.03);
 }
 
-/* Sections: more breathing room on large screens */
 section {
   max-width: min(1400px, 96%);
   /* No container styling - content sits on main background */
 }
 
-/* Inputs & selects: subtle elevation + focus ring */
 input[type="text"], input[type="password"], input[type="number"], textarea, select {
   transition: all 0.2s ease;
   font-family: 'Poppins', 'Nunito', 'Inter', sans-serif;
@@ -3124,7 +2960,6 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
   transform: translateY(-1px);
 }
 
-/* Primary / danger buttons: soft, modern styling */
 .add-btn, .save-btn, .delete-btn,
 .table-edit-btn, .table-delete-btn, .btn {
   border-radius: 12px;
@@ -3134,14 +2969,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
   font-family: 'Poppins', 'Nunito', 'Inter', sans-serif;
 }
 
-/* Subtle lift on hover */
 .add-btn:hover, .save-btn:hover, .delete-btn:hover,
 .table-edit-btn:hover, .table-delete-btn:hover, .btn:hover {
   box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
 }
 
-/* Modal redesign — glassmorphic card */
 .modal-content {
   backdrop-filter: saturate(200%) blur(18px);
   background: rgba(255,255,255,0.9);
@@ -3155,14 +2988,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
   100% { transform: scale(1);   opacity: 1; }
 }
 
-/* Link-style indication for table row hover (pointer row) */
 tbody tr:hover {
   cursor: pointer;
   filter: brightness(0.985);
   box-shadow: inset 0 0 0 9999px rgba(46,125,50,0.03);
 }
 
-/* Card-like nav buttons on small screens */
 @media (max-width: 600px) {
   nav button {
     flex: 1 1 45%;
@@ -3170,66 +3001,45 @@ tbody tr:hover {
   }
 }
 
-/* Dense data tables: improved ﬁrst-column colour */
 .schedule-table th:first-child,
 .schedule-table td:first-child {
   background-color: #f1f3f4;
 }
 
-/* End 2025 redesign overrides */
-/* ===================================================================== */
-
-/* ===================================================================== */
-/* Sticky time column — design enhancements (Section & Room)              */
-/* Applies to both Section View and Room Management tables                */
-/* ===================================================================== */
 .schedule-table th:first-child,
 .schedule-table td:first-child {
-  /* Use site palette without gradients */
   background-color: var(--color-primary-xlight);
   background-clip: padding-box;
   border-right: 1px solid var(--color-border);
-  /* Subtle elevation, tinted to primary for cohesion */
   box-shadow: 2px 0 6px rgba(46, 125, 50, 0.08), inset 0 -1px 0 var(--color-border-light);
   color: var(--color-text-dark);
-  /* Softer outline for the time column */
   outline: 1px solid rgba(46, 125, 50, 0.35);
   outline-offset: -1px;
 }
 
-/* Make the top-left header cell more legible and distinct */
 .schedule-table thead th:first-child {
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--color-text-dark);
 }
 
-/* Strengthen time values in body for quicker scanning */
 .schedule-table tbody td:first-child {
   font-weight: 500;
   color: var(--color-text);
 }
 
-/* Add a soft fade at the right edge for visual depth */
 .schedule-table th:first-child::after,
 .schedule-table td:first-child::after {
   content: none;
 }
 
-
-/* ===================================================================== */
-/* GLOBAL ANIMATION ENHANCEMENTS                                         */
-/* ===================================================================== */
-/* Site fade-in on load */
 @keyframes siteFade { to { opacity: 1; } }
 
-/* Sidebar slides in when visible (not collapsed) */
 nav:not(.collapsed) {
   animation: sidebarSlide 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 @keyframes sidebarSlide { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 
-/* Sidebar buttons cascade in */
 nav:not(.collapsed) button {
   opacity: 0;
   transform: translateX(-12px);
@@ -3238,7 +3048,6 @@ nav:not(.collapsed) button {
 }
 @keyframes navBtnIn { to { opacity: 1; transform: translateX(0); } }
 
-/* Bounce subtle on add/save/delete buttons when clicked */
 .add-btn:active, .save-btn:active, .delete-btn:active {
   animation: btnPress 0.25s ease-out;
 }
@@ -3248,7 +3057,6 @@ nav:not(.collapsed) button {
   100% { transform: scale(1); }
 }
 
-/* Manage Rooms modal button sizing */
 #table-rooms .table-edit-btn,
 #table-rooms .table-delete-btn {
   padding: 4px 10px;
@@ -3256,7 +3064,6 @@ nav:not(.collapsed) button {
   min-width: 60px;
 }
 
-/* Mobile manage rooms adjustments */
 @media (max-width: 768px) {
   #modal-manage-rooms .modal-content {
     width: 95vw;
@@ -3291,7 +3098,6 @@ nav:not(.collapsed) button {
   }
 }
 
-/* Action buttons container for side-by-side layout */
 .action-buttons-container {
   display: flex;
   gap: 8px;
@@ -3299,7 +3105,6 @@ nav:not(.collapsed) button {
   align-items: center;
 }
 
-/* Edit button styling to match Clear All Courses button */
 .action-edit-btn {
   background-color: transparent;
   border: 1px solid #4285f4;
@@ -3320,7 +3125,6 @@ nav:not(.collapsed) button {
   box-shadow: 0 2px 5px rgba(66, 133, 244, 0.2);
 }
 
-/* Delete button styling to match Clear All Courses button */
 .action-delete-btn {
   background-color: transparent;
   border: 1px solid #ea4335;
@@ -3377,9 +3181,7 @@ nav:not(.collapsed) button {
   to { transform: rotate(360deg); }
 }
 
-/* Removed specific room table button overrides - now using standard action button styling */
 
-/* Add ripple animation for sidebar buttons */
 @keyframes ripple {
   0% {
     transform: scale(0.8);
@@ -3402,13 +3204,11 @@ nav:not(.collapsed) button {
   transform: translateZ(0);
 }
 
-/* Apply MILKER font to section headers */
 .section-header {
   font-family: 'verdana', sans-serif;
   letter-spacing: 1px;
 }
 
-/* Apply MILKER font to specific headers */
 section h2 {
   font-family: 'verdana', sans-serif;
   letter-spacing: 1px;
@@ -3418,55 +3218,17 @@ section h2 {
   margin-bottom: 10px;
 }
 
-/* Apply MILKER font to section view table headers */
 .table-container h3 {
   font-family: 'verdana', sans-serif;
   letter-spacing: 1px;
   font-size: 1.4rem;
-  color: #5ba361; /* Lighter shade of green */
+  color: #5ba361;
   text-align: center;
   margin-bottom: 0px;
   margin-top: 0px;
 }
 
-/* Add transparent gradient to main page sections */
-#section-courses,
-#section-course-offering, 
-#section-section-view,
-#section-room-view {
-  position: relative;
-  overflow: hidden;
-  z-index: 0;
-}
 
-#section-courses::after,
-#section-course-offering::after, 
-#section-section-view::after,
-#section-room-view::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 60%;
-  background: linear-gradient(to top, 
-              rgba(232, 245, 233, 0.4) 0%, 
-              rgba(232, 245, 233, 0) 100%);
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 0 0 12px 12px;
-}
-
-/* Ensure content stays above the gradient */
-#section-courses > *, 
-#section-course-offering > *, 
-#section-section-view > *,
-#section-room-view > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* Global button styles for a soft, flat look */
 .add-btn, .save-btn, .delete-btn, 
 .table-edit-btn, .table-delete-btn,
 .tab-btn, .year-tab-btn, .action-btn,
@@ -3478,7 +3240,6 @@ section h2 {
   border: 1px solid transparent;
 }
 
-/* Remove hover effects that add shadows and large transforms */
 .add-btn:hover, .save-btn:hover, .delete-btn:hover,
 .table-edit-btn:hover, .table-delete-btn:hover,
 .tab-btn:hover, .year-tab-btn:hover, .action-btn:hover,
@@ -3486,10 +3247,6 @@ section h2 {
   box-shadow: none;
   transform: translateY(-1px);
 }
-
-/* ===================================================================== */
-/* Course Offering Categorizer Styles */
-/* ===================================================================== */
 
 .offering-categorizer {
   border-radius: 8px;
@@ -3561,7 +3318,6 @@ section h2 {
   background: var(--color-primary-light);
 }
 
-/* Animation for category toggling */
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -3571,7 +3327,6 @@ section h2 {
   animation: fadeInDown 0.3s ease forwards;
 }
 
-/* Nested Section Categorizer Styles */
 .section-category-group {
   margin: 5px 0 5px 20px;
   border-radius: 6px;
@@ -3626,7 +3381,6 @@ section h2 {
   font-weight: 600;
 }
 
-/* Animation for section category toggling */
 @keyframes fadeInRight {
   from { opacity: 0; transform: translateX(-10px); }
   to { opacity: 1; transform: translateX(0); }
@@ -3636,9 +3390,6 @@ section h2 {
   animation: fadeInRight 0.3s ease forwards;
 }
 
-/* ===================================================================== */
-/* Loading Overlay                                                       */
-/* ===================================================================== */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -3692,7 +3443,6 @@ section h2 {
   100% { opacity: 0.7; }
 }
 
-/* Remove All Schedules Button */
 .remove-all-btn {
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
   color: white;
@@ -3761,7 +3511,6 @@ section h2 {
   animation: none;
 }
 
-/* Small subtle remove button positioned below tables */
 .remove-all-btn-small {
   background: rgba(255, 107, 107, 0.1);
   color: #ff6b6b;
@@ -3815,10 +3564,6 @@ section h2 {
   border-color: rgba(0, 184, 148, 0.3);
 }
 
-/* ===================================================================== */
-/* Enhanced LecLab Assignment Styles - Simplified - Horizontal Layout     */
-/* ===================================================================== */
-
 .room-assignment-section {
   margin-top: 25px;
   padding: 18px;
@@ -3830,8 +3575,8 @@ section h2 {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 15px;
-  max-height: 400px; /* Limit height */
-  overflow-y: auto; /* Add scrolling for tall content */
+  max-height: 400px; 
+  overflow-y: auto; 
 }
 
 .leclab-assignment-section {
@@ -3842,12 +3587,12 @@ section h2 {
   background-color: white;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   transition: all 0.2s ease;
-  display: flex; /* Make it horizontal */
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  display: flex; 
+  flex-wrap: wrap; 
   align-items: flex-start;
   gap: 10px;
-  max-height: 400px; /* Limit height */
-  overflow-y: auto; /* Add scrolling for tall content */
+  max-height: 400px; 
+  overflow-y: auto; 
 }
 
 .leclab-assignment-section h4 {
@@ -3858,7 +3603,7 @@ section h2 {
   border-bottom: 1px solid var(--color-primary-light);
   padding-bottom: 4px;
   display: inline-block;
-  width: 100%; /* Full width in the flex container */
+  width: 100%; 
 }
 
 .assignment-mode-selection {
@@ -3877,8 +3622,8 @@ section h2 {
 .assignment-option {
   border-radius: 8px;
   transition: all 0.3s ease;
-  flex: 1; /* Take remaining space */
-  min-width: 300px; /* Ensure minimum width */
+  flex: 1; 
+  min-width: 300px;
 }
 
 .room-assignment-component {
@@ -3913,13 +3658,13 @@ section h2 {
   display: flex;
   gap: 8px;
   margin-top: 6px;
-  flex: 1; /* Take remaining space */
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  flex: 1; 
+  flex-wrap: wrap; 
 }
 
 .lec-assignment, .lab-assignment {
   flex: 1;
-  min-width: 200px; /* Ensure minimum width for readability */
+  min-width: 200px;
   padding: 10px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -3998,7 +3743,6 @@ section h2 {
   box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
 }
 
-/* Responsive design for component assignment */
 @media (max-width: 768px) {
   .leclab-assignment-section,
   .room-assignment-section {
@@ -4043,7 +3787,6 @@ section h2 {
   }
 }
 
-/* Animation for showing/hiding assignment options */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -4061,7 +3804,6 @@ section h2 {
   animation: slideDown 0.3s ease forwards;
 }
 
-/* Enhanced visual indicators for LecLab components in schedule */
 .schedule-leclab-indicator {
   position: relative;
 }
@@ -4086,7 +3828,6 @@ section h2 {
   border-left: 3px solid #1976d2;
 }
 
-/* ===== ANALYTICS STYLES ===== */
 .analytics-header {
   display: flex;
   justify-content: space-between;
@@ -4219,7 +3960,6 @@ section h2 {
   padding-bottom: 8px;
 }
 
-/* Bar Chart Styles */
 .chart-bars {
   display: flex;
   flex-direction: column;
@@ -4260,7 +4000,6 @@ section h2 {
   text-align: right;
 }
 
-/* Pie Chart Styles */
 .pie-chart-container {
   display: flex;
   flex-direction: column;
@@ -4304,7 +4043,6 @@ section h2 {
   flex-shrink: 0;
 }
 
-/* Responsive Analytics */
 @media (max-width: 1200px) {
   .chart-row {
     grid-template-columns: 1fr;
@@ -4419,7 +4157,6 @@ section h2 {
   }
 }
 
-/* Dashboard Loading States */
 .chart.loading {
   display: flex;
   align-items: center;
@@ -4430,11 +4167,10 @@ section h2 {
 
 .chart.loading::before {
   font-family: 'dripicons-v2';
-  content: "\e009"; /* dripicons-graph-bar */
+  content: "\e009";
   margin-right: 8px;
 }
 
-/* Analytics Animation - Smoother and faster */
 .analytics-stats .stat-card {
   animation: smoothFadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
@@ -4477,7 +4213,6 @@ section h2 {
   }
 }
 
-/* Additional responsive improvements for horizontal scroll */
 @media (max-width: 480px) {
   /* Ensure minimum widths are respected on very small screens */
   .main-app {
@@ -4516,7 +4251,6 @@ section h2 {
 }
 
 @media (max-width: 320px) {
-  /* Ultra-small screen support */
   .main-app {
     min-width: 280px;
     padding: 8px;
@@ -4533,9 +4267,6 @@ section h2 {
   }
 }
 
-/* ===================================================================== */
-/* TOUCH-FRIENDLY MOBILE ENHANCEMENTS                                    */
-/* ===================================================================== */
 @media (max-width: 768px) {
   /* Ensure all interactive elements meet minimum touch target size (44x44px) */
   button,
@@ -4554,7 +4285,6 @@ section h2 {
     min-height: 44px;
   }
   
-  /* Improve spacing for easier touch interaction */
   button + button,
   .btn + .btn {
     margin-top: 4px;
@@ -4566,23 +4296,17 @@ section h2 {
     text-size-adjust: 100%;
   }
   
-  /* Improve horizontal scrolling on tables */
   .table-container {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
   
-  /* Better tap highlighting */
   * {
     -webkit-tap-highlight-color: rgba(46, 125, 50, 0.1);
   }
 }
 
-/* ===================================================================== */
-/* LANDSCAPE ORIENTATION OPTIMIZATIONS FOR MOBILE                        */
-/* ===================================================================== */
 @media (max-width: 896px) and (orientation: landscape) {
-  /* Optimize for landscape mobile viewing */
   section h2 {
     font-size: clamp(20px, 4vw, 36px);
     margin-top: -10px;
@@ -4616,7 +4340,6 @@ section h2 {
   }
 }
 
-/* Selective Deletion Modal Styles */
 #modal-selective-deletion .modal-content {
   max-width: 650px;
   width: 90%;
@@ -4829,7 +4552,7 @@ section h2 {
 
 .deletion-summary h4::before {
   font-family: 'dripicons-v2';
-  content: '\e000'; /* dripicons-warning */
+  content: '\e000';
   font-size: 0.875rem;
 }
 
@@ -4856,7 +4579,7 @@ section h2 {
 
 .warning-message::before {
   font-family: 'dripicons-v2';
-  content: '\e000'; /* dripicons-warning */
+  content: '\e000';
   font-size: 0.875rem;
   flex-shrink: 0;
 }
@@ -5018,9 +4741,6 @@ section h2 {
     max-width: 180px;
   }
 
-/* ===================================================================== */
-/* LOGIN PAGE STYLES                                                     */
-/* ===================================================================== */
 body.login-page {
   font-family: 'Poppins', 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e3f2fd 100%);

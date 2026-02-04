@@ -1,19 +1,11 @@
-/**************************************************************
- * Navigation
- **************************************************************/
-// sectionCourses is defined in 03-global-variables-for-room-view-columns.js
-// sectionCourseOffering is defined in 03-global-variables-for-room-view-columns.js
-// sectionRoomView is defined in 03-global-variables-for-room-view-columns.js
-// sectionSectionView is defined in 03-global-variables-for-room-view-columns.js
+// Navigation
 
-// Add fade animation helper
 function applyFadeAnimation(element) {
   element.classList.add("fade-in");
   element.addEventListener("animationend", () => element.classList.remove("fade-in"), { once: true });
 }
 
 function hideAllSections() {
-  // remove fade-in from all sections
   document.querySelectorAll("[id^='section-']").forEach(sec => sec.classList.remove("fade-in"));
   document.getElementById("section-analytics").classList.add("hidden");
   document.getElementById("section-courses").classList.add("hidden");
@@ -22,7 +14,6 @@ function hideAllSections() {
   document.getElementById("section-room-view").classList.add("hidden");
   document.getElementById("section-schedule-summary").classList.add("hidden");
   
-  // Hide curriculum indicator when leaving courses page
   if (window.ActiveCurriculumManager) {
     window.ActiveCurriculumManager.hideActiveCurriculumIndicator();
   }
@@ -34,16 +25,12 @@ function showSection(section) {
   secEl.classList.remove("hidden");
   applyFadeAnimation(secEl);
   
-  // Update active button in navigation
   document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
   document.getElementById(`btn-${section}`).classList.add("active");
   
-  // Additional actions for specific sections
   if (section === "courses") {
     renderCoursesTable();
-    // Show curriculum indicator only on courses page
     if (window.ActiveCurriculumManager) {
-      // Use a small delay to ensure the section is visible
       setTimeout(() => {
         window.ActiveCurriculumManager.createActiveCurriculumIndicator();
       }, 100);

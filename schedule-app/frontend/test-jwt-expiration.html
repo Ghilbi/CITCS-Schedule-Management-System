@@ -112,13 +112,11 @@
     </div>
   </div>
 
-  <!-- Include necessary modules -->
   <script src="modules/api-wrapper-functions-for-backend-calls.js"></script>
   <script src="modules/global-variables-for-room-view-columns.js"></script>
   <script src="modules/jwt-expiration-monitor.js"></script>
 
   <script>
-    // Test functions
     function updateStatus(elementId, message, type = 'info') {
       const element = document.getElementById(elementId);
       element.textContent = message;
@@ -255,7 +253,6 @@
       }
     }
 
-    // Initialize on page load
     window.addEventListener('load', () => {
       checkLoginStatus();
       checkMonitorStatus();

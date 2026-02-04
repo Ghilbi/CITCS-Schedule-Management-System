@@ -1,5 +1,4 @@
-// JWT Expiration Monitor Module
-// Handles token expiration checking, warnings, and automatic logout
+// JWT Expiration Monitor - handles token expiration warnings and auto-logout
 
 class JWTExpirationMonitor {
   constructor() {
@@ -9,10 +8,9 @@ class JWTExpirationMonitor {
     this.countdownInterval = null;
     this.isMonitoring = false;
     
-    // Configuration
-    this.CHECK_INTERVAL = 30000; // Check every 30 seconds
-    this.WARNING_THRESHOLD = 900; // 15 minutes in seconds
-    this.FINAL_WARNING_THRESHOLD = 300; // 5 minutes in seconds
+    this.CHECK_INTERVAL = 30000;
+    this.WARNING_THRESHOLD = 900;
+    this.FINAL_WARNING_THRESHOLD = 300;
     
     this.init();
   }
@@ -21,7 +19,6 @@ class JWTExpirationMonitor {
     this.createNotificationElement();
     this.setupEventListeners();
     
-    // Start monitoring if user is logged in
     if (this.isLoggedIn()) {
       this.startMonitoring();
     }
@@ -32,7 +29,6 @@ class JWTExpirationMonitor {
   }
   
   createNotificationElement() {
-    // Create notification container
     const notification = document.createElement('div');
     notification.id = 'jwt-expiration-notification';
     notification.className = 'jwt-notification hidden';
@@ -50,14 +46,10 @@ class JWTExpirationMonitor {
       </div>
     `;
     
-    // Add styles
     this.addNotificationStyles();
-    
-    // Append to body
     document.body.appendChild(notification);
     this.notificationElement = notification;
     
-    // Setup button event listeners
     document.getElementById('jwt-extend-session').addEventListener('click', () => {
       this.extendSession();
     });
@@ -238,7 +230,6 @@ class JWTExpirationMonitor {
   }
   
   setupEventListeners() {
-    // Listen for login/logout events
     window.addEventListener('storage', (e) => {
       if (e.key === 'authToken') {
         if (e.newValue) {
@@ -249,14 +240,12 @@ class JWTExpirationMonitor {
       }
     });
     
-    // Listen for page visibility changes
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && this.isLoggedIn()) {
         this.checkTokenStatus();
       }
     });
     
-    // Listen for focus events
     window.addEventListener('focus', () => {
       if (this.isLoggedIn()) {
         this.checkTokenStatus();
@@ -270,10 +259,8 @@ class JWTExpirationMonitor {
     this.isMonitoring = true;
     this.warningShown = false;
     
-    // Initial check
     this.checkTokenStatus();
     
-    // Set up periodic checking
     this.checkInterval = setInterval(() => {
       this.checkTokenStatus();
     }, this.CHECK_INTERVAL);
@@ -311,7 +298,6 @@ class JWTExpirationMonitor {
       });
       
       if (response.status === 401) {
-        // Token expired
         this.handleTokenExpired();
         return;
       }
@@ -346,7 +332,6 @@ class JWTExpirationMonitor {
     
     const isCritical = expiresIn <= this.FINAL_WARNING_THRESHOLD;
     
-    // Update notification content
     const title = this.notificationElement.querySelector('.jwt-notification-title');
     const text = this.notificationElement.querySelector('.jwt-notification-text');
     const icon = this.notificationElement.querySelector('.jwt-notification-icon');
@@ -363,13 +348,11 @@ class JWTExpirationMonitor {
       this.notificationElement.classList.remove('critical');
     }
     
-    // Show notification
     this.notificationElement.classList.remove('hidden');
     setTimeout(() => {
       this.notificationElement.classList.add('show');
     }, 10);
     
-    // Start countdown
     this.startCountdown(expiresIn);
     
     this.warningShown = true;
@@ -420,10 +403,8 @@ class JWTExpirationMonitor {
   }
   
   async extendSession() {
-    // Attempt to refresh the token without page reload
     const currentToken = localStorage.getItem('authToken');
     if (!currentToken) {
-      // No token available, go to login
       window.location.href = 'login.html';
       return;
     }
@@ -439,7 +420,6 @@ class JWTExpirationMonitor {
       });
 
       if (response.status === 401) {
-        // Token expired or invalid, handle as expired
         this.handleTokenExpired();
         return;
       }
@@ -447,11 +427,9 @@ class JWTExpirationMonitor {
       if (response.ok) {
         const data = await response.json();
         if (data && data.token) {
-          // Store the new token and resume monitoring
           localStorage.setItem('authToken', data.token);
           this.hideNotification();
           this.warningShown = false;
-          // Immediately re-check status to update countdown/UI
           this.checkTokenStatus();
           alert('Session extended successfully.');
         } else {
@@ -471,22 +449,14 @@ class JWTExpirationMonitor {
   
   handleTokenExpired() {
     this.stopMonitoring();
-    
-    // Clear token
     localStorage.removeItem('authToken');
-    
-    // Show expiration message
     alert('Your session has expired. You will be redirected to the login page.');
-    
-    // Redirect to login
     window.location.href = 'login.html';
   }
 }
 
-// Create global instance
 const jwtMonitor = new JWTExpirationMonitor();
 
-// Export for use in other modules
 if (typeof window !== 'undefined') {
   window.jwtMonitor = jwtMonitor;
 }

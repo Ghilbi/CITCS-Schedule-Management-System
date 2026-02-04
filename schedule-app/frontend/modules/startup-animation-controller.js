@@ -1,6 +1,5 @@
-/**************************************************************
- * STARTUP ANIMATION CONTROLLER
- **************************************************************/
+// Startup Animation Controller
+
 function initStartupAnimation() {
   const loader = document.getElementById('startup-loader');
   const mainApp = document.getElementById('main-app');
@@ -12,27 +11,20 @@ function initStartupAnimation() {
     return;
   }
   
-  // Ensure the loader is visible initially
   loader.style.display = 'flex';
   
-  // Start the fade out sequence after content is loaded
   setTimeout(() => {
-    // Add fade-out class to loader
     loader.classList.add('fade-out');
-    
-    // Enable scrolling and show main app
     document.body.classList.add('app-loaded');
     document.body.style.overflow = 'auto';
     mainApp.classList.add('loaded');
     
-    // Remove loader from DOM after animation completes
     setTimeout(() => {
       loader.style.display = 'none';
     }, 800);
-  }, 3500); // Total loading time: 3.5 seconds
+  }, 3500);
 }
 
-// Check if this is the first visit
 function isFirstVisit() {
   const hasVisited = localStorage.getItem('schedule-app-visited');
   if (!hasVisited) {
@@ -42,7 +34,6 @@ function isFirstVisit() {
   return false;
 }
 
-// Skip animation for returning users
 function skipStartupAnimation() {
   const loader = document.getElementById('startup-loader');
   const mainApp = document.getElementById('main-app');
@@ -60,10 +51,7 @@ function skipStartupAnimation() {
   mainApp.style.animationDelay = '0s';
 }
 
-/**************************************************************
- * API wrapper functions for backend calls
- **************************************************************/
-// Utility: debounce to limit frequent calls on inputs
+// Debounce utility
 function debounce(func, delay = 300) {
   let timer;
   return (...args) => {
@@ -72,7 +60,7 @@ function debounce(func, delay = 300) {
   };
 }
 
-// Parse section input supporting both ranges (A-D) and comma-separated values (A,B,C)
+// Parse section input (supports ranges like A-D and comma-separated like A,B,C)
 function parseSectionInput(input) {
   if (!input || !input.trim()) {
     return [];
@@ -82,7 +70,6 @@ function parseSectionInput(input) {
   const parts = input.split(',').map(part => part.trim()).filter(part => part);
   
   for (const part of parts) {
-    // Check if it's a range (e.g., A-D, a-d)
     const rangeMatch = part.match(/^([a-zA-Z])\s*-\s*([a-zA-Z])$/);
     if (rangeMatch) {
       const start = rangeMatch[1].toUpperCase();
@@ -91,21 +78,17 @@ function parseSectionInput(input) {
       const endCode = end.charCodeAt(0);
       
       if (startCode <= endCode) {
-        // Generate range from start to end
         for (let i = startCode; i <= endCode; i++) {
           sections.push(String.fromCharCode(i));
         }
       } else {
-        // Invalid range, treat as individual letters
         sections.push(start, end);
       }
     } else {
-      // Single letter or invalid format, add as-is (converted to uppercase)
       sections.push(part.toUpperCase());
     }
   }
   
-  // Remove duplicates and return
   return [...new Set(sections)];
 }
 
@@ -119,8 +102,6 @@ async function apiGet(table) {
   });
   return response.json();
 }
-
-// API caching is handled in 02-api-wrapper-functions-for-backend-calls.js
 
 async function apiPost(table, data) {
   try {
@@ -142,10 +123,3 @@ async function apiPost(table, data) {
     throw error;
   }
 }
-
-// API POST caching is handled in 02-api-wrapper-functions-for-backend-calls.js
-
-// API PUT caching is handled in 02-api-wrapper-functions-for-backend-calls.js
-
-// API DELETE caching is handled in 02-api-wrapper-functions-for-backend-calls.js
-

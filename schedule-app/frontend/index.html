@@ -12,13 +12,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dripicons@2.0.0/webfont/webfont.css" />
   <link rel="stylesheet" href="style.css" />
-  <!-- SheetJS library for Excel export -->
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  <!-- ExcelJS for advanced Excel formatting and images -->
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 </head>
 <body>
-  <!-- Main Application Content -->
   <div id="main-app" class="main-app">
     <div class="app-container">
       <nav>
@@ -31,32 +28,27 @@
         <button id="btn-logout" onclick="logout()" class="delete-btn mt-auto">Logout</button>
       </nav>
 
-      <!-- Dynamically injected sections -->
       <div id="page-sections"></div>
     </div>
 
     <div id="conflict-popup" class="hidden"></div>
 
-    <!-- Loading Overlay -->
     <div class="loading-overlay">
       <div class="spinner"></div>
       <div class="loading-message">Processing...</div>
     </div>
 
-  </div> <!-- End main-app -->
+  </div>
 
-  <!-- Authentication Check -->
   <script>
-    // Check authentication before loading the app
     if (!localStorage.getItem('authToken')) {
       window.location.href = 'login.html';
     }
   </script>
 
-  <!-- Load page sections from external fragments -->
   <script src="modules/section-loader.js"></script>
 
-  <!-- modularized start -->
+
 <script src="modules/color-utils.js"></script>
 <script src="modules/theme-manager.js"></script>
 <script src="modules/globals-utilities.js"></script>
@@ -86,6 +78,5 @@
 <script src="modules/helper-functions.js"></script>
 <script src="modules/selective-deletion-modal.js"></script>
 <script src="modules/analytics.js"></script>
-<!-- modularized end -->
 </body>
 </html>

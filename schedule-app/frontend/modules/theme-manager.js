@@ -1,8 +1,4 @@
-/**
- * Theme Manager Module
- * Provides easy switching between different color themes
- * Stores theme preferences in localStorage
- */
+// Theme Manager - handles color theme switching
 
 class ThemeManager {
   constructor() {
@@ -11,13 +7,9 @@ class ThemeManager {
     this.themes = this.defineThemes();
     this.storageKey = 'schedule-app-theme';
     
-    // Load saved theme on initialization
     this.loadSavedTheme();
   }
 
-  /**
-   * Define available themes
-   */
   defineThemes() {
     return {
       default: {
@@ -96,45 +88,29 @@ class ThemeManager {
     };
   }
 
-  /**
-   * Apply a theme by name
-   * @param {string} themeName - The name of the theme to apply
-   */
   applyTheme(themeName) {
     if (!this.themes[themeName]) {
       console.warn(`Theme "${themeName}" not found. Using default theme.`);
       themeName = 'default';
     }
-
+    
     const theme = this.themes[themeName];
     
-    // Apply theme colors
     Object.entries(theme.colors).forEach(([property, value]) => {
       this.rootElement.style.setProperty(property, value);
     });
 
-    // Update current theme
     this.currentTheme = themeName;
-    
-    // Save to localStorage
     this.saveTheme(themeName);
-    
-    // Dispatch theme change event
     this.dispatchThemeChangeEvent(themeName, theme);
     
     console.log(`Applied theme: ${theme.name}`);
   }
 
-  /**
-   * Get the current theme name
-   */
   getCurrentTheme() {
     return this.currentTheme;
   }
 
-  /**
-   * Get all available themes
-   */
   getAvailableThemes() {
     return Object.keys(this.themes).map(key => ({
       key,
@@ -143,9 +119,6 @@ class ThemeManager {
     }));
   }
 
-  /**
-   * Save theme preference to localStorage
-   */
   saveTheme(themeName) {
     try {
       localStorage.setItem(this.storageKey, themeName);
@@ -154,9 +127,6 @@ class ThemeManager {
     }
   }
 
-  /**
-   * Load saved theme from localStorage
-   */
   loadSavedTheme() {
     try {
       const savedTheme = localStorage.getItem(this.storageKey);
@@ -168,16 +138,10 @@ class ThemeManager {
     }
   }
 
-  /**
-   * Reset to default theme
-   */
   resetToDefault() {
     this.applyTheme('default');
   }
 
-  /**
-   * Toggle between light and dark themes
-   */
   toggleDarkMode() {
     if (this.currentTheme === 'dark') {
       this.applyTheme('default');
@@ -186,9 +150,6 @@ class ThemeManager {
     }
   }
 
-  /**
-   * Dispatch a custom event when theme changes
-   */
   dispatchThemeChangeEvent(themeName, theme) {
     const event = new CustomEvent('themeChanged', {
       detail: {
@@ -200,10 +161,6 @@ class ThemeManager {
     document.dispatchEvent(event);
   }
 
-  /**
-   * Create a theme selector UI element
-   * @param {string} containerId - The ID of the container element
-   */
   createThemeSelector(containerId) {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -229,7 +186,6 @@ class ThemeManager {
       </div>
     `;
 
-    // Add event listeners
     const select = container.querySelector('#theme-select');
     const darkModeToggle = container.querySelector('#dark-mode-toggle');
 
@@ -245,18 +201,12 @@ class ThemeManager {
     });
   }
 
-  /**
-   * Update dark mode button text
-   */
   updateDarkModeButton(button) {
     if (button) {
       button.textContent = this.currentTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
     }
   }
 
-  /**
-   * Add theme selector styles to the page
-   */
   addThemeSelectorStyles() {
     if (document.getElementById('theme-selector-styles')) return;
 
@@ -320,7 +270,6 @@ if (document.readyState === 'loading') {
   themeManager.addThemeSelectorStyles();
 }
 
-// Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = themeManager;
 } else {

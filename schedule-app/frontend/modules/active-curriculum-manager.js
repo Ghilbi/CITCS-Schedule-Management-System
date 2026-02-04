@@ -1,42 +1,28 @@
-/**************************************************************
- * ACTIVE CURRICULUM MANAGER
- * Centralized management of active curriculum state
- * Extends the global state manager pattern
- **************************************************************/
-
-// Active curriculum state - single source of truth
+// Active Curriculum Manager - manages curriculum state and UI
 let activeCurriculum = null;
 let activeCurriculumManagerCurriculaList = [];
 let activeCurriculumChangeListeners = [];
 
-// Initialize with default curriculum
 const DEFAULT_CURRICULUM = "2024-2025";
 
-/**
- * Load curricula from database and set active curriculum
- */
+// Load curricula from database and set active curriculum
 async function loadCurriculaAndSetActive() {
   try {
     activeCurriculumManagerCurriculaList = await apiGet("curricula");
     
-    // If no active curriculum is set, use the first available or default
     if (!activeCurriculum) {
       if (activeCurriculumManagerCurriculaList.length > 0) {
-        // Try to find the default curriculum first
         const defaultCurr = activeCurriculumManagerCurriculaList.find(c => c.year === DEFAULT_CURRICULUM);
         activeCurriculum = defaultCurr ? defaultCurr.year : activeCurriculumManagerCurriculaList[0].year;
       } else {
         activeCurriculum = DEFAULT_CURRICULUM;
       }
       
-      // Save to localStorage
       localStorage.setItem('activeCurriculum', activeCurriculum);
-      // Notify all listeners about the curriculum change
       notifyActiveCurriculumChange();
     }
   } catch (error) {
     console.error('Error loading curricula:', error);
-    // Fallback to default curriculum
     if (!activeCurriculum) {
       activeCurriculum = DEFAULT_CURRICULUM;
       notifyActiveCurriculumChange();
@@ -44,59 +30,38 @@ async function loadCurriculaAndSetActive() {
   }
 }
 
-/**
- * Set the active curriculum
- * @param {string} curriculumYear - The curriculum year to set as active
- */
+// Set active curriculum
 function setActiveCurriculum(curriculumYear) {
   if (curriculumYear && curriculumYear !== activeCurriculum) {
     activeCurriculum = curriculumYear;
     notifyActiveCurriculumChange();
-    
-    // Store in localStorage for persistence
     localStorage.setItem('activeCurriculum', curriculumYear);
   }
 }
 
-/**
- * Get the current active curriculum
- * @returns {string} The active curriculum year
- */
+// Get current active curriculum
 function getActiveCurriculum() {
   return activeCurriculum || DEFAULT_CURRICULUM;
 }
 
-/**
- * Get all available curricula
- * @returns {Array} Array of curriculum objects
- */
+// Get all available curricula
 function getAllCurricula() {
   return [...activeCurriculumManagerCurriculaList];
 }
 
-/**
- * Check if a curriculum exists in the list
- * @param {string} curriculumYear - The curriculum year to check
- * @returns {boolean} True if curriculum exists
- */
+// Check if curriculum exists
 function curriculumExists(curriculumYear) {
   return activeCurriculumManagerCurriculaList.some(c => c.year === curriculumYear);
 }
 
-/**
- * Add a listener for active curriculum changes
- * @param {Function} callback - Function to call when active curriculum changes
- */
+// Add listener for curriculum changes
 function addActiveCurriculumChangeListener(callback) {
   if (typeof callback === 'function') {
     activeCurriculumChangeListeners.push(callback);
   }
 }
 
-/**
- * Remove a listener for active curriculum changes
- * @param {Function} callback - Function to remove from listeners
- */
+// Remove listener for curriculum changes
 function removeActiveCurriculumChangeListener(callback) {
   const index = activeCurriculumChangeListeners.indexOf(callback);
   if (index > -1) {
@@ -104,9 +69,7 @@ function removeActiveCurriculumChangeListener(callback) {
   }
 }
 
-/**
- * Notify all listeners about active curriculum change
- */
+// Notify all listeners about curriculum change
 function notifyActiveCurriculumChange() {
   activeCurriculumChangeListeners.forEach(callback => {
     try {
@@ -117,16 +80,12 @@ function notifyActiveCurriculumChange() {
   });
 }
 
-/**
- * Update curricula list (called when curricula are added/edited/deleted)
- * @param {Array} newCurriculaList - Updated list of curricula
- */
+// Update curricula list
 function updateCurriculaList(newCurriculaList) {
   activeCurriculumManagerCurriculaList = [...newCurriculaList];
   
-  // Check if active curriculum still exists
+  // Reset to default if active curriculum no longer exists
   if (activeCurriculum && !curriculumExists(activeCurriculum)) {
-    // Active curriculum was deleted, set to first available or default
     if (activeCurriculumManagerCurriculaList.length > 0) {
       const defaultCurr = activeCurriculumManagerCurriculaList.find(c => c.year === DEFAULT_CURRICULUM);
       setActiveCurriculum(defaultCurr ? defaultCurr.year : activeCurriculumManagerCurriculaList[0].year);
@@ -136,14 +95,10 @@ function updateCurriculaList(newCurriculaList) {
   }
 }
 
-/**
- * Create and manage active curriculum indicator UI
- */
+// Create and manage curriculum indicator UI
 function createActiveCurriculumIndicator() {
-  // Only show indicator on course catalog page
   const coursesSection = document.getElementById('section-courses');
   if (!coursesSection || coursesSection.classList.contains('hidden')) {
-    // Hide indicator if not on courses page
     const indicator = document.getElementById('active-curriculum-indicator');
     if (indicator) {
       indicator.style.display = 'none';
@@ -151,35 +106,28 @@ function createActiveCurriculumIndicator() {
     return;
   }
 
-  // Get indicator element from page header
   const indicator = document.getElementById('active-curriculum-indicator');
   if (!indicator) {
     return;
   }
   
-  // Remove any inline styles that might have been added
   indicator.removeAttribute('style');
   
-  // Ensure class is set
   if (!indicator.classList.contains('subtle-curriculum-btn')) {
     indicator.classList.add('subtle-curriculum-btn');
   }
   
-  // Add click handler to show curriculum selector if not already added
   if (!indicator.hasAttribute('data-listener-added')) {
     indicator.addEventListener('click', showActiveCurriculumSelector);
     indicator.setAttribute('data-listener-added', 'true');
   }
   
-  // Show indicator and update text
   indicator.style.display = 'flex';
   indicator.textContent = `${getActiveCurriculum()}`;
   indicator.title = 'Click to change active curriculum';
 }
 
-/**
- * Hide the active curriculum indicator
- */
+// Hide curriculum indicator
 function hideActiveCurriculumIndicator() {
   const indicator = document.getElementById('active-curriculum-indicator');
   if (indicator) {
@@ -187,11 +135,8 @@ function hideActiveCurriculumIndicator() {
   }
 }
 
-/**
- * Show active curriculum selector modal
- */
+// Show curriculum selector modal
 function showActiveCurriculumSelector() {
-  // Create modal if it doesn't exist
   let modal = document.getElementById('active-curriculum-selector-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -231,7 +176,6 @@ function showActiveCurriculumSelector() {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
     
-    // Add event listeners
     document.getElementById('cancel-curriculum-selector').addEventListener('click', () => {
       modal.style.display = 'none';
     });
@@ -244,7 +188,6 @@ function showActiveCurriculumSelector() {
       modal.style.display = 'none';
     });
     
-    // Close on backdrop click
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.style.display = 'none';
@@ -252,13 +195,11 @@ function showActiveCurriculumSelector() {
     });
   }
   
-  // Populate curriculum list
   const listContainer = document.getElementById('curriculum-selector-list');
   listContainer.innerHTML = '';
   
   const currentActive = getActiveCurriculum();
   
-  // Add available curricula
   activeCurriculumManagerCurriculaList.forEach(curriculum => {
     const label = document.createElement('label');
     label.style.cssText = 'display: block; margin-bottom: 8px; cursor: pointer;';
@@ -275,7 +216,6 @@ function showActiveCurriculumSelector() {
     listContainer.appendChild(label);
   });
   
-  // If no curricula available, add default option
   if (activeCurriculumManagerCurriculaList.length === 0) {
     const label = document.createElement('label');
     label.style.cssText = 'display: block; margin-bottom: 8px; cursor: pointer;';
@@ -295,23 +235,15 @@ function showActiveCurriculumSelector() {
   modal.style.display = 'flex';
 }
 
-/**
- * Initialize active curriculum manager
- */
+// Initialize curriculum manager
 async function initializeActiveCurriculumManager() {
-  // Try to restore from localStorage
   const stored = localStorage.getItem('activeCurriculum');
   if (stored) {
     activeCurriculum = stored;
   }
   
-  // Load curricula and set active
   await loadCurriculaAndSetActive();
   
-  // Don't create UI indicator by default - only show on courses page
-  // createActiveCurriculumIndicator();
-  
-  // Add listener to update indicator when curriculum changes
   addActiveCurriculumChangeListener(() => {
     createActiveCurriculumIndicator();
   });
@@ -324,7 +256,7 @@ if (document.readyState === 'loading') {
   initializeActiveCurriculumManager();
 }
 
-// Export functions to global window object
+// Export to global window object
 window.ActiveCurriculumManager = {
   setActiveCurriculum,
   getActiveCurriculum,

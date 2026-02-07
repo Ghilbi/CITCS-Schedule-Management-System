@@ -86,7 +86,7 @@
       }
       
       const data = await response.json();
-      return data.token;
+      return data;
     }
 
     loginForm.addEventListener('submit', async (e) => {
@@ -104,8 +104,9 @@
       setLoading(true);
       
       try {
-        const token = await loginRequest(username, password);
-        localStorage.setItem('authToken', token);
+        const data = await loginRequest(username, password);
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userRole', data.role);
         window.location.href = 'index.html';
       } catch (error) {
         showError(error.message || 'Invalid credentials. Please try again.');

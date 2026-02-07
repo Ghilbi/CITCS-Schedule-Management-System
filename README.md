@@ -6,6 +6,7 @@ A comprehensive web application for managing academic course schedules, room all
 - [Overview](#overview)
 - [Getting Started](#getting-started)
 - [Core Features](#core-features)
+  - [Analytics Dashboard](#analytics-dashboard)
   - [Course Catalog](#course-catalog)
   - [Manage Course Offering](#manage-course-offering)
   - [Section View](#section-view)
@@ -38,9 +39,44 @@ This Academic Schedule Management System streamlines the complex process of acad
 
 ## Core Features
 
+### Analytics Dashboard
+
+**Default Landing Page**: The Analytics Dashboard is displayed by default after login and provides actionable insights into the current state of academic scheduling.
+
+**Key Metric Cards:**
+- **Scheduling Complete (%)**: Percentage of course offerings that have been fully scheduled with room assignments
+- **Unscheduled Offerings**: Number of course offerings that have no schedule assigned yet
+- **Need Room Assignment**: Offerings that are scheduled in Section View but still lack a room assignment
+- **Room Utilization (%)**: Average utilization percentage across all available rooms
+- **Missing Lec/Lab Pairs**: Courses with unit category "Lec/Lab" where a section is missing either its Lec or Lab offering
+- **Overloaded Slots**: Time slots where room occupancy exceeds 80% capacity
+
+**Trimester Filtering:**
+- Filter all analytics data by trimester (All, 1st Trimester, 2nd Trimester, 3rd Trimester)
+- All metric cards, charts, and action items update dynamically based on the selected trimester
+
+**Next Steps & Action Items:**
+- Prioritized, actionable recommendations with severity levels (Critical, Warning, Info)
+- Clear descriptions of what's wrong and specific instructions on what to do next
+- Examples: unscheduled offerings by program, missing Lec/Lab pairs, overloaded time slots, underutilized rooms
+
+**Room Utilization Chart:**
+- Horizontal bar chart ranking all rooms by their utilization percentage
+- Visual distinction between high, medium, and low utilization rooms
+
+**Room Availability Heatmap:**
+- Collapsible panel with a grid showing room occupancy across all time slots
+- Toggle between MWF and TTHS day patterns
+- Color-coded cells indicating free, occupied, and high-demand slots
+- Helps identify scheduling gaps and peak-load periods
+
+**Auto-Refresh:**
+- Analytics data refreshes automatically at regular intervals
+- Manual refresh available via the Refresh button
+
 ### Course Catalog
 
-**Authentication Required**: Users must login with administrator credentials to access course management features.
+**Authentication Required**: Users must login with administrator credentials to access course management features. **Note**: The Course Catalog is only accessible to users with the **Admin** role; Program Chair users do not see this section.
 
 **Key Capabilities:**
 - **Add New Courses**: Create courses with comprehensive details including:
@@ -151,19 +187,21 @@ This Academic Schedule Management System streamlines the complex process of acad
 ## Authentication & Security
 
 **JWT-Based Authentication:**
-- Secure admin login system using JSON Web Tokens
+- Secure login system using JSON Web Tokens with role-based access
 - 2-hour token expiration for security
 - Automatic re-authentication prompts when tokens expire
-- LocalStorage-based session management
+- LocalStorage-based session management (token and role)
 
-**Access Control:**
-- **Protected Operations**: Course management (add, edit, delete) requires authentication
-- **Open Access**: Section View, Room View, and browsing functions available without login
-- **Secure Credentials**: Environment-based admin credential management
+**Multi-Role Access Control:**
+- **Admin Role**: Full access to all features including Course Catalog (add, edit, delete courses), Course Offerings, Section Management, Room Management, Analytics, and Schedule Summary
+- **Program Chair Role**: Access to all features except Course Catalog — the Course Catalog navigation button and section are hidden for this role
+- **Open Access**: Section View, Room View, Schedule Summary, and Analytics are available to all authenticated users
+- **Secure Credentials**: Environment-based credential management with bcrypt password hashing for both roles
 
 **Session Management:**
-- Persistent login sessions across browser refreshes
-- Automatic logout on token expiration
+- Persistent login sessions across browser refreshes (token and role stored in localStorage)
+- Automatic logout on token expiration with redirect to login page
+- Role preserved across token refresh operations
 - Secure credential validation on all protected endpoints
 
 ## Conflict Detection & Validation
@@ -214,15 +252,24 @@ This Academic Schedule Management System streamlines the complex process of acad
 **Environment Configuration:**
 Create a `.env` file in the `schedule-app/backend` directory:
 ```env
-DB_USER=your_username
-DB_PASSWORD=your_password
-DB_HOST=localhost
-DB_PORT=5432
-DB_DATABASE=schedule_db
 PORT=3000
+NODE_ENV=development
+DATABASE_URL=postgres://user:password@host:port/dbname
+
+# Admin account
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_secure_password
+ADMIN_PASSWORD_HASH=$2b$10$...your_bcrypt_hash...
+
+# Program Chair account
+PROGRAMCHAIR_USERNAME=programchair
+PROGRAMCHAIR_PASSWORD_HASH=$2b$10$...your_bcrypt_hash...
+
 JWT_SECRET=your_jwt_secret_key
+```
+
+**Generating bcrypt password hashes:**
+```bash
+node -e "require('bcrypt').hash(process.argv[1], 10).then(h=>console.log(h))" 'yourStrongPassword'
 ```
 
 **Database Setup:**
@@ -251,7 +298,8 @@ npm start
 **Backend Dependencies:**
 - **Express.js**: Web application framework
 - **PostgreSQL (pg)**: Database connectivity
-- **JWT**: Authentication token management
+- **JWT (jsonwebtoken)**: Authentication token management with role-based payloads
+- **bcrypt**: Secure password hashing and verification
 - **CORS**: Cross-origin resource sharing
 - **dotenv**: Environment variable management
 
@@ -268,9 +316,10 @@ npm start
 ### Common Issues and Solutions
 
 **Login Problems:**
-- Verify admin credentials in environment variables
+- Verify admin or program chair credentials in environment variables (`ADMIN_USERNAME`/`ADMIN_PASSWORD_HASH` or `PROGRAMCHAIR_USERNAME`/`PROGRAMCHAIR_PASSWORD_HASH`)
+- Ensure password hashes are valid bcrypt hashes (not plaintext passwords)
 - Check browser console for authentication errors
-- Clear browser localStorage and retry login
+- Clear browser localStorage (both `authToken` and `userRole`) and retry login
 - Ensure JWT_SECRET is properly configured
 
 **Schedule Conflicts:**

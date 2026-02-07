@@ -428,6 +428,9 @@ class JWTExpirationMonitor {
         const data = await response.json();
         if (data && data.token) {
           localStorage.setItem('authToken', data.token);
+          if (data.role) {
+            localStorage.setItem('userRole', data.role);
+          }
           this.hideNotification();
           this.warningShown = false;
           this.checkTokenStatus();
@@ -450,6 +453,7 @@ class JWTExpirationMonitor {
   handleTokenExpired() {
     this.stopMonitoring();
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
     alert('Your session has expired. You will be redirected to the login page.');
     window.location.href = 'login.html';
   }

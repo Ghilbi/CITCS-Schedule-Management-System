@@ -225,19 +225,32 @@ function protectCoursesWrite(req, res, next) {
 }
 
 // Login route that issues a JWT if credentials are valid
+// Supports both admin and program chair accounts
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required' });
   }
-  if (username !== process.env.ADMIN_USERNAME) {
+
+  // Determine which account is being used
+  let role = null;
+  let passwordHash = null;
+
+  if (username === process.env.ADMIN_USERNAME) {
+    role = 'admin';
+    passwordHash = process.env.ADMIN_PASSWORD_HASH;
+  } else if (username === process.env.PROGRAMCHAIR_USERNAME) {
+    role = 'programchair';
+    passwordHash = process.env.PROGRAMCHAIR_PASSWORD_HASH;
+  } else {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+
   try {
-    const match = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+    const match = await bcrypt.compare(password, passwordHash);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '2h' });
-    res.json({ token });
+    const token = jwt.sign({ username, role }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    res.json({ token, role });
   } catch (err) {
     res.status(500).json({ error: 'Authentication error' });
   }
@@ -247,11 +260,12 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/refresh-token', authenticateToken, (req, res) => {
   try {
     const username = req.user?.username;
+    const role = req.user?.role || 'admin';
     if (!username) {
       return res.status(400).json({ error: 'Invalid user payload' });
     }
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '2h' });
-    res.json({ token });
+    const token = jwt.sign({ username, role }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    res.json({ token, role });
   } catch (err) {
     res.status(500).json({ error: 'Unable to refresh token' });
   }

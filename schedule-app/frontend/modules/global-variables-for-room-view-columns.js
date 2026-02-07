@@ -72,6 +72,9 @@ function hideAllSections() {
   document.getElementById("section-section-view").classList.add("hidden");
   document.getElementById("section-room-view").classList.add("hidden");
   document.getElementById("section-schedule-summary").classList.add("hidden");
+  document.getElementById("section-analytics").classList.add("hidden");
+  // Stop analytics auto-refresh when leaving the section
+  if (typeof stopAnalyticsAutoRefresh === 'function') stopAnalyticsAutoRefresh();
 }
 
 function showSection(section) {
@@ -94,6 +97,20 @@ function showSection(section) {
 
 // After the apiCache helper, add auth helpers
 let authToken = localStorage.getItem('authToken') || null;
+let userRole = localStorage.getItem('userRole') || 'admin';
+
+function getUserRole() {
+  return userRole;
+}
+
+function setUserRole(role) {
+  userRole = role;
+  if (role) {
+    localStorage.setItem('userRole', role);
+  } else {
+    localStorage.removeItem('userRole');
+  }
+}
 
 function isLoggedIn() {
   return !!authToken;
@@ -127,6 +144,9 @@ async function loginRequest(username, password) {
   }
   const data = await resp.json();
   setAuthToken(data.token);
+  if (data.role) {
+    setUserRole(data.role);
+  }
 }
 
 function addAuthHeader(headers = {}) {
@@ -138,6 +158,8 @@ function addAuthHeader(headers = {}) {
 
 // Navigation: replace inline listener for btn-courses with auth-check helper
 function openCoursesSection() {
+  // Block access for program chair role
+  if (getUserRole() === 'programchair') return;
   if (!isLoggedIn()) {
     showModal(document.getElementById('modal-login'));
     return;

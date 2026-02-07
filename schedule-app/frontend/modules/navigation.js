@@ -39,16 +39,11 @@ function showSection(section) {
     renderCourseOfferingTable();
   } else if (section === "analytics") {
     // Initialize analytics data when showing analytics section
-    if (typeof loadAnalyticsData === 'function' &&
-        typeof calculateAnalyticsStats === 'function' &&
-        typeof renderAnalyticsStats === 'function' &&
-        typeof renderAnalyticsCharts === 'function') {
+    if (typeof loadAnalyticsData === 'function' && typeof renderFullAnalytics === 'function') {
       setTimeout(async () => {
         try {
           await loadAnalyticsData();
-          const analyticsStats = await calculateAnalyticsStats();
-          renderAnalyticsStats(analyticsStats);
-          renderAnalyticsCharts(analyticsStats);
+          renderFullAnalytics();
         } catch (error) {
           console.error('Error loading analytics:', error);
         }
@@ -103,6 +98,9 @@ function addAuthHeader(headers = {}) {
 
 // Navigation: courses section access (authentication handled at app level)
 function openCoursesSection() {
+  // Block access for program chair role
+  if (getUserRole() === 'programchair') return;
+  
   hideAllSections();
   sectionCourses.classList.remove('hidden');
   applyFadeAnimation(sectionCourses);

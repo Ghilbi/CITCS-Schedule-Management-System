@@ -33,7 +33,7 @@ A secure web application for managing academic schedules across trimesters, year
 - **Backend**: Node.js + Express (`schedule-app/backend/server.js`). Serves static frontend, exposes REST APIs, and handles JWT auth.
 - **Database**: PostgreSQL via `pg` using `DATABASE_URL`. Tables are created/altered on startup if missing.
 - **Frontend**: HTML/CSS/vanilla JavaScript in `schedule-app/frontend/` with modular JS files for features. Assets in `schedule-app/assets/`.
-- **Security**: JWT with 2-hour expiry; bcrypt password verification using an admin password hash from environment variables.
+- **Security**: JWT with 2-hour expiry and role-based payloads (`admin` or `programchair`); bcrypt password verification using password hashes from environment variables.
 
 Key Libraries
 - express, pg, jsonwebtoken, bcrypt, dotenv
@@ -48,10 +48,16 @@ PORT=3000
 NODE_ENV=development
 DATABASE_URL=postgres://user:password@host:port/dbname
 
-# Auth
+# Admin auth
 ADMIN_USERNAME=admin
 # Bcrypt hash of your chosen admin password (NOT the plaintext password)
 ADMIN_PASSWORD_HASH=$2b$10$...your_bcrypt_hash...
+
+# Program Chair auth
+PROGRAMCHAIR_USERNAME=programchair
+# Bcrypt hash of your chosen program chair password
+PROGRAMCHAIR_PASSWORD_HASH=$2b$10$...your_bcrypt_hash...
+
 JWT_SECRET=replace_with_a_long_random_secret
 ```
 
@@ -83,16 +89,18 @@ Base URL: `/api`
 
 - POST `/api/login`  
   Request: `{ "username": string, "password": string }`  
-  Response: `{ "token": string }` (JWT, 2h expiry)
+  Response: `{ "token": string, "role": string }` (JWT, 2h expiry)
 
 Notes
-- Username must equal `ADMIN_USERNAME`. Password is verified against `ADMIN_PASSWORD_HASH` via bcrypt.
-- Store the token (e.g., `localStorage`) and send it as `Authorization: Bearer <token>` for protected operations.
+- The server supports two account types. The username is matched against `ADMIN_USERNAME` (role: `admin`) or `PROGRAMCHAIR_USERNAME` (role: `programchair`). The password is verified against the corresponding bcrypt hash (`ADMIN_PASSWORD_HASH` or `PROGRAMCHAIR_PASSWORD_HASH`).
+- The JWT payload includes both `username` and `role`.
+- The response returns the `role` alongside the `token` so the frontend can apply role-based navigation.
+- Store the token and role (e.g., `localStorage`) and send the token as `Authorization: Bearer <token>` for protected operations.
 
 ### Token Utilities
 
 - POST `/api/refresh-token` (requires valid token)  
-  Response: `{ "token": string }` (new 2h token)
+  Response: `{ "token": string, "role": string }` (new 2h token, preserves original role)
 
 - GET `/api/token-status` (requires valid token)  
   Response: `{ valid: true, expiresAt: number, expiresIn: number, warningThreshold: boolean }`
@@ -183,12 +191,19 @@ The app is served statically from the backend. Main entry: `index.html`. If no t
 
 Sidebar options include: Analytics, Course Catalog, Manage Course Offering, Section Management, Room Management, Schedule Summary, Logout. The UI is responsive and includes a startup loader animation.
 
+**Role-Based Navigation:**
+- On page load, `applyRoleBasedNavigation()` checks the user's role from `localStorage`.
+- **Admin** role: Full sidebar with all navigation options visible.
+- **Program Chair** role: The Course Catalog button and section are hidden (`display: none`). All other navigation options remain accessible.
+- The `userRole` is stored in `localStorage` alongside `authToken` and is cleared on logout or token expiration.
+
 ### Course Catalog
 
-Protected (requires login) for add/edit/delete.
+Protected (requires login) for add/edit/delete. **Admin role only** — the Course Catalog section and its navigation button are hidden for Program Chair users.
 - Add/Edit/Delete courses with subject, unit category (PureLec or Lec/Lab), units, year level, degree, trimester, curriculum, and description.
 - Search, filter (year, degree, trimester, curriculum), sort (subject, units).
 - CSV import/export and selective deletion tools.
+- The `openCoursesSection()` function blocks access if `getUserRole()` returns `'programchair'`.
 
 ### Manage Course Offering
 
@@ -216,7 +231,45 @@ View aggregated schedules by trimester and year level, with section-based summar
 
 ### Analytics
 
-Key counts and distribution visuals (courses, offerings, schedules, rooms, curricula, room utilization).
+The analytics module (`analytics.js`) has been redesigned from basic counts into an actionable data analytics dashboard. It provides scheduling completion tracking, gap analysis, room utilization insights, and prioritized action items.
+
+**Key Metric Cards:**
+- **Scheduling Complete (%)**: Percentage of offerings that are fully scheduled (have room assignments)
+- **Unscheduled Offerings**: Offerings with no schedule entry at all
+- **Need Room Assignment**: Offerings scheduled in Section View (col=0) but lacking a room column assignment
+- **Room Utilization (%)**: Average percentage of the 18 possible time slots (9 times x 2 day types) that are occupied across all rooms
+- **Missing Lec/Lab Pairs**: Lec/Lab courses where a section has only one component (Lec or Lab) but not both
+- **Overloaded Slots**: Time slots where room occupancy exceeds the 80% threshold
+
+**Trimester Filtering:**
+- Filter buttons (All, 1st Tri, 2nd Tri, 3rd Tri) filter offerings, schedules, and courses by trimester
+- All metrics, charts, and action items recalculate when the filter changes
+
+**Analysis Functions:**
+- `analyzeOfferingStatus()`: Classifies each offering as `fullyScheduled`, `needsRoom`, or `unscheduled`
+- `analyzeRoomUtilization()`: Calculates per-room occupancy out of 18 possible slots
+- `analyzeTimeSlotLoad()`: Determines percentage of rooms used per (dayType, time) combination
+- `analyzeLecLabPairing()`: Finds Lec/Lab courses missing a component for any section
+
+**Next Steps & Action Items:**
+- `generateActionItems()` produces prioritized recommendations at three severity levels: `critical`, `warning`, and `info`
+- Rendered in a collapsible panel with color-coded severity badges
+- Examples: unscheduled offerings by program, missing Lec/Lab pairs, overloaded time slots, underutilized rooms, fully scheduled confirmation
+
+**Room Utilization Chart:**
+- Horizontal bar chart ranking all rooms by utilization percentage (rendered via inline HTML/CSS bars)
+
+**Room Availability Heatmap:**
+- Collapsible panel with MWF/TTHS toggle
+- Grid showing rooms as columns and time slots as rows
+- Color-coded cells (green = free, red = occupied) for quick visual scanning
+
+**Auto-Refresh:**
+- `startAnalyticsAutoRefresh()` / `stopAnalyticsAutoRefresh()` manage periodic data reload
+- Auto-refresh stops when navigating away from the analytics section (`hideAllSections()` calls `stopAnalyticsAutoRefresh()`)
+
+**Entry Point:**
+- `renderFullAnalytics()` orchestrates the full render pipeline: load data → filter → analyze → render cards, action items, chart, and heatmap
 
 ### Export
 
@@ -239,10 +292,13 @@ Client-side
 Auth
 - JWT required for write operations on `courses` only (rooms, schedules, offerings, curricula are public in current config).  
 - Tokens expire in 2 hours; headers expose expiry to aid proactive refresh.
+- Two roles supported: `admin` (full access) and `programchair` (no Course Catalog access).
+- Role is included in JWT payload and returned with login/refresh responses.
+- Frontend stores `userRole` in `localStorage` and applies role-based UI restrictions on page load.
 
 ## Deployment Notes
 
-- Provide `DATABASE_URL`, `JWT_SECRET`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH` in environment.  
+- Provide `DATABASE_URL`, `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `PROGRAMCHAIR_USERNAME`, and `PROGRAMCHAIR_PASSWORD_HASH` in environment.  
 - Ensure the process has access to serve `schedule-app/frontend` and `schedule-app/assets`.  
 - For hosted Postgres, enable SSL; the server auto-sets SSL in production (`NODE_ENV=production`).  
 - Scale guidance: terminate idle connections; prefer a connection pool compatible with your provider.
@@ -256,9 +312,11 @@ Auth
 ## Troubleshooting
 
 Login/auth issues
-- Verify `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and `JWT_SECRET` in environment.
+- Verify `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `PROGRAMCHAIR_USERNAME`, `PROGRAMCHAIR_PASSWORD_HASH`, and `JWT_SECRET` in environment.
 - Recreate bcrypt hash if plaintext password changed.
 - Check token expiry; use `/api/refresh-token`.
+- If a user reports missing navigation items (e.g., Course Catalog not visible), check their role — Program Chair users do not have access to Course Catalog by design.
+- Clear both `authToken` and `userRole` from `localStorage` when troubleshooting login state.
 
 Database issues
 - Verify `DATABASE_URL` connectivity and SSL settings in production.

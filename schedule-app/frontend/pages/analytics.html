@@ -1,77 +1,95 @@
 <section id="section-analytics" class="hidden">
   <div class="analytics-header">
     <h2>Analytics Dashboard</h2>
-    <button id="btn-refresh-analytics" class="btn-refresh"><i class="dripicons-clockwise"></i> Refresh</button>
+    <div class="analytics-controls">
+      <div class="analytics-trimester-filter">
+        <button class="analytics-filter-btn active" data-trimester="all">All</button>
+        <button class="analytics-filter-btn" data-trimester="1st Trimester">1st Tri</button>
+        <button class="analytics-filter-btn" data-trimester="2nd Trimester">2nd Tri</button>
+        <button class="analytics-filter-btn" data-trimester="3rd Trimester">3rd Tri</button>
+      </div>
+      <button id="btn-refresh-analytics" class="btn-refresh"><i class="dripicons-clockwise"></i> Refresh</button>
+    </div>
   </div>
-  
-  <!-- Statistics Cards -->
+
+  <!-- Key Metric Cards -->
   <div class="analytics-stats">
-    <div class="stat-card">
-      <div class="stat-icon"><i class="dripicons-stack"></i></div>
+    <div class="stat-card" id="card-completion">
+      <div class="stat-icon"><i class="dripicons-checkmark"></i></div>
       <div class="stat-content">
-        <h3 id="stat-total-courses">0</h3>
-        <p>Total Courses</p>
+        <h3 id="stat-completion-pct">0%</h3>
+        <p>Scheduling Complete</p>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i class="dripicons-document"></i></div>
+    <div class="stat-card" id="card-unscheduled">
+      <div class="stat-icon"><i class="dripicons-warning"></i></div>
       <div class="stat-content">
-        <h3 id="stat-total-offerings">0</h3>
-        <p>Course Offerings</p>
+        <h3 id="stat-unscheduled">0</h3>
+        <p>Unscheduled Offerings</p>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i class="dripicons-calendar"></i></div>
+    <div class="stat-card" id="card-needs-room">
+      <div class="stat-icon"><i class="dripicons-location"></i></div>
       <div class="stat-content">
-        <h3 id="stat-total-schedules">0</h3>
-        <p>Scheduled Sessions</p>
+        <h3 id="stat-needs-room">0</h3>
+        <p>Need Room Assignment</p>
       </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="card-room-util">
       <div class="stat-icon"><i class="dripicons-home"></i></div>
-      <div class="stat-content">
-        <h3 id="stat-total-rooms">0</h3>
-        <p>Total Rooms</p>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i class="dripicons-graduation"></i></div>
-      <div class="stat-content">
-        <h3 id="stat-total-curricula">0</h3>
-        <p>Curricula</p>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i class="dripicons-graph-bar"></i></div>
       <div class="stat-content">
         <h3 id="stat-room-utilization">0%</h3>
         <p>Room Utilization</p>
       </div>
     </div>
+    <div class="stat-card" id="card-missing-pairs">
+      <div class="stat-icon"><i class="dripicons-link-broken"></i></div>
+      <div class="stat-content">
+        <h3 id="stat-missing-pairs">0</h3>
+        <p>Missing Lec/Lab Pairs</p>
+      </div>
+    </div>
+    <div class="stat-card" id="card-peak">
+      <div class="stat-icon"><i class="dripicons-graph-bar"></i></div>
+      <div class="stat-content">
+        <h3 id="stat-peak-slots">0</h3>
+        <p>Overloaded Slots</p>
+      </div>
+    </div>
   </div>
-  
-  <!-- Charts Section -->
+
+  <!-- Next Steps & Action Items -->
+  <div class="analytics-panel">
+    <div class="analytics-panel-header" onclick="toggleAnalyticsPanel('action-items')">
+      <h3><i class="dripicons-rocket"></i> Next Steps & Action Items</h3>
+      <i class="dripicons-chevron-down panel-toggle-icon" id="toggle-icon-action-items"></i>
+    </div>
+    <div class="analytics-panel-body" id="body-action-items">
+      <div id="action-items-container"></div>
+    </div>
+  </div>
+
+  <!-- Room Utilization (All Rooms) -->
   <div class="analytics-charts">
-    <div class="chart-row">
+    <div class="chart-row chart-row--full">
       <div class="chart-container">
-        <div id="chart-degree-distribution" class="chart"></div>
-      </div>
-      <div class="chart-container">
-        <div id="chart-trimester-distribution" class="chart"></div>
+        <div id="chart-room-ranking" class="chart"></div>
       </div>
     </div>
-    <div class="chart-row">
-      <div class="chart-container">
-        <div id="chart-offering-type" class="chart"></div>
-      </div>
-      <div class="chart-container">
-        <div id="chart-room-utilization" class="chart"></div>
-      </div>
+  </div>
+
+  <!-- Room Availability Heatmap -->
+  <div class="analytics-panel">
+    <div class="analytics-panel-header" onclick="toggleAnalyticsPanel('heatmap')">
+      <h3><i class="dripicons-view-apps"></i> Room Availability Heatmap</h3>
+      <i class="dripicons-chevron-down panel-toggle-icon" id="toggle-icon-heatmap"></i>
     </div>
-    <div class="chart-row">
-      <div class="chart-container">
-        <div id="chart-year-level" class="chart"></div>
+    <div class="analytics-panel-body collapsed" id="body-heatmap">
+      <div class="heatmap-controls">
+        <button class="heatmap-tab active" data-daytype="MWF" onclick="switchHeatmapDay('MWF')">MWF</button>
+        <button class="heatmap-tab" data-daytype="TTHS" onclick="switchHeatmapDay('TTHS')">TTHS</button>
       </div>
+      <div id="heatmap-container" class="heatmap-wrapper"></div>
     </div>
   </div>
 

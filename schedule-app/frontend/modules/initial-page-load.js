@@ -2,8 +2,14 @@
  * INITIAL PAGE LOAD
  **************************************************************/
 (async function initialLoad() {
+  // Apply role-based navigation visibility
+  applyRoleBasedNavigation();
+  
   // Initial loading for all tables
-  await renderCoursesTable();
+  const role = getUserRole();
+  if (role === 'admin') {
+    await renderCoursesTable();
+  }
   await renderCourseOfferingTable();
   await renderRoomsTable();
   
@@ -46,18 +52,31 @@
   
   // Show Analytics by default (authentication handled at HTML level)
   showSection('analytics');
-  if (typeof loadAnalyticsData === 'function' && typeof calculateAnalyticsStats === 'function') {
+  if (typeof loadAnalyticsData === 'function' && typeof renderFullAnalytics === 'function') {
     await loadAnalyticsData();
-    const analyticsStats = await calculateAnalyticsStats();
-    if (typeof renderAnalyticsStats === 'function') {
-      renderAnalyticsStats(analyticsStats);
-    }
-    if (typeof renderAnalyticsCharts === 'function') {
-      renderAnalyticsCharts(analyticsStats);
-    }
+    renderFullAnalytics();
   }
 
 })();
+
+/**************************************************************
+ * ROLE-BASED NAVIGATION
+ **************************************************************/
+function applyRoleBasedNavigation() {
+  const role = getUserRole();
+  
+  if (role === 'programchair') {
+    // Program Chair: hide Course Catalog button and section
+    const btnCourses = document.getElementById('btn-courses');
+    if (btnCourses) {
+      btnCourses.style.display = 'none';
+    }
+    const sectionCourses = document.getElementById('section-courses');
+    if (sectionCourses) {
+      sectionCourses.style.display = 'none';
+    }
+  }
+}
 
 /**************************************************************
  * HELPER FUNCTIONS

@@ -780,6 +780,7 @@ async function exportAllSchedulesToExcel() {
 // Logout function for dedicated login system
 function logout() {
   localStorage.removeItem('authToken');
+  localStorage.removeItem('userRole');
   window.location.href = 'login.html';
 }
 

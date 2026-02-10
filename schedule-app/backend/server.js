@@ -373,19 +373,35 @@ app.post('/api/:table', async (req, res) => {
       // Ensure curriculum is not NULL/missing and normalize before duplicate check
       // Use provided curriculum or keep as null to let database handle default
       const curriculumValuePost = (data.curriculum && String(data.curriculum).trim()) ? String(data.curriculum).trim() : null;
-      // Check for existing course with same subject, curriculum, and degree first
+      // Check for existing course with ALL matching attributes to determine a true duplicate
       try {
         let checkQuery, checkParams;
         if (curriculumValuePost === null) {
-          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum IS NULL AND degree = $2';
-          checkParams = [data.subject, data.degree];
+          checkQuery = `SELECT id FROM courses 
+            WHERE LOWER(subject) = LOWER($1) 
+            AND unit_category = $2 
+            AND units = $3 
+            AND year_level = $4 
+            AND degree = $5 
+            AND trimester = $6 
+            AND COALESCE(description, '') = COALESCE($7, '') 
+            AND curriculum IS NULL`;
+          checkParams = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description || ''];
         } else {
-          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum = $2 AND degree = $3';
-          checkParams = [data.subject, curriculumValuePost, data.degree];
+          checkQuery = `SELECT id FROM courses 
+            WHERE LOWER(subject) = LOWER($1) 
+            AND unit_category = $2 
+            AND units = $3 
+            AND year_level = $4 
+            AND degree = $5 
+            AND trimester = $6 
+            AND COALESCE(description, '') = COALESCE($7, '') 
+            AND curriculum = $8`;
+          checkParams = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description || '', curriculumValuePost];
         }
         const checkResult = await pool.query(checkQuery, checkParams);
         if (checkResult.rows.length > 0) {
-          return res.status(400).json({ error: 'Course with this subject already exists in the selected curriculum and degree program' });
+          return res.status(400).json({ error: 'An identical course with the same attributes already exists' });
         }
       } catch (checkErr) {
         console.error("Error checking for duplicate course:", checkErr);
@@ -435,19 +451,37 @@ app.put('/api/:table/:id', async (req, res) => {
       // Ensure curriculum is not NULL/missing and normalize before duplicate check
       // Use provided curriculum or keep as null to let database handle default
       const curriculumValuePut = (data.curriculum && String(data.curriculum).trim()) ? String(data.curriculum).trim() : null;
-      // Check for duplicate course with same subject and curriculum (excluding current course)
+      // Check for duplicate course with ALL matching attributes (excluding current course)
       try {
         let checkQuery, checkParams;
         if (curriculumValuePut === null) {
-          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum IS NULL AND id != $2';
-          checkParams = [data.subject, id];
+          checkQuery = `SELECT id FROM courses 
+            WHERE LOWER(subject) = LOWER($1) 
+            AND unit_category = $2 
+            AND units = $3 
+            AND year_level = $4 
+            AND degree = $5 
+            AND trimester = $6 
+            AND COALESCE(description, '') = COALESCE($7, '') 
+            AND curriculum IS NULL 
+            AND id != $8`;
+          checkParams = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description || '', id];
         } else {
-          checkQuery = 'SELECT id FROM courses WHERE LOWER(subject) = LOWER($1) AND curriculum = $2 AND id != $3';
-          checkParams = [data.subject, curriculumValuePut, id];
+          checkQuery = `SELECT id FROM courses 
+            WHERE LOWER(subject) = LOWER($1) 
+            AND unit_category = $2 
+            AND units = $3 
+            AND year_level = $4 
+            AND degree = $5 
+            AND trimester = $6 
+            AND COALESCE(description, '') = COALESCE($7, '') 
+            AND curriculum = $8 
+            AND id != $9`;
+          checkParams = [data.subject, data.unitCategory, data.units, data.yearLevel, data.degree, data.trimester, data.description || '', curriculumValuePut, id];
         }
         const checkResult = await pool.query(checkQuery, checkParams);
         if (checkResult.rows.length > 0) {
-          return res.status(400).json({ error: 'Another course with this subject already exists in the selected curriculum' });
+          return res.status(400).json({ error: 'An identical course with the same attributes already exists' });
         }
       } catch (checkErr) {
         console.error("Error checking for duplicate course during update:", checkErr);
@@ -486,6 +520,15 @@ app.delete('/api/:table/:id', async (req, res) => {
   const id = req.params.id;
   if (!isValidTable(table)) return res.status(400).json({ error: 'Invalid table name' });
   try {
+    // For rooms, cascade delete associated schedules first
+    if (table === 'rooms') {
+      await pool.query('DELETE FROM schedules WHERE roomId = $1', [id]);
+    }
+    // For courses, cascade delete associated schedules and course_offerings first
+    if (table === 'courses') {
+      await pool.query('DELETE FROM schedules WHERE courseId = $1', [id]);
+      await pool.query('DELETE FROM course_offerings WHERE courseId = $1', [id]);
+    }
     await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
     res.json({ success: true });
   } catch (err) {

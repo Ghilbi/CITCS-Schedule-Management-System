@@ -45,9 +45,8 @@ let currentHeatmapDayType = 'MWF';
  */
 function getAllAvailableRooms() {
   const databaseRoomNames = analyticsData.rooms.map(room => room.name);
-  const allUniqueRooms = [...new Set([...predefinedRooms, ...databaseRoomNames])];
   const allRoomVariants = [];
-  allUniqueRooms.forEach(room => {
+  databaseRoomNames.forEach(room => {
     allRoomVariants.push(`${room} A`);
     allRoomVariants.push(`${room} B`);
   });

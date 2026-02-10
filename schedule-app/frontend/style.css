@@ -1449,6 +1449,46 @@ tbody tr:hover td { background: var(--color-hover); }
   max-width: 95vw;
 }
 
+/* Manage Rooms header layout */
+.manage-rooms-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.manage-rooms-header .add-btn {
+  margin: 0;
+}
+
+.delete-all-rooms-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: 'Poppins', 'Nunito', 'Inter', sans-serif;
+  color: #ea4335;
+  background-color: transparent;
+  border: 1px solid #ea4335;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.delete-all-rooms-btn:hover {
+  background-color: #ea4335;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(234, 67, 53, 0.3);
+  transform: translateY(-1px);
+}
+
+.delete-all-rooms-btn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
   .modal-content {
     width: 95vw;

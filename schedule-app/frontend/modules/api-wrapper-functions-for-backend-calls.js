@@ -158,9 +158,8 @@ async function handleAuthorizedResponse(response) {
 async function getAllRoomColumns() {
   const rooms = await apiGet("rooms");
   const roomNames = rooms.map(room => room.name);
-  const allRooms = [...new Set([...predefinedRooms, ...roomNames])];
   const doubled = [];
-  allRooms.forEach(room => {
+  roomNames.forEach(room => {
     doubled.push(`${room} A`);
     doubled.push(`${room} B`);
   });

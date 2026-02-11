@@ -125,3 +125,31 @@
     </div>
   </div>
 </div>
+
+<!-- Section Auto-Scheduler Modal -->
+<div class="modal hidden" id="modal-section-autoschedule">
+  <div class="modal-content section-autoschedule-modal-content">
+    <span class="close-button" data-close-modal="modal-section-autoschedule">×</span>
+    <h3>Generate Section Schedule</h3>
+    <input type="hidden" id="section-autoschedule-section" />
+    <p class="section-autoschedule-intro">
+      Generate available schedules for <strong id="section-autoschedule-section-label"></strong>.
+    </p>
+    <label>Room Group:</label>
+    <div class="radio-group section-autoschedule-room-group">
+      <label for="section-autoschedule-group-a">
+        <input type="radio" id="section-autoschedule-group-a" name="sectionAutoScheduleRoomGroup" value="A" checked> Group A
+      </label>
+      <label for="section-autoschedule-group-b">
+        <input type="radio" id="section-autoschedule-group-b" name="sectionAutoScheduleRoomGroup" value="B"> Group B
+      </label>
+    </div>
+    <p class="section-autoschedule-hint">
+      Rules: no room/section conflicts, no 3 consecutive time slots, optimized MWF/TTHS placement.
+    </p>
+    <div class="modal-actions-inline">
+      <button id="btn-generate-section-autoschedule" class="save-btn">Generate</button>
+      <button id="btn-cancel-section-autoschedule" class="icon-btn">Cancel</button>
+    </div>
+  </div>
+</div>

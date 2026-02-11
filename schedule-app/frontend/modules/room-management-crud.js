@@ -7,6 +7,7 @@
 // btnSaveRoom is defined in 03-global-variables-for-room-view-columns.js
 const roomIdInput = document.getElementById("room-id");
 const roomNameInput = document.getElementById("room-name");
+const roomTypeSelect = document.getElementById("room-type");
 const btnDeleteAllRooms = document.getElementById("btn-delete-all-rooms");
 
 // Seed predefined rooms into the database once (only on first use)
@@ -14,10 +15,12 @@ async function seedPredefinedRooms() {
   if (localStorage.getItem('predefinedRoomsSeeded')) return;
   const existingRooms = await apiGet("rooms");
   const existingNames = existingRooms.map(r => r.name.toLowerCase());
-  for (const roomName of predefinedRooms) {
+  for (const roomDef of predefinedRooms) {
+    const roomName = typeof roomDef === 'string' ? roomDef : roomDef.name;
+    const roomType = typeof roomDef === 'string' ? 'Both' : (roomDef.type || 'Both');
     if (!existingNames.includes(roomName.toLowerCase())) {
       try {
-        await apiPost("rooms", { name: roomName });
+        await apiPost("rooms", { name: roomName, type: roomType });
       } catch (e) {
         console.log(`Room ${roomName} may already exist.`);
       }
@@ -37,15 +40,18 @@ async function renderRoomsTable() {
   tableRoomsBody.innerHTML = "";
   if (roomsList.length === 0) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="3" style="text-align:center; color:#888; padding:20px;">No rooms found. Click "Add New Room" to get started.</td>`;
+    tr.innerHTML = `<td colspan="4" style="text-align:center; color:#888; padding:20px;">No rooms found. Click "Add New Room" to get started.</td>`;
     tableRoomsBody.appendChild(tr);
     return;
   }
   roomsList.forEach(room => {
     const tr = document.createElement("tr");
+    const roomType = room.type || "Both";
+    const badgeClass = roomType === "Lec/Lab" ? "room-type-leclab" : roomType === "Pure Lec" ? "room-type-purelec" : "room-type-both";
     tr.innerHTML = `
       <td>${room.id}</td>
       <td>${room.name}</td>
+      <td><span class="room-type-badge ${badgeClass}">${roomType}</span></td>
       <td>
         <div class="action-buttons-container">
           <button class="action-edit-btn" onclick="editRoom(${room.id})">Edit</button>
@@ -60,6 +66,7 @@ async function renderRoomsTable() {
 btnAddRoom.addEventListener("click", () => {
   roomIdInput.value = "";
   roomNameInput.value = "";
+  roomTypeSelect.value = "Both";
   document.getElementById("modal-room-title").textContent = "Add New Room";
   showModal(modalAddRoom);
 });
@@ -68,6 +75,7 @@ btnSaveRoom.addEventListener("click", async () => {
   try {
     const id = roomIdInput.value;
     const name = roomNameInput.value.trim();
+    const type = roomTypeSelect.value;
     if (!name) {
       alert("Please enter a room name.");
       return;
@@ -87,9 +95,9 @@ btnSaveRoom.addEventListener("click", async () => {
     }
     
     if (id) {
-      await apiPut("rooms", id, { name });
+      await apiPut("rooms", id, { name, type });
     } else {
-      await apiPost("rooms", { name });
+      await apiPost("rooms", { name, type });
     }
     hideModal(modalAddRoom);
     await renderRoomsTable();
@@ -107,6 +115,7 @@ window.editRoom = async function(id) {
   if (!room) return;
   roomIdInput.value = room.id;
   roomNameInput.value = room.name;
+  roomTypeSelect.value = room.type || "Both";
   document.getElementById("modal-room-title").textContent = "Edit Room";
   showModal(modalAddRoom);
 };

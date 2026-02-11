@@ -13,10 +13,6 @@ function hideAllSections() {
   document.getElementById("section-section-view").classList.add("hidden");
   document.getElementById("section-room-view").classList.add("hidden");
   document.getElementById("section-schedule-summary").classList.add("hidden");
-  
-  if (window.ActiveCurriculumManager) {
-    window.ActiveCurriculumManager.hideActiveCurriculumIndicator();
-  }
 }
 
 function showSection(section) {
@@ -30,11 +26,6 @@ function showSection(section) {
   
   if (section === "courses") {
     renderCoursesTable();
-    if (window.ActiveCurriculumManager) {
-      setTimeout(() => {
-        window.ActiveCurriculumManager.createActiveCurriculumIndicator();
-      }, 100);
-    }
   } else if (section === "course-offering") {
     renderCourseOfferingTable();
   } else if (section === "analytics") {
@@ -108,14 +99,6 @@ function openCoursesSection() {
   document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
   document.getElementById('btn-courses').classList.add('active');
   renderCoursesTable();
-  
-  // Show curriculum indicator only on courses page
-  if (window.ActiveCurriculumManager) {
-    // Use a small delay to ensure the section is visible
-    setTimeout(() => {
-      window.ActiveCurriculumManager.createActiveCurriculumIndicator();
-    }, 100);
-  }
 }
 
 // Update navigation event bindings

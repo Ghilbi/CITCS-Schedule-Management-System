@@ -7,9 +7,7 @@ const courseSubjectInput = document.getElementById("course-subject");
 const courseUnitsInput = document.getElementById("course-units");
 const courseDegreeSelect = document.getElementById("course-degree");
 const courseTrimesterSelect = document.getElementById("course-trimester");
-const courseCurriculumSelect = document.getElementById("course-curriculum");
 const courseDescriptionTextarea = document.getElementById("course-description");
-const courseFilterCurriculum = document.getElementById("course-filter-curriculum");
 
 async function renderCoursesTable(forceRefresh = false) {
   let coursesList = await apiGet("courses", forceRefresh);
@@ -17,7 +15,6 @@ async function renderCoursesTable(forceRefresh = false) {
   const filterYearLevel = courseFilterYearLevel.value;
   const filterDegree = courseFilterDegree.value;
   const filterTrimester = courseFilterTrimester.value;
-  const filterCurriculum = courseFilterCurriculum.value;
   const sortValue = courseSort.value;
 
   if (searchTerm) {
@@ -25,7 +22,6 @@ async function renderCoursesTable(forceRefresh = false) {
       c.subject.toLowerCase().includes(searchTerm) ||
       c.degree.toLowerCase().includes(searchTerm) ||
       c.trimester.toLowerCase().includes(searchTerm) ||
-      (c.curriculum && c.curriculum.toLowerCase().includes(searchTerm)) ||
       (c.description && c.description.toLowerCase().includes(searchTerm))
     );
   }
@@ -40,10 +36,6 @@ async function renderCoursesTable(forceRefresh = false) {
 
   if (filterTrimester) {
     coursesList = coursesList.filter(c => c.trimester === filterTrimester);
-  }
-
-  if (filterCurriculum) {
-    coursesList = coursesList.filter(c => c.curriculum === filterCurriculum);
   }
 
   if (sortValue) {
@@ -72,7 +64,6 @@ async function renderCoursesTable(forceRefresh = false) {
       <td>${c.year_level}</td>
       <td>${c.degree}</td>
       <td>${c.trimester}</td>
-      <td>${c.curriculum || (window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : '2024-2025')}</td>
       <td>${c.description || ''}</td>
       <td>
         <div class="action-buttons-container">
@@ -95,28 +86,6 @@ btnAddCourse.addEventListener("click", () => {
   courseDegreeSelect.value = "BSIT";
   courseTrimesterSelect.value = "1st Trimester";
   
-  // Use active curriculum as default, with fallbacks
-  if (window.ActiveCurriculumManager) {
-    const activeCurriculum = window.ActiveCurriculumManager.getActiveCurriculum();
-    if (curriculaList.some(c => c.year === activeCurriculum)) {
-      courseCurriculumSelect.value = activeCurriculum;
-    } else if (curriculaList.length > 0) {
-      courseCurriculumSelect.value = curriculaList[0].year;
-    } else {
-      courseCurriculumSelect.value = "2024-2025";
-    }
-  } else {
-    // Fallback to previous behavior if ActiveCurriculumManager is not available
-    const filterCurriculumValue = courseFilterCurriculum.value;
-    if (filterCurriculumValue && curriculaList.some(c => c.year === filterCurriculumValue)) {
-      courseCurriculumSelect.value = filterCurriculumValue;
-    } else if (curriculaList.length > 0) {
-      courseCurriculumSelect.value = curriculaList[0].year;
-    } else {
-      courseCurriculumSelect.value = "2024-2025";
-    }
-  }
-  
   document.getElementById("modal-course-title").textContent = "Add Course";
   showModal(modalCourse);
 });
@@ -131,7 +100,6 @@ btnSaveCourse.addEventListener("click", async () => {
   const year_level = yearLevelElement ? yearLevelElement.value : "1st yr"; // Default to 1st yr if none selected
   const degree = courseDegreeSelect.value;
   const trimester = courseTrimesterSelect.value;
-  const curriculum = courseCurriculumSelect.value;
   const description = courseDescriptionTextarea.value.trim();
   
   if (!subject || !units) {
@@ -141,9 +109,9 @@ btnSaveCourse.addEventListener("click", async () => {
   
   try {
     if (id) {
-      await apiPut("courses", id, { subject, unitCategory: unit_category, units, yearLevel: year_level, degree, trimester, curriculum, description });
+      await apiPut("courses", id, { subject, unitCategory: unit_category, units, yearLevel: year_level, degree, trimester, description });
     } else {
-      await apiPost("courses", { subject, unitCategory: unit_category, units, yearLevel: year_level, degree, trimester, curriculum, description });
+      await apiPost("courses", { subject, unitCategory: unit_category, units, yearLevel: year_level, degree, trimester, description });
     }
     
     hideModal(modalCourse);
@@ -174,14 +142,6 @@ window.editCourse = async function(id) {
   courseUnitsInput.value = found.units;
   courseDegreeSelect.value = found.degree;
   courseTrimesterSelect.value = found.trimester;
-  // Use the course's curriculum if available, otherwise use the first curriculum in the list or default to "2024-2025" as fallback
-  if (found.curriculum && curriculaList.some(c => c.year === found.curriculum)) {
-    courseCurriculumSelect.value = found.curriculum;
-  } else if (curriculaList.length > 0) {
-    courseCurriculumSelect.value = curriculaList[0].year;
-  } else {
-    courseCurriculumSelect.value = "2024-2025";
-  }
   courseDescriptionTextarea.value = found.description || '';
   
   if (found.unit_category === "PureLec") {
@@ -239,7 +199,6 @@ courseSearch.addEventListener("input", debounce(renderCoursesTable, 200));
 courseFilterYearLevel.addEventListener("change", debounce(renderCoursesTable, 200));
 courseFilterDegree.addEventListener("change", debounce(renderCoursesTable, 200));
 courseFilterTrimester.addEventListener("change", debounce(renderCoursesTable, 200));
-courseFilterCurriculum.addEventListener("change", debounce(renderCoursesTable, 200));
 courseSort.addEventListener("change", debounce(renderCoursesTable, 200));
 
 // CSV Import/Export functionality
@@ -295,14 +254,13 @@ async function importCoursesFromCsv(csvText) {
   try {
     // Parse header
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-    // Curriculum is OPTIONAL in CSV; we'll default to 2024-2025 when missing
     const requiredHeaders = ['subject', 'unit_category', 'units', 'year_level', 'degree', 'trimester'];
     
     // Check if all required headers are present
     const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
     if (missingHeaders.length > 0) {
       hideLoadingOverlay();
-      alert(`Missing required columns: ${missingHeaders.join(', ')}\nRequired columns: ${requiredHeaders.join(', ')}\nOptional columns: curriculum, description`);
+      alert(`Missing required columns: ${missingHeaders.join(', ')}\nRequired columns: ${requiredHeaders.join(', ')}\nOptional columns: description`);
       return;
     }
     
@@ -321,11 +279,6 @@ async function importCoursesFromCsv(csvText) {
       headers.forEach((header, index) => {
         course[header] = values[index];
       });
-      
-      // Set default curriculum if not provided
-      if (!course.curriculum) {
-        course.curriculum = window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : '2024-2025';
-      }
       
       // Validate required fields
       if (!course.subject || !course.units) {
@@ -372,7 +325,6 @@ async function importCoursesFromCsv(csvText) {
         yearLevel: course.year_level,
         degree: course.degree,
         trimester: course.trimester,
-        curriculum: course.curriculum,
         description: course.description || ''
       });
     }
@@ -384,12 +336,12 @@ async function importCoursesFromCsv(csvText) {
       return;
     }
     
-    // De-duplicate within CSV by subject+curriculum+degree (case-insensitive on subject)
+    // De-duplicate within CSV by subject+degree (case-insensitive on subject)
     const seenKeys = new Set();
     const csvDuplicates = [];
     const uniqueParsed = [];
     for (const c of parsedCourses) {
-      const key = `${String(c.subject).trim().toLowerCase()}|${String(c.curriculum || (window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : '2024-2025'))}|${String(c.degree).trim()}`;
+      const key = `${String(c.subject).trim().toLowerCase()}|${String(c.degree).trim()}`;
       if (seenKeys.has(key)) {
         csvDuplicates.push(`${c.subject} (${c.degree})`);
       } else {
@@ -402,12 +354,12 @@ async function importCoursesFromCsv(csvText) {
     showLoadingOverlay('Checking existing courses...');
     const existingCourses = await apiGet('courses');
     const existingKeys = new Set(
-      existingCourses.map(ec => `${String(ec.subject).trim().toLowerCase()}|${String(ec.curriculum || (window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : '2024-2025'))}|${String(ec.degree).trim()}`)
+      existingCourses.map(ec => `${String(ec.subject).trim().toLowerCase()}|${String(ec.degree).trim()}`)
     );
     const alreadyExisting = [];
     const toImport = [];
     for (const c of uniqueParsed) {
-      const key = `${String(c.subject).trim().toLowerCase()}|${String(c.curriculum || (window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : '2024-2025'))}|${String(c.degree).trim()}`;
+      const key = `${String(c.subject).trim().toLowerCase()}|${String(c.degree).trim()}`;
       if (existingKeys.has(key)) {
         alreadyExisting.push(`${c.subject} (${c.degree})`);
       } else {
@@ -495,7 +447,7 @@ async function exportCoursesToCsv() {
     showLoadingOverlay(`Generating CSV file for ${coursesList.length} courses...`);
     
     // CSV headers
-    const headers = ['subject', 'unit_category', 'units', 'year_level', 'degree', 'trimester', 'curriculum', 'description'];
+    const headers = ['subject', 'unit_category', 'units', 'year_level', 'degree', 'trimester', 'description'];
     
     // Create CSV content
     let csvContent = headers.join(',') + '\n';
@@ -508,7 +460,6 @@ async function exportCoursesToCsv() {
         course.year_level || '',
         course.degree || '',
         course.trimester || '',
-        course.curriculum || (window.ActiveCurriculumManager ? window.ActiveCurriculumManager.getActiveCurriculum() : '2024-2025'),
         (course.description || '').replace(/,/g, ';') // Replace commas with semicolons in description
       ];
       csvContent += row.join(',') + '\n';
@@ -542,209 +493,6 @@ async function exportCoursesToCsv() {
   }
 }
 
-/**************************************************************
- * CURRICULUM MANAGEMENT FUNCTIONALITY
- **************************************************************/
-const btnManageCurriculum = document.getElementById("btn-manage-curriculum");
-const modalCurriculumManagement = document.getElementById("modal-curriculum-management");
-const modalAddEditCurriculum = document.getElementById("modal-add-edit-curriculum");
-const btnAddCurriculum = document.getElementById("btn-add-curriculum");
-const btnSaveCurriculum = document.getElementById("btn-save-curriculum");
-const btnCancelCurriculum = document.getElementById("btn-cancel-curriculum");
-const curriculumTableBody = document.getElementById("curriculum-table-body");
-const curriculumYearInput = document.getElementById("curriculum-year");
-const curriculumIdInput = document.getElementById("curriculum-id");
-const modalCurriculumTitle = document.getElementById("modal-curriculum-title");
-
-// Curriculum data will be loaded from the database
-let curriculaList = [];
-
-// Load curricula from database
-async function loadCurriculaFromDatabase() {
-  try {
-    curriculaList = await apiGet("curricula");
-  } catch (error) {
-    console.error("Error loading curricula:", error);
-    alert("Error loading curricula from database.");
-  }
-}
-
-// Open curriculum management modal
-btnManageCurriculum.addEventListener("click", async () => {
-  await loadCurriculaFromDatabase();
-  renderCurriculaTable();
-  modalCurriculumManagement.classList.remove("hidden");
-});
-
-// Add new curriculum button
-btnAddCurriculum.addEventListener("click", () => {
-  modalCurriculumTitle.textContent = "Add Curriculum";
-  curriculumYearInput.value = "";
-  curriculumIdInput.value = "";
-  modalAddEditCurriculum.classList.remove("hidden");
-});
-
-// Save curriculum
-btnSaveCurriculum.addEventListener("click", async () => {
-  const year = curriculumYearInput.value.trim();
-  const id = curriculumIdInput.value;
-  
-  if (!year) {
-    alert("Please enter a curriculum year.");
-    return;
-  }
-  
-  // Check for duplicate curriculum year
-  const existingCurriculum = curriculaList.find(c => c.year === year && c.id != id);
-  if (existingCurriculum) {
-    alert("This curriculum year already exists.");
-    return;
-  }
-  
-  try {
-    if (id) {
-      // Edit existing curriculum
-      await apiPut("curricula", id, { year });
-    } else {
-      // Add new curriculum
-      await apiPost("curricula", { year });
-    }
-    
-    // Reload curricula from database
-    await loadCurriculaFromDatabase();
-    
-    // Clear cache to ensure fresh data
-    clearApiCache('curricula');
-    
-    // Update curriculum dropdowns
-    updateCurriculumDropdowns();
-    
-    // Close modal and refresh table
-    modalAddEditCurriculum.classList.add("hidden");
-    renderCurriculaTable();
-  } catch (error) {
-    console.error("Error saving curriculum:", error);
-    alert("Error saving curriculum to database.");
-  }
-});
-
-// Cancel curriculum editing
-btnCancelCurriculum.addEventListener("click", () => {
-  modalAddEditCurriculum.classList.add("hidden");
-});
-
-// Render curricula table
-function renderCurriculaTable() {
-  curriculumTableBody.innerHTML = "";
-  
-  curriculaList.forEach(curriculum => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${curriculum.year}</td>
-      <td>
-        <button class="action-edit-btn" onclick="editCurriculum(${curriculum.id})">Edit</button>
-        <button class="action-delete-btn" onclick="deleteCurriculum(${curriculum.id})">Delete</button>
-      </td>
-    `;
-    curriculumTableBody.appendChild(row);
-  });
-}
-
-// Edit curriculum
-window.editCurriculum = function(id) {
-  const curriculum = curriculaList.find(c => c.id == id);
-  if (curriculum) {
-    modalCurriculumTitle.textContent = "Edit Curriculum";
-    curriculumYearInput.value = curriculum.year;
-    curriculumIdInput.value = curriculum.id;
-    modalAddEditCurriculum.classList.remove("hidden");
-  }
-};
-
-// Delete curriculum
-window.deleteCurriculum = async function(id) {
-  const curriculum = curriculaList.find(c => c.id == id);
-  if (curriculum && confirm(`Are you sure you want to delete curriculum "${curriculum.year}"?`)) {
-    try {
-      await apiDelete("curricula", id);
-      
-      // Reload curricula from database
-      await loadCurriculaFromDatabase();
-      
-      // Clear cache to ensure fresh data
-      clearApiCache('curricula');
-      
-      // Update curriculum dropdowns
-      updateCurriculumDropdowns();
-      renderCurriculaTable();
-    } catch (error) {
-      console.error("Error deleting curriculum:", error);
-      alert("Error deleting curriculum from database.");
-    }
-  }
-};
-
-// Update all curriculum dropdowns in the application
-function updateCurriculumDropdowns() {
-  const dropdowns = [courseCurriculumSelect, courseFilterCurriculum];
-  
-  dropdowns.forEach(dropdown => {
-    if (dropdown) {
-      const currentValue = dropdown.value;
-      dropdown.innerHTML = "";
-      
-      curriculaList.forEach(curriculum => {
-        const option = document.createElement("option");
-        option.value = curriculum.year;
-        option.textContent = curriculum.year;
-        dropdown.appendChild(option);
-      });
-      
-      // Restore previous selection if it still exists, otherwise use active curriculum
-      if (curriculaList.find(c => c.year === currentValue)) {
-        dropdown.value = currentValue;
-      } else if (window.ActiveCurriculumManager) {
-        const activeCurriculum = window.ActiveCurriculumManager.getActiveCurriculum();
-        if (curriculaList.find(c => c.year === activeCurriculum)) {
-          dropdown.value = activeCurriculum;
-        }
-      }
-    }
-  });
-  
-  // Update the active curriculum manager with the new curricula list
-  if (window.ActiveCurriculumManager) {
-    window.ActiveCurriculumManager.updateCurriculaList(curriculaList);
-  }
-}
-
-// Initialize curricula on page load
-async function initializeCurricula() {
-  await loadCurriculaFromDatabase();
-  updateCurriculumDropdowns();
-  
-  // Set filter to active curriculum if available
-  if (window.ActiveCurriculumManager && courseFilterCurriculum) {
-    const activeCurriculum = window.ActiveCurriculumManager.getActiveCurriculum();
-    if (curriculaList.some(c => c.year === activeCurriculum)) {
-      courseFilterCurriculum.value = activeCurriculum;
-    }
-  }
-  
-  // Render table with active curriculum filter
-  await renderCoursesTable();
-}
-
-// Call initialization when the page loads
-initializeCurricula();
-
-// Listen for active curriculum changes and update filter
-if (window.ActiveCurriculumManager) {
-  window.ActiveCurriculumManager.addActiveCurriculumChangeListener((newActiveCurriculum) => {
-    if (courseFilterCurriculum && curriculaList.some(c => c.year === newActiveCurriculum)) {
-      courseFilterCurriculum.value = newActiveCurriculum;
-      renderCoursesTable(); // Refresh the table with new filter
-    }
-  });
-}
+// Initialize courses table on page load
+renderCoursesTable();
 

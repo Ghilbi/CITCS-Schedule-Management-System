@@ -45,8 +45,11 @@ pool.connect(async (err, client, release) => {
 async function createTables() {
   await pool.query(`CREATE TABLE IF NOT EXISTS rooms (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'Both'
   )`);
+  // Ensure existing rooms table has the type column
+  await ensureRoomTypeColumn();
   await pool.query(`CREATE TABLE IF NOT EXISTS courses (
     id SERIAL PRIMARY KEY,
     subject TEXT NOT NULL,
@@ -86,6 +89,14 @@ async function createTables() {
   await ensureCourseCurriculumColumn();
 }
 createTables().catch(err => console.error("Error creating tables", err));
+
+async function ensureRoomTypeColumn() {
+  try {
+    await pool.query(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'Both'`);
+  } catch (err) {
+    console.log('Room type column already exists or error adding it:', err.message);
+  }
+}
 
 async function ensureCourseCurriculumColumn() {
   try {
@@ -366,8 +377,8 @@ app.post('/api/:table', async (req, res) => {
       } catch (checkErr) {
         console.error("Error checking for duplicate room:", checkErr);
       }
-      query = 'INSERT INTO rooms (name) VALUES ($1)';
-      params = [data.name];
+      query = 'INSERT INTO rooms (name, type) VALUES ($1, $2)';
+      params = [data.name, data.type || 'Both'];
       break;
     case 'courses':
       // Ensure curriculum is not NULL/missing and normalize before duplicate check
@@ -444,8 +455,8 @@ app.put('/api/:table/:id', async (req, res) => {
   
   switch (table) {
     case 'rooms':
-      query = 'UPDATE rooms SET name = $1 WHERE id = $2';
-      params = [data.name, id];
+      query = 'UPDATE rooms SET name = $1, type = $2 WHERE id = $3';
+      params = [data.name, data.type || 'Both', id];
       break;
     case 'courses':
       // Ensure curriculum is not NULL/missing and normalize before duplicate check

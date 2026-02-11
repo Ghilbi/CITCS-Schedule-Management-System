@@ -179,6 +179,13 @@ async function renderSectionViewTables() {
     sections.forEach(section => {
       const th = document.createElement("th");
       th.textContent = section;
+      th.classList.add("clickable-section-header");
+      th.title = `Generate schedule for ${section}`;
+      th.addEventListener("click", () => {
+        if (typeof openSectionAutoScheduleModal === "function") {
+          openSectionAutoScheduleModal(section);
+        }
+      });
       // Remove transition styles
       th.style.transition = "";
       headerRow.appendChild(th);

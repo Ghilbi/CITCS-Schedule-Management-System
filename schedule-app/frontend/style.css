@@ -238,31 +238,6 @@ h3 { font-size: 1.25rem; }
   color: var(--color-primary);
 }
 
-.subtle-curriculum-btn {
-  display: flex;
-  align-items: center;
-  padding: 6px 12px;
-  background: transparent;
-  color: #666;
-  border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.subtle-curriculum-btn:hover {
-  background: #f5f5f5;
-  border-color: #999;
-  color: #333;
-}
-
-.subtle-curriculum-btn:active {
-  background: #e8e8e8;
-}
-
 .header-actions {
   display: flex;
   gap: 10px;
@@ -1272,6 +1247,16 @@ tbody tr:hover td { background: var(--color-hover); }
   background-color: #f8f9fa;
   font-weight: 500;
   color: #5f6368;
+}
+
+.schedule-table th.clickable-section-header {
+  cursor: pointer;
+  position: relative;
+}
+
+.schedule-table th.clickable-section-header:hover {
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
 .schedule-table td.clickable-cell {
@@ -3097,6 +3082,45 @@ nav:not(.collapsed) button {
   100% { transform: scale(1); }
 }
 
+/* Room Type Badges */
+.room-type-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.room-type-leclab {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #c6dafc;
+}
+
+.room-type-purelec {
+  background-color: #fef7e0;
+  color: #e37400;
+  border: 1px solid #fce8b2;
+}
+
+.room-type-both {
+  background-color: #e6f4ea;
+  color: #1e8e3e;
+  border: 1px solid #ceead6;
+}
+
+/* Room type info text */
+.room-type-info {
+  font-size: 0.78rem;
+  color: #666;
+  margin-top: 2px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
 #table-rooms .table-edit-btn,
 #table-rooms .table-delete-btn {
   padding: 4px 10px;
@@ -3617,6 +3641,27 @@ section h2 {
   gap: 15px;
   max-height: 400px; 
   overflow-y: auto; 
+}
+
+.section-autoschedule-modal-content {
+  width: 460px;
+  max-width: 92vw;
+}
+
+.section-autoschedule-intro {
+  margin: 6px 0 14px;
+  color: #4b5563;
+}
+
+.section-autoschedule-room-group {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.section-autoschedule-hint {
+  margin: 2px 0 14px;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
 .leclab-assignment-section {

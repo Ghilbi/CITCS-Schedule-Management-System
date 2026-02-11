@@ -27,8 +27,7 @@ let analyticsData = {
   courses: [],
   courseOfferings: [],
   schedules: [],
-  rooms: [],
-  curricula: []
+  rooms: []
 };
 
 let analyticsFilter = { trimester: 'all' };
@@ -58,19 +57,17 @@ function getAllAvailableRooms() {
  */
 async function loadAnalyticsData() {
   try {
-    const [courses, courseOfferings, schedules, rooms, curricula] = await Promise.all([
+    const [courses, courseOfferings, schedules, rooms] = await Promise.all([
       apiGet('courses', true),
       apiGet('course_offerings', true),
       apiGet('schedules', true),
-      apiGet('rooms', true),
-      apiGet('curricula', true)
+      apiGet('rooms', true)
     ]);
     analyticsData = {
       courses: courses || [],
       courseOfferings: courseOfferings || [],
       schedules: schedules || [],
-      rooms: rooms || [],
-      curricula: curricula || []
+      rooms: rooms || []
     };
   } catch (error) {
     console.error('Error loading analytics data:', error);

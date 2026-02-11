@@ -292,12 +292,6 @@ function setupTrimesterTabs() {
 async function populateCourseOfferingCourses() {
   let coursesList = await apiGet("courses");
   
-  // Filter by active curriculum first
-  if (window.ActiveCurriculumManager) {
-    const activeCurriculum = window.ActiveCurriculumManager.getActiveCurriculum();
-    coursesList = coursesList.filter(c => (c.curriculum || activeCurriculum) === activeCurriculum);
-  }
-  
   // Get the selected degree filter value - use the manual tab's degree filter
   const degreeFilter = document.getElementById("courseOffering-degree").value;
   
@@ -532,12 +526,6 @@ document.getElementById("btn-add-all-courses").addEventListener("click", async f
   
   // Get all courses for the selected degree to check for duplicates
   let coursesToAdd = await apiGet("courses");
-  
-  // Filter by active curriculum first
-  if (window.ActiveCurriculumManager) {
-    const activeCurriculum = window.ActiveCurriculumManager.getActiveCurriculum();
-    coursesToAdd = coursesToAdd.filter(course => (course.curriculum || activeCurriculum) === activeCurriculum);
-  }
   
   coursesToAdd = coursesToAdd.filter(course =>
     course.degree === selectedDegree &&
@@ -1491,16 +1479,6 @@ window.deleteSection = async function(section, categoryKey) {
 offeringSearch.addEventListener("input", debounce(renderCourseOfferingTable, 200));
 offeringFilterType.addEventListener("change", debounce(renderCourseOfferingTable, 200));
 offeringSort.addEventListener("change", debounce(renderCourseOfferingTable, 200));
-
-// Listen for active curriculum changes and refresh course offerings
-if (window.ActiveCurriculumManager) {
-  window.ActiveCurriculumManager.addActiveCurriculumChangeListener(async () => {
-    // Refresh the course dropdown when curriculum changes
-    await populateCourseOfferingCourses();
-    // Refresh the course offering table
-    await renderCourseOfferingTable();
-  });
-}
 
 // Collapsible filter functionality for Course Offerings
 const offeringFilterToggleBtn = document.getElementById("offering-filter-toggle-btn");

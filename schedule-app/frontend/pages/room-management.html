@@ -70,6 +70,7 @@
         <tr>
           <th>ID</th>
           <th>Room Name</th>
+          <th>Type</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -85,6 +86,13 @@
     <label for="room-name">Room Name (letters and numbers only):</label>
     <input type="text" id="room-name" placeholder="e.g., M308" pattern="[A-Za-z0-9]+" title="Only letters and numbers allowed" />
     <p class="info-text">Room names should only contain letters and numbers, no spaces or special characters.</p>
+    <label for="room-type">Room Type:</label>
+    <select id="room-type">
+      <option value="Lec/Lab">Lec/Lab</option>
+      <option value="Pure Lec">Pure Lec</option>
+      <option value="Both" selected>Both</option>
+    </select>
+    <p class="info-text room-type-info"><strong>Lec/Lab</strong> — dedicated lab room &nbsp;|&nbsp; <strong>Pure Lec</strong> — lecture only &nbsp;|&nbsp; <strong>Both</strong> — can be used for either</p>
     <input type="hidden" id="room-id" />
     <button id="btn-save-room" class="save-btn">Save</button>
   </div>

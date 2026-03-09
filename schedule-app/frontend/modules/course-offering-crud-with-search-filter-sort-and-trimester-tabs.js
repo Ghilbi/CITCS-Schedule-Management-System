@@ -997,17 +997,34 @@ async function renderCourseOfferingTable() {
   sortedCategoryKeys.forEach(categoryKey => {
     const offerings = categorizedOfferings[categoryKey];
     
-    // Further group by section
-    const sectionGroups = {};
+    // Consolidate offerings: group by courseId + type so the same course
+    // across multiple sections appears only once with sections comma-separated
+    const courseGroups = {};
     offerings.forEach(off => {
-      const section = off.section || 'Unassigned';
+      const course = coursesList.find(c => c.id == off.courseId);
+      const groupKey = `${off.courseId}_${off.type}`;
       
-      if (!sectionGroups[section]) {
-        sectionGroups[section] = [];
+      if (!courseGroups[groupKey]) {
+        courseGroups[groupKey] = {
+          ids: [],
+          courseId: off.courseId,
+          course: course,
+          sections: [],
+          type: off.type,
+          units: off.units,
+          trimester: off.trimester,
+          degree: off.degree || (course ? course.degree : ""),
+        };
       }
       
-      sectionGroups[section].push(off);
+      courseGroups[groupKey].ids.push(off.id);
+      if (!courseGroups[groupKey].sections.includes(off.section)) {
+        courseGroups[groupKey].sections.push(off.section);
+      }
     });
+    
+    // Collect unique sections for this category (used for section-level delete)
+    const uniqueSections = [...new Set(offerings.map(off => off.section))].sort();
     
     // Create category group
     const categoryGroup = document.createElement('div');
@@ -1018,116 +1035,87 @@ async function renderCourseOfferingTable() {
     categoryHeader.className = 'category-header';
     categoryHeader.innerHTML = `
       <span>${categoryKey}</span>
-      <span class="category-count">${Object.keys(sectionGroups).length}</span>
+      <span class="category-count">${uniqueSections.length} section${uniqueSections.length !== 1 ? 's' : ''}</span>
     `;
     
     // Create content container
     const categoryContent = document.createElement('div');
     categoryContent.className = 'category-content';
     
-    // Sort sections alphabetically
-    const sortedSections = Object.keys(sectionGroups).sort();
+    // Create section pills row for section-level management
+    if (uniqueSections.length > 0) {
+      const sectionPillsRow = document.createElement('div');
+      sectionPillsRow.className = 'section-pills-row';
+      sectionPillsRow.innerHTML = `<span class="section-pills-label">Sections:</span>`;
+      uniqueSections.forEach(section => {
+        const pill = document.createElement('span');
+        pill.className = 'section-pill';
+        pill.innerHTML = `${section} <button class="section-pill-delete" onclick="deleteSection('${section}', '${categoryKey}'); event.stopPropagation();" title="Delete Section ${section}">×</button>`;
+        sectionPillsRow.appendChild(pill);
+      });
+      categoryContent.appendChild(sectionPillsRow);
+    }
     
-    // Create section category for each section
-    sortedSections.forEach(section => {
-      const sectionOfferings = sectionGroups[section];
-      
-      // Create section category group
-      const sectionCategoryGroup = document.createElement('div');
-      sectionCategoryGroup.className = 'section-category-group';
-      
-      // Create section header
-      const sectionCategoryHeader = document.createElement('div');
-      sectionCategoryHeader.className = 'section-category-header';
-      sectionCategoryHeader.innerHTML = `
-        <span>Section: ${section}</span>
-        <button class="section-delete-btn" onclick="deleteSection('${section}', '${categoryKey}'); event.stopPropagation();" title="Delete Section">×</button>
-      `;
-      
-      // Create section content container
-      const sectionCategoryContent = document.createElement('div');
-      sectionCategoryContent.className = 'section-category-content';
-      
-      // Create section table wrapper
-      const sectionTableWrapper = document.createElement('div');
-      sectionTableWrapper.className = 'section-category-table-wrapper';
-      
-      // Create table for this section
-      const sectionTable = document.createElement('table');
-      sectionTable.className = 'course-offering-table';
-      sectionTable.innerHTML = `
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Course</th>
-            <th>Section</th>
-            <th>Type</th>
-            <th>Units</th>
-            <th>Trimester</th>
-            <th>Degree</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      `;
-      
-      const sectionTbody = sectionTable.querySelector('tbody');
-      
-      // Add offerings to this section
-      sectionOfferings.forEach(off => {
-        const course = coursesList.find(c => c.id == off.courseId);
-        const courseDisplay = course ? course.subject : off.courseId;
-        const trimester = off ? off.trimester : (course ? course.trimester : "");
-        const degree = off.degree || (course ? course.degree : "");
-        
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${off.id}</td>
-          <td>${courseDisplay}</td>
-          <td>${off.section}</td>
-          <td>${off.type}</td>
-          <td>${off.units}</td>
-          <td>${trimester}</td>
-          <td>${degree}</td>
-          <td>
-            <div class="action-buttons-container">
-              <button class="action-edit-btn" onclick="editCourseOffering(${off.id})">Edit</button>
-              <button class="action-delete-btn" onclick="deleteCourseOffering(${off.id})">Delete</button>
-            </div>
-          </td>
-        `;
-        sectionTbody.appendChild(tr);
-      });
-      
-      sectionTableWrapper.appendChild(sectionTable);
-      sectionCategoryContent.appendChild(sectionTableWrapper);
-      
-      // Add event listener to toggle section
-      sectionCategoryHeader.addEventListener('click', (e) => {
-        // Prevent triggering parent category toggle
-        e.stopPropagation();
-        
-        // Toggle active state for this header
-        sectionCategoryHeader.classList.toggle('active');
-        
-        // Toggle open state for this content
-        sectionCategoryContent.classList.toggle('open');
-      });
-      
-      // Add to section category group
-      sectionCategoryGroup.appendChild(sectionCategoryHeader);
-      sectionCategoryGroup.appendChild(sectionCategoryContent);
-      
-      // Add to parent category content
-      categoryContent.appendChild(sectionCategoryGroup);
+    // Create table wrapper
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'section-category-table-wrapper';
+    
+    // Create consolidated table for this category
+    const table = document.createElement('table');
+    table.className = 'course-offering-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Section</th>
+          <th>Type</th>
+          <th>Units</th>
+          <th>Trimester</th>
+          <th>Degree</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    
+    const tbody = table.querySelector('tbody');
+    
+    // Sort groups alphabetically by course name
+    const sortedGroups = Object.values(courseGroups).sort((a, b) => {
+      const nameA = a.course ? a.course.subject : '';
+      const nameB = b.course ? b.course.subject : '';
+      return nameA.localeCompare(nameB);
     });
+    
+    sortedGroups.forEach(group => {
+      const courseDisplay = group.course ? group.course.subject : group.courseId;
+      const sectionsDisplay = group.sections.sort().join(', ');
+      const idsJson = JSON.stringify(group.ids);
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${courseDisplay}</td>
+        <td>${sectionsDisplay}</td>
+        <td>${group.type}</td>
+        <td>${group.units}</td>
+        <td>${group.trimester}</td>
+        <td>${group.degree}</td>
+        <td>
+          <div class="action-buttons-container">
+            <button class="action-edit-btn" onclick="editCourseOffering(${group.ids[0]})">Edit</button>
+            <button class="action-delete-btn" onclick="deleteCourseOfferingGroup(${group.ids.length > 1 ? "'" + idsJson.replace(/'/g, "\\'") + "'" : group.ids[0]})">Delete</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    
+    tableWrapper.appendChild(table);
+    categoryContent.appendChild(tableWrapper);
     
     // Add event listener to toggle category
     categoryHeader.addEventListener('click', () => {
-      // Toggle active state for this header
       categoryHeader.classList.toggle('active');
-      
-      // Toggle open state for this content
       categoryContent.classList.toggle('open');
     });
     
@@ -1402,11 +1390,48 @@ window.deleteCourseOffering = async function(id) {
         requestSectionViewRefresh();
       } else {
         await renderSectionViewTables();
-        await validateAllComplementary(); // Debounced validation
+        await validateAllComplementary();
       }
     }
   } catch (e) {
     console.error('Section View refresh after offering delete failed:', e);
+  }
+};
+
+window.deleteCourseOfferingGroup = async function(idsOrSingleId) {
+  let ids;
+  if (typeof idsOrSingleId === 'string') {
+    ids = JSON.parse(idsOrSingleId);
+  } else {
+    ids = [idsOrSingleId];
+  }
+  
+  const confirmMsg = ids.length > 1
+    ? `This course is offered in ${ids.length} sections. Delete all ${ids.length} offerings?`
+    : "Are you sure you want to delete this offering?";
+  
+  if (!confirm(confirmMsg)) return;
+  
+  for (const id of ids) {
+    await apiDelete("course_offerings", id);
+  }
+  
+  clearApiCache('courses');
+  clearApiCache('course_offerings');
+  await renderCourseOfferingTable();
+  await forceValidateAllComplementary();
+  try {
+    const sectionEl = document.getElementById('section-section-view');
+    if (sectionEl && !sectionEl.classList.contains('hidden')) {
+      if (typeof requestSectionViewRefresh === 'function') {
+        requestSectionViewRefresh();
+      } else {
+        await renderSectionViewTables();
+        await validateAllComplementary();
+      }
+    }
+  } catch (e) {
+    console.error('Section View refresh after offering group delete failed:', e);
   }
 };
 

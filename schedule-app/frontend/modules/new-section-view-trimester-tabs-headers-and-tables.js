@@ -394,15 +394,83 @@ async function openSectionViewModal(dayType, time, section) {
   document.getElementById("sectionview-time").value = time;
   document.getElementById("sectionview-section").value = section;
   
-  // Reset room group filter to "Group A"
-  document.getElementById("room-group-a").checked = true;
+  // Detect which room group the section is already using and lock to it
+  const allSchedules = await apiGet("schedules");
+  const allCourses = await apiGet("courses");
+  const allRoomCols = await getAllRoomColumns();
+  const sectionState = getSectionViewState();
   
+  const sectionRoomEntries = allSchedules.filter(sch => {
+    const course = allCourses.find(c => c.id === sch.courseId);
+    if (!course || sch.col <= 0) return false;
+    const isInternationalView = sectionState.yearLevel === "International";
+    if (isInternationalView) {
+      return (sch.section === section || sch.section2 === section);
+    }
+    return (sch.section === section || sch.section2 === section) &&
+           course.trimester === sectionState.trimester &&
+           course.year_level === sectionState.yearLevel;
+  });
+  
+  let detectedGroup = null;
+  for (const entry of sectionRoomEntries) {
+    const colIndex = entry.col - 1;
+    if (colIndex >= 0 && colIndex < allRoomCols.length) {
+      const roomName = allRoomCols[colIndex];
+      if (roomName.endsWith(" A")) { detectedGroup = "A"; break; }
+      if (roomName.endsWith(" B")) { detectedGroup = "B"; break; }
+    }
+  }
+  
+  const roomGroupA = document.getElementById("room-group-a");
+  const roomGroupB = document.getElementById("room-group-b");
+  const leclabGroupA = document.getElementById("leclab-room-group-a");
+  const leclabGroupB = document.getElementById("leclab-room-group-b");
+  
+  if (detectedGroup === "A") {
+    roomGroupA.checked = true;
+    roomGroupB.checked = false;
+    roomGroupA.disabled = false;
+    roomGroupB.disabled = true;
+    roomGroupA.parentElement.style.opacity = "1";
+    roomGroupB.parentElement.style.opacity = "0.45";
+    leclabGroupA.checked = true;
+    leclabGroupB.checked = false;
+    leclabGroupA.disabled = false;
+    leclabGroupB.disabled = true;
+    leclabGroupA.parentElement.style.opacity = "1";
+    leclabGroupB.parentElement.style.opacity = "0.45";
+  } else if (detectedGroup === "B") {
+    roomGroupB.checked = true;
+    roomGroupA.checked = false;
+    roomGroupB.disabled = false;
+    roomGroupA.disabled = true;
+    roomGroupB.parentElement.style.opacity = "1";
+    roomGroupA.parentElement.style.opacity = "0.45";
+    leclabGroupB.checked = true;
+    leclabGroupA.checked = false;
+    leclabGroupB.disabled = false;
+    leclabGroupA.disabled = true;
+    leclabGroupB.parentElement.style.opacity = "1";
+    leclabGroupA.parentElement.style.opacity = "0.45";
+  } else {
+    roomGroupA.checked = true;
+    roomGroupA.disabled = false;
+    roomGroupB.disabled = false;
+    roomGroupA.parentElement.style.opacity = "1";
+    roomGroupB.parentElement.style.opacity = "1";
+    leclabGroupA.checked = true;
+    leclabGroupA.disabled = false;
+    leclabGroupB.disabled = false;
+    leclabGroupA.parentElement.style.opacity = "1";
+    leclabGroupB.parentElement.style.opacity = "1";
+  }
+
   // Hide LecLab interface initially
   hideLecLabInterface();
   
   const schedules = await apiGet("schedules");
   const courses = await apiGet("courses");
-  const sectionState = getSectionViewState();
   const offerings = await apiGet("course_offerings");
   const isInternationalView = sectionState.yearLevel === "International";
   const existing = schedules.find(sch => {

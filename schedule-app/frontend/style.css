@@ -3454,6 +3454,58 @@ section h2 {
   animation: fadeInRight 0.3s ease forwards;
 }
 
+/* Section pills for consolidated course offering view */
+.section-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  background-color: rgba(232, 245, 233, 0.3);
+}
+
+.section-pills-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #555);
+  margin-right: 4px;
+}
+
+.section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-primary-light, #c8e6c9);
+  color: var(--color-primary, #2e7d32);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.section-pill:hover {
+  background-color: var(--color-primary, #2e7d32);
+  color: #fff;
+}
+
+.section-pill-delete {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.section-pill-delete:hover {
+  opacity: 1;
+}
+
 .loading-overlay {
   position: fixed;
   top: 0;

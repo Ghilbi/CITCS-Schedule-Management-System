@@ -3,13 +3,93 @@
  **************************************************************/
 const modalSectionView = document.getElementById("modal-sectionview");
 
+async function detectAndLockRoomGroup(section, schedules, courses, offerings, sectionState) {
+  const allRoomCols = await getAllRoomColumns();
+  const isInternationalView = sectionState.yearLevel === "International";
+
+  const sectionRoomEntries = schedules.filter(sch => {
+    const course = courses.find(c => c.id === sch.courseId);
+    if (!course || sch.col <= 0) return false;
+    if (!(sch.section === section || sch.section2 === section)) return false;
+    if (isInternationalView) {
+      return offerings.some(off =>
+        off.courseId === sch.courseId &&
+        off.type === sch.unitType &&
+        off.trimester === sectionState.trimester &&
+        ((sch.section && off.section === sch.section) || (sch.section2 && off.section === sch.section2))
+      );
+    }
+    return course.trimester === sectionState.trimester &&
+           course.year_level === sectionState.yearLevel;
+  });
+
+  let detectedGroup = null;
+  for (const entry of sectionRoomEntries) {
+    const colIndex = entry.col - 1;
+    if (colIndex >= 0 && colIndex < allRoomCols.length) {
+      const roomName = allRoomCols[colIndex];
+      if (roomName.endsWith(" A")) { detectedGroup = "A"; break; }
+      if (roomName.endsWith(" B")) { detectedGroup = "B"; break; }
+    }
+  }
+
+  const roomGroupA = document.getElementById("room-group-a");
+  const roomGroupB = document.getElementById("room-group-b");
+  const leclabGroupA = document.getElementById("leclab-room-group-a");
+  const leclabGroupB = document.getElementById("leclab-room-group-b");
+
+  if (detectedGroup === "A") {
+    roomGroupA.checked = true;
+    roomGroupB.checked = false;
+    roomGroupA.disabled = false;
+    roomGroupB.disabled = true;
+    roomGroupA.parentElement.style.opacity = "1";
+    roomGroupB.parentElement.style.opacity = "0.45";
+    if (leclabGroupA && leclabGroupB) {
+      leclabGroupA.checked = true;
+      leclabGroupB.checked = false;
+      leclabGroupA.disabled = false;
+      leclabGroupB.disabled = true;
+      leclabGroupA.parentElement.style.opacity = "1";
+      leclabGroupB.parentElement.style.opacity = "0.45";
+    }
+  } else if (detectedGroup === "B") {
+    roomGroupA.checked = false;
+    roomGroupB.checked = true;
+    roomGroupA.disabled = true;
+    roomGroupB.disabled = false;
+    roomGroupA.parentElement.style.opacity = "0.45";
+    roomGroupB.parentElement.style.opacity = "1";
+    if (leclabGroupA && leclabGroupB) {
+      leclabGroupA.checked = false;
+      leclabGroupB.checked = true;
+      leclabGroupA.disabled = true;
+      leclabGroupB.disabled = false;
+      leclabGroupA.parentElement.style.opacity = "0.45";
+      leclabGroupB.parentElement.style.opacity = "1";
+    }
+  } else {
+    roomGroupA.checked = true;
+    roomGroupB.checked = false;
+    roomGroupA.disabled = false;
+    roomGroupB.disabled = false;
+    roomGroupA.parentElement.style.opacity = "1";
+    roomGroupB.parentElement.style.opacity = "1";
+    if (leclabGroupA && leclabGroupB) {
+      leclabGroupA.checked = true;
+      leclabGroupB.checked = false;
+      leclabGroupA.disabled = false;
+      leclabGroupB.disabled = false;
+      leclabGroupA.parentElement.style.opacity = "1";
+      leclabGroupB.parentElement.style.opacity = "1";
+    }
+  }
+}
+
 async function openSectionViewModal(dayType, time, section) {
   document.getElementById("sectionview-dayType").value = dayType;
   document.getElementById("sectionview-time").value = time;
   document.getElementById("sectionview-section").value = section;
-  
-  // Reset room group filter to "Group A"
-  document.getElementById("room-group-a").checked = true;
   
   // Hide LecLab interface initially
   hideLecLabInterface();
@@ -22,6 +102,9 @@ async function openSectionViewModal(dayType, time, section) {
   const offerings = await apiGet("course_offerings");
   const sectionState = getSectionViewState();
   const isInternationalView = sectionState.yearLevel === "International";
+
+  await detectAndLockRoomGroup(section, schedules, courses, offerings, sectionState);
+
   const existing = schedules.find(sch => {
     const course = courses.find(c => c.id === sch.courseId);
     if (!course) return false;

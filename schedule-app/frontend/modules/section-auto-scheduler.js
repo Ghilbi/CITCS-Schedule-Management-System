@@ -340,7 +340,7 @@ function findBestAssignment({ section, offering, candidateRooms, scheduleContext
           continue;
         }
 
-        const roomPenalty = getRoomCompatibilityPenalty(offering, room.type);
+        const roomPenalty = getRoomCompatibilityPenalty(offering, room.type, { roomBaseName: room.baseName });
         if (roomPenalty === null) {
           continue;
         }
@@ -422,7 +422,8 @@ function findBestPairedAssignment({ section, lecOffering, labOffering, candidate
               continue;
             }
             const firstPenalty = getRoomCompatibilityPenalty(order.firstOffering, firstRoom.type, {
-              allowLabInBoth: strategy.allowLabInBoth
+              allowLabInBoth: strategy.allowLabInBoth,
+              roomBaseName: firstRoom.baseName
             });
             if (firstPenalty === null) continue;
 
@@ -431,7 +432,8 @@ function findBestPairedAssignment({ section, lecOffering, labOffering, candidate
                 continue;
               }
               const secondPenalty = getRoomCompatibilityPenalty(order.secondOffering, secondRoom.type, {
-                allowLabInBoth: strategy.allowLabInBoth
+                allowLabInBoth: strategy.allowLabInBoth,
+                roomBaseName: secondRoom.baseName
               });
               if (secondPenalty === null) continue;
 
@@ -567,10 +569,40 @@ function shuffleArray(values) {
   return copy;
 }
 
+function isPathfitSubject(subjectName) {
+  return /pathfit/i.test(subjectName || "");
+}
+
+function isNstpSubject(subjectName) {
+  return /nstp/i.test(subjectName || "");
+}
+
+function isGymRoom(roomBaseName) {
+  return /gym/i.test(roomBaseName || "");
+}
+
+function isAudRoom(roomBaseName) {
+  return /aud/i.test(roomBaseName || "");
+}
+
 function getRoomCompatibilityPenalty(offering, normalizedRoomType, options = {}) {
   const offeringType = normalizeOfferingType(offering.type);
   const unitCategory = normalizeUnitCategory(offering.course?.unit_category);
   const allowLabInBoth = !!options.allowLabInBoth;
+  const roomBaseName = options.roomBaseName || "";
+  const subjectName = offering.course?.subject || "";
+
+  if (isPathfitSubject(subjectName)) {
+    return isGymRoom(roomBaseName) ? 0 : null;
+  }
+
+  if (isNstpSubject(subjectName)) {
+    return isAudRoom(roomBaseName) ? 0 : null;
+  }
+
+  if (isGymRoom(roomBaseName) || isAudRoom(roomBaseName)) {
+    return null;
+  }
 
   // Lab portions are restricted to Lec/Lab rooms only.
   if (offeringType === "LAB") {

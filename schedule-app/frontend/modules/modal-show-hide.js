@@ -66,5 +66,7 @@ function hideModal(modal) {
   
   showSection('analytics');
   await loadAnalyticsData();
+
+  launchTutorialIfFirstTime();
 })();
 

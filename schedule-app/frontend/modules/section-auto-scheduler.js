@@ -225,7 +225,7 @@ async function runSectionAutoScheduler() {
         `Unscheduled due to constraints: ${unscheduled.join(", ")}`
       );
     } else {
-      showConflictNotification(`Generated ${newEntries.length} schedule(s) for "${section}" successfully.`);
+      showConflictNotification(`Generated ${newEntries.length} schedule(s) for "${section}" successfully.`, "success");
     }
   } catch (error) {
     console.error("Error in section auto-scheduler:", error);

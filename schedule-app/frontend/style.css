@@ -1909,10 +1909,7 @@ nav #btn-logout {
   position: fixed;
   top: 20px;
   right: 20px;
-  background-color: #fce8e6;
-  color: #c5221f;
   padding: 12px 18px;
-  border-left: 4px solid #ea4335;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.12);
   z-index: 1100;
@@ -1920,6 +1917,18 @@ nav #btn-logout {
   font-size: 14px;
   line-height: 1.5;
   animation: slideIn 0.3s ease;
+}
+
+#conflict-popup.conflict-popup-error {
+  background-color: #fce8e6;
+  color: #c5221f;
+  border-left: 4px solid #ea4335;
+}
+
+#conflict-popup.conflict-popup-success {
+  background-color: #e6f4ea;
+  color: #1e7e34;
+  border-left: 4px solid #34a853;
 }
 
 @keyframes slideIn {

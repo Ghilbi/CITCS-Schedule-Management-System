@@ -107,11 +107,6 @@ async function renderRoomViewTables() {
       for (const [index, roomName] of columns.entries()) {
         const baseRoomName = roomName.replace(/ (A|B)$/, '');
         const td = document.createElement("td");
-        td.classList.add("clickable-cell");
-        td.setAttribute("data-dayType", dayType);
-        td.setAttribute("data-time", time);
-        td.setAttribute("data-col", index + 1);
-        td.addEventListener("click", () => openRoomViewModal(dayType, time, roomName, index + 1));
         
         const room = rooms.find(r => r.name === baseRoomName);
         let schedule = filteredSchedules.find(sch =>

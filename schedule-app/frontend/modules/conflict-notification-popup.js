@@ -1,12 +1,12 @@
 /**************************************************************
  * Conflict notification popup
  **************************************************************/
-function showConflictNotification(message) {
+function showConflictNotification(message, type = "error") {
   const popup = document.getElementById("conflict-popup");
   popup.textContent = message;
-  popup.classList.remove("hidden");
+  popup.classList.remove("hidden", "conflict-popup-success", "conflict-popup-error");
+  popup.classList.add(type === "success" ? "conflict-popup-success" : "conflict-popup-error");
   
-  // Auto-hide the conflict notification after 6 seconds
   setTimeout(() => {
     clearConflictNotification();
   }, 6000);
@@ -15,6 +15,7 @@ function showConflictNotification(message) {
 function clearConflictNotification() {
   const popup = document.getElementById("conflict-popup");
   popup.classList.add("hidden");
+  popup.classList.remove("conflict-popup-success", "conflict-popup-error");
 }
 
 /**************************************************************

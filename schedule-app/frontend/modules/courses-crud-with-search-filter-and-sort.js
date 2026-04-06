@@ -286,26 +286,51 @@ async function importCoursesFromCsv(csvText) {
         continue;
       }
       
-      // Validate unit_category
+      // Normalize unit_category: "Lec" -> "PureLec"
+      if (course.unit_category === 'Lec') {
+        course.unit_category = 'PureLec';
+      }
       if (!['PureLec', 'Lec/Lab'].includes(course.unit_category)) {
         errors.push(`Row ${i + 1}: unit_category must be 'PureLec' or 'Lec/Lab'`);
         continue;
       }
       
-      // Validate year_level
+      // Normalize year_level: "First Year" -> "1st yr", etc.
+      const yearLevelMap = {
+        'first year': '1st yr', '1st year': '1st yr',
+        'second year': '2nd yr', '2nd year': '2nd yr',
+        'third year': '3rd yr', '3rd year': '3rd yr',
+      };
+      const normalizedYear = yearLevelMap[course.year_level.toLowerCase()];
+      if (normalizedYear) {
+        course.year_level = normalizedYear;
+      }
       if (!['1st yr', '2nd yr', '3rd yr'].includes(course.year_level)) {
         errors.push(`Row ${i + 1}: year_level must be '1st yr', '2nd yr', or '3rd yr'`);
         continue;
       }
       
-      // Validate degree
+      // Normalize degree variations
+      const degreeMap = {
+        'BSIT-ERP': 'BSIT(ERP)', 'BSIT-Web': 'BSIT(Webtech)', 'BSIT-Webtech': 'BSIT(Webtech)',
+        'BSIT-NetSec': 'BSIT(NetSec)', 'BSDS': 'BSDA',
+      };
+      if (degreeMap[course.degree]) {
+        course.degree = degreeMap[course.degree];
+      }
       const validDegrees = ['BSIT', 'BSIT(Webtech)', 'BSIT(NetSec)', 'BSIT(ERP)', 'BSCS', 'BSDA', 'BMMA'];
       if (!validDegrees.includes(course.degree)) {
         errors.push(`Row ${i + 1}: Invalid degree '${course.degree}'. Valid degrees: ${validDegrees.join(', ')}`);
         continue;
       }
       
-      // Validate trimester
+      // Normalize trimester: "1st Term" -> "1st Trimester", etc.
+      const trimesterMap = {
+        '1st Term': '1st Trimester', '2nd Term': '2nd Trimester', '3rd Term': '3rd Trimester',
+      };
+      if (trimesterMap[course.trimester]) {
+        course.trimester = trimesterMap[course.trimester];
+      }
       const validTrimesters = ['1st Trimester', '2nd Trimester', '3rd Trimester'];
       if (!validTrimesters.includes(course.trimester)) {
         errors.push(`Row ${i + 1}: Invalid trimester '${course.trimester}'. Valid trimesters: ${validTrimesters.join(', ')}`);
@@ -325,6 +350,7 @@ async function importCoursesFromCsv(csvText) {
         yearLevel: course.year_level,
         degree: course.degree,
         trimester: course.trimester,
+        curriculum: course.curriculum || null,
         description: course.description || ''
       });
     }
